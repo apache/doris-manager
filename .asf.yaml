@@ -16,7 +16,7 @@
 #
 
 github:
-  description: Flink/Spark Connectors for Apache Doris(Incubating)
+  description: Cluster manager for Apache Doris(Incubating)
   homepage: https://doris.apache.org/
   labels:
     - data-warehousing
@@ -37,4 +37,4 @@ github:
         dismiss_stale_reviews: true
         required_approving_review_count: 1
   notifications:
-    pullrequests_status:  dev@doris.apache.org
+    pullrequests_status:  commits@doris.apache.org
