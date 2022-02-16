@@ -45,11 +45,11 @@ const SpaceNew = () => {
                         queryPort: cluValues.queryPort,
                         user: cluValues.user,
                     },
-                    name: values.userName,
+                    name: values.name,
                     describe: values.describe,
                     user: {
                         email: values.email,
-                        name: values.name,
+                        name: values.userName,
                         password: values.password,
                     },
                 }).then(res => {
