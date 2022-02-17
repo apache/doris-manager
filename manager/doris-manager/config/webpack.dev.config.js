@@ -22,7 +22,7 @@ const { webpack } = require("webpack");
 
 const SERVER_QA = 'http://127.0.0.1:8090';
 
-const SERVER_RD = 'http://www.baidu.com:8080';
+const SERVER_RD = 'http://127.0.0.1:8080';
 module.exports = merge(webpackBaseConfig, {
   mode: "development",
   devtool: "eval-source-map",
