@@ -5,7 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3f07d030-e8d9-41a2-94e6-36eacfa5bccc" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/manager/general/src/test/java/org/apache/doris/stack/service/user/UserServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/manager/general/src/test/java/org/apache/doris/stack/service/user/UserServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/dm-agent/src/main/java/org/apache/doris/manager/agent/util/Request.java" beforeDir="false" afterPath="$PROJECT_DIR$/manager/dm-agent/src/main/java/org/apache/doris/manager/agent/util/Request.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/dm-server/src/main/java/org/apache/doris/stack/util/TelnetUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/manager/dm-server/src/main/java/org/apache/doris/stack/util/TelnetUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/doc/Doris Manager Server 接口文档.md" beforeDir="false" afterPath="$PROJECT_DIR$/manager/doc/Doris Manager Server 接口文档.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -60,5 +62,16 @@
       <updated>1645099503558</updated>
     </task>
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>
