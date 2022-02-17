@@ -680,7 +680,7 @@ public class UserServiceTest {
         invitor.setId(requestId);
         CoreUserEntity user = new CoreUserEntity();
         user.setId(userId);
-        user.setEmail("9943094@baidu.com");
+        user.setEmail("9943094@xxx.com");
         user.setFirstName("first");
         // mock Invitor
         when(userRepository.findById(requestId)).thenReturn(Optional.of(invitor));

@@ -165,7 +165,7 @@ public class PaloUserSpaceServiceTest {
         String clusterName = "doris1";
         createReq.setName(clusterName);
         UserSpaceCreateReq.UserAdminInfo userAdminInfo = new UserSpaceCreateReq.UserAdminInfo();
-        userAdminInfo.setEmail("test@baidu.com");
+        userAdminInfo.setEmail("test@xxx.com");
         userAdminInfo.setName("test");
         userAdminInfo.setPassword("test@123");
         createReq.setUser(userAdminInfo);
@@ -309,7 +309,7 @@ public class PaloUserSpaceServiceTest {
         String clusterName = "doris1";
         createReq.setName(clusterName);
         UserSpaceCreateReq.UserAdminInfo userAdminInfo = new UserSpaceCreateReq.UserAdminInfo();
-        userAdminInfo.setEmail("test@baidu.com");
+        userAdminInfo.setEmail("test@xxx.com");
         createReq.setUser(userAdminInfo);
 
         // After initialization, use LDAP authentication
