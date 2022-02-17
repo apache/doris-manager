@@ -205,7 +205,7 @@ public class AuthenticationServiceTest {
     public void testLogin() throws Exception {
         log.debug("test login.");
         String passwd = "ewe232";
-        String userName = "cai@baidu.com";
+        String userName = "cai@xxx.com";
         int userId = 1;
         when(environment.getProperty(PropertyDefine.LOGIN_DELAY_TIME_PROPERTY)).thenReturn("300000");
         when(environment.getProperty(PropertyDefine.MAX_LOGIN_FAILED_TIMES_PROPERTY)).thenReturn("10");
@@ -696,7 +696,7 @@ public class AuthenticationServiceTest {
     @Transactional
     public void testForgetPassword() throws Exception {
         log.debug("test forget password.");
-        String email = "{\"email\":\"sss@baidu.com\"}";
+        String email = "{\"email\":\"sss@xxx.com\"}";
         String hostName = "ss";
         when(ldapComponent.enabled()).thenReturn(true);
         // ldap user can't be reseted password
@@ -717,7 +717,7 @@ public class AuthenticationServiceTest {
             Assert.assertEquals(ResetPasswordTokenException.MESSAGE, e.getMessage());
         }
         // mock user
-        when(userRepository.getByEmail("sss@baidu.com")).thenReturn(Lists.newArrayList(userEntity));
+        when(userRepository.getByEmail("sss@xxx.com")).thenReturn(Lists.newArrayList(userEntity));
         String resetTokenStr = UuidUtil.newUuid();
         // mock reset password token
         when(utilService.resetUserToken(userEntity, false)).thenReturn(resetTokenStr);

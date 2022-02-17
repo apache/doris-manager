@@ -108,7 +108,7 @@ public class Request {
     }
 
     public static void main(String[] args) {
-        String rResult = sendGetRequest("http://www.baidu.com", new HashMap<>());
+        String rResult = sendGetRequest("http://www.test.com", new HashMap<>());
         System.out.println(rResult);
 
     }

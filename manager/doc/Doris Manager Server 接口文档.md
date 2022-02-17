@@ -50,7 +50,7 @@
 ``` json
 {
     "clusterId":"1",
-    "packageUrl":"https://palo-cloud-repo-bd.bd.bcebos.com/baidu-doris-release/PALO-0.15.1-rc03-no-avx2-binary.tar.gz",
+    "packageUrl":"https://localhost/doris-release/PALO-0.15.1-rc03-no-avx2-binary.tar.gz",
     "installDir":"/usr/local/doris",
     "hosts":["10.10.10.11"],
     "user":"root",

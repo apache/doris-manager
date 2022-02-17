@@ -311,7 +311,7 @@ public class UserServiceTest {
         int userId = 2;
         int defaultGroupId = 3;
         int allUserGroupId = 4;
-        String email = "caijunhui@baidu.com";
+        String email = "XXX@aa.com";
         UserAddReq userAddReq = new UserAddReq();
         when(ldapComponent.enabled()).thenReturn(true);
         // request exception
@@ -434,7 +434,7 @@ public class UserServiceTest {
     public void testUpdateUser() throws Exception {
         log.debug("test update user.");
         String name = "name";
-        String email = "caijunhui@baidu.com";
+        String email = "XXX@aa.com";
         int userId = 1;
         int requestId = 2;
         int groupId = 3;
@@ -680,7 +680,7 @@ public class UserServiceTest {
         invitor.setId(requestId);
         CoreUserEntity user = new CoreUserEntity();
         user.setId(userId);
-        user.setEmail("9943094@baidu.com");
+        user.setEmail("9943094@xxx.com");
         user.setFirstName("first");
         // mock Invitor
         when(userRepository.findById(requestId)).thenReturn(Optional.of(invitor));

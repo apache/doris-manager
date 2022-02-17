@@ -37,6 +37,6 @@ public class TelnetUtil {
     }
 
     public static void main(String[] args) {
-        telnet("www.baidu.com", 11111);
+        telnet("www.test.com", 11111);
     }
 }
