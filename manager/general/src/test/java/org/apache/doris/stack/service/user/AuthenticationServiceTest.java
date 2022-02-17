@@ -142,7 +142,11 @@ public class AuthenticationServiceTest {
     public void testLogin() throws Exception {
         log.debug("test login.");
         String passwd = "ewe232";
+<<<<<<< HEAD
         String userName = "cai@test.com";
+=======
+        String userName = "cai@xxx.com";
+>>>>>>> dee0d0c (delete mail info)
         int userId = 1;
         when(environment.getProperty(PropertyDefine.LOGIN_DELAY_TIME_PROPERTY)).thenReturn("300000");
         when(environment.getProperty(PropertyDefine.MAX_LOGIN_FAILED_TIMES_PROPERTY)).thenReturn("10");
@@ -501,7 +505,11 @@ public class AuthenticationServiceTest {
     @Transactional
     public void testForgetPassword() throws Exception {
         log.debug("test forget password.");
+<<<<<<< HEAD
         String email = "{\"email\":\"sss@test.com\"}";
+=======
+        String email = "{\"email\":\"sss@xxx.com\"}";
+>>>>>>> dee0d0c (delete mail info)
         String hostName = "ss";
         when(ldapComponent.enabled()).thenReturn(true);
         // ldap user can't be reseted password
@@ -522,7 +530,11 @@ public class AuthenticationServiceTest {
             Assert.assertEquals(ResetPasswordTokenException.MESSAGE, e.getMessage());
         }
         // mock user
+<<<<<<< HEAD
         when(userRepository.getByEmail("sss@test.com")).thenReturn(Lists.newArrayList(userEntity));
+=======
+        when(userRepository.getByEmail("sss@xxx.com")).thenReturn(Lists.newArrayList(userEntity));
+>>>>>>> dee0d0c (delete mail info)
         String resetTokenStr = UuidUtil.newUuid();
         // mock reset password token
         when(utilService.resetUserToken(userEntity, false)).thenReturn(resetTokenStr);
