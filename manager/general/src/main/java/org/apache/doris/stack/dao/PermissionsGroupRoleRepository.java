@@ -53,4 +53,20 @@ public interface PermissionsGroupRoleRepository extends
     @Modifying
     @Query("delete from PermissionsGroupRoleEntity s where s.groupName = :groupName")
     void deleteByGroupName(@Param("groupName") String groupName);
+
+    @Query("select s from PermissionsGroupRoleEntity s where s.groupName like 'All User_%' and s.paloUserName like "
+            + "'Analyzer%' and s.password = '123456'")
+    List<PermissionsGroupRoleEntity> getByGroupName();
+
+    @Query("select s from PermissionsGroupRoleEntity s where s.password is not null")
+    List<PermissionsGroupRoleEntity> getByPassword();
+
+    @Query("select s from PermissionsGroupRoleEntity s where s.role is not null and s.password "
+            + "is null and s.paloUserName is null and s.groupName not like 'Administrators%' and s.groupName not like"
+            + " 'All Users%'")
+    List<PermissionsGroupRoleEntity> getByUserNameAndPassword();
+
+    @Query("select s from PermissionsGroupRoleEntity s where s.clusterId = :clusterId and s.groupName not like "
+            + "'Administrators%'")
+    List<PermissionsGroupRoleEntity> getAllGroup(@Param("clusterId") int clusterId);
 }

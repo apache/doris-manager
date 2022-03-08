@@ -179,7 +179,7 @@ public class DataBaseResp {
         isSample = sample;
     }
 
-    // todo 后续根据Doris 引擎添加支持特性
+    // todo:Later, add support features according to Doris engine
     {
         this.features = new ArrayList<>();
         this.features.add("basic-aggregations");

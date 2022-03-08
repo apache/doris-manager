@@ -18,7 +18,7 @@
 package org.apache.doris.stack.model.request.user;
 
 import lombok.Data;
-import org.springframework.util.StringUtils;
+import org.apache.doris.stack.util.StringUtil;
 
 @Data
 public class UserUpdateReq {
@@ -35,9 +35,11 @@ public class UserUpdateReq {
      * @return boolean
      */
     public boolean hasEmptyField() {
-        if (StringUtils.isEmpty(name) || StringUtils.isEmpty(email)) {
+        if (StringUtil.trimStrEmpty(this.name)) {
             return true;
+        } else {
+            this.name = this.name.trim();
+            return false;
         }
-        return false;
     }
 }

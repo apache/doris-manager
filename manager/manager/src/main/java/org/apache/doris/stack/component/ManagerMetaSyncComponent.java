@@ -58,7 +58,7 @@ public class ManagerMetaSyncComponent extends BaseService {
      * @param clusterInfo
      */
     public void deleteClusterMetadata(ClusterInfoEntity clusterInfo) throws Exception {
-        int clusterId = clusterInfo.getId();
+        int clusterId = (int) clusterInfo.getId();
         log.debug("Delete cluster {} manager metadata.", clusterId);
         // Delete all databases metadata in the space
         List<ManagerDatabaseEntity> databaseEntities = databaseRepository.getByClusterId(clusterId);
@@ -74,7 +74,7 @@ public class ManagerMetaSyncComponent extends BaseService {
      * @throws Exception
      */
     public void syncPaloClusterMetadata(ClusterInfoEntity clusterInfo) throws Exception {
-        int clusterId = clusterInfo.getId();
+        int clusterId = (int) clusterInfo.getId();
         try {
             log.info("Start to sync palo cluster {} metadata to manager.", clusterId);
             List<String> databaseList = metaInfoClient.getDatabaseList(ConstantDef.DORIS_DEFAULT_NS, clusterInfo);
@@ -282,7 +282,8 @@ public class ManagerMetaSyncComponent extends BaseService {
             }
 
             // Initialize and save table information
-            ManagerTableEntity tableEntity = new ManagerTableEntity(dbId, name, description, tableSchema);
+            ManagerTableEntity tableEntity = new ManagerTableEntity(dbId, name, description,
+                    tableSchema.isBaseIndex(), tableSchema.getKeyType());
             int tableId = tableRepository.save(tableEntity).getId();
             log.debug("add new table {}.", tableId);
             return tableId;
@@ -327,7 +328,15 @@ public class ManagerMetaSyncComponent extends BaseService {
             }
             int position = 0;
             for (TableSchemaInfo.Schema field : fields) {
-                ManagerFieldEntity fieldEntity = new ManagerFieldEntity(tableId, field, position);
+                ManagerFieldEntity fieldEntity = new ManagerFieldEntity(tableId, position);
+                fieldEntity.setName(field.getField());
+                fieldEntity.setDatabaseType(field.getType());
+                fieldEntity.setDescription(field.getComment());
+                fieldEntity.setIsNull(field.getIsNull());
+                fieldEntity.setDefaultVal(field.getDefaultVal());
+                fieldEntity.setKey(field.getKey());
+                fieldEntity.setAggrType(field.getAggrType());
+
                 fieldRepository.save(fieldEntity);
                 position++;
                 log.debug("Add table {} field {} success.", tableId, field.getField());

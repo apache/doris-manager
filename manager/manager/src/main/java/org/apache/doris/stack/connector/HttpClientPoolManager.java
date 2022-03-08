@@ -17,15 +17,20 @@
 
 package org.apache.doris.stack.connector;
 
-import com.alibaba.fastjson.JSON;
-import org.apache.doris.stack.model.palo.PaloResponseEntity;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.doris.stack.model.palo.PaloResponseEntity;
+
+import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Lists;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
@@ -40,16 +45,18 @@ import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -75,7 +82,7 @@ public class HttpClientPoolManager implements InitializingBean, DisposableBean {
                 .setConnectionManager(pool)
                 .setKeepAliveStrategy(initKeepAliveStrategy())
                 .build();
-        executorService = Executors.newFixedThreadPool(1);
+        executorService = Executors.newFixedThreadPool(2);
         executorService.submit(new IdleConnectionClearThread(pool));
     }
 
@@ -128,7 +135,7 @@ public class HttpClientPoolManager implements InitializingBean, DisposableBean {
                 httpGet.setHeader(key, headers.get(key));
             }
         }
-        String jsonString = JSON.toJSONString(body);
+        String jsonString = JSON.toJSONString(body, SerializerFeature.DisableCircularReferenceDetect);
         StringEntity stringEntity = new StringEntity(jsonString, "UTF-8");
         httpGet.setEntity(stringEntity);
         setRequestConfig(httpGet);
@@ -151,11 +158,24 @@ public class HttpClientPoolManager implements InitializingBean, DisposableBean {
                 httpPost.setHeader(key, headers.get(key));
             }
         }
-        String jsonString = JSON.toJSONString(body);
+        String jsonString = JSON.toJSONString(body, SerializerFeature.DisableCircularReferenceDetect);
         StringEntity stringEntity = new StringEntity(jsonString, "UTF-8");
         httpPost.setEntity(stringEntity);
         setRequestConfig(httpPost);
         return executeRequest(httpPost);
+    }
+
+    public String doPostUrlEncode(String url, Map<String, String> paras) throws IOException {
+        HttpPost httpPost = new HttpPost(url);
+        List<NameValuePair> nameValuePairs = Lists.newArrayList();
+        for (Map.Entry<String, String> entry : paras.entrySet()) {
+            nameValuePairs.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
+        }
+        httpPost.setHeader("Content-type", "application/x-www-form-urlencoded");
+        httpPost.setEntity(new UrlEncodedFormEntity(nameValuePairs, "UTF-8"));
+        setRequestConfig(httpPost);
+
+        return executeRequestNoParse(httpPost);
     }
 
     public PaloResponseEntity forwardPost(String url, Map<String, String> headers, String body) throws Exception {
@@ -236,16 +256,15 @@ public class HttpClientPoolManager implements InitializingBean, DisposableBean {
     }
 
     private PaloResponseEntity executeRequest(HttpRequestBase request) throws Exception {
-        String result = client.execute(request, new ResponseHandler<String>() {
-            @Override
-            public String handleResponse(HttpResponse httpResponse) throws ClientProtocolException, IOException {
-                return EntityUtils.toString(httpResponse.getEntity());
-            }
-        });
-        log.debug("execute request result:" + result);
+        String result = executeRequestNoParse(request);
 
-        PaloResponseEntity responseEntity = JSON.parseObject(result, PaloResponseEntity.class);
-        return responseEntity;
+        return JSON.parseObject(result, PaloResponseEntity.class);
+    }
+
+    private String executeRequestNoParse(HttpRequestBase request) throws IOException {
+        String result = client.execute(request, httpResponse -> EntityUtils.toString(httpResponse.getEntity()));
+        log.debug("execute request result:" + result);
+        return result;
     }
 
     /**

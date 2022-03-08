@@ -17,6 +17,7 @@
 
 package org.apache.doris.stack.controller.config;
 
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.model.request.config.EmailInfo;
 import org.apache.doris.stack.model.request.config.TestEmailReq;
 import org.apache.doris.stack.rest.ResponseEntityBuilder;
@@ -50,15 +51,14 @@ public class EmailController {
     @Autowired
     private EmailService emailService;
 
-    @ApiOperation(value = "Get mailbox service configuration information(super administrator/space administrator access)")
+    @ApiOperation(value = "Get mailbox service configuration information(super administrator access)")
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public Object getEmailSmtp(HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("Admin user update email service info.");
-        int userId = authenticationService.checkAllUserAuthWithCookie(request, response);
-        if (userId > 0) {
-            authenticationService.checkUserIsAdmin(userId);
-        }
-        return ResponseEntityBuilder.ok(emailService.getEmailConfig(userId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // check is super admin user
+        authenticationService.checkUserIsAdmin(user);
+        return ResponseEntityBuilder.ok(emailService.getEmailConfig(user.getId()));
     }
 
     @ApiOperation(value = "Configure mailbox service information(super administrator access)")
@@ -67,7 +67,9 @@ public class EmailController {
                                   HttpServletRequest request,
                                   HttpServletResponse response) throws Exception {
         log.debug("Super Admin user update email service info.");
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // check is super admin user
+        authenticationService.checkUserIsAdmin(user);
         emailService.updateEmailInfo(emailInfo);
         return ResponseEntityBuilder.ok();
     }
@@ -76,7 +78,9 @@ public class EmailController {
     @DeleteMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public Object deleteEmailSmtp(HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("Admin user update email service info.");
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // check is super admin user
+        authenticationService.checkUserIsAdmin(user);
         emailService.deleteEmailInfo();
         return ResponseEntityBuilder.ok();
     }
@@ -85,7 +89,9 @@ public class EmailController {
     @PostMapping(value = "test", produces = MediaType.APPLICATION_JSON_VALUE)
     public Object testEmail(@RequestBody TestEmailReq testEmailReq, HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("Admin user update email service info.");
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // check is super admin user
+        authenticationService.checkUserIsAdmin(user);
 
         emailService.sendTestEmail(testEmailReq);
         return ResponseEntityBuilder.ok();

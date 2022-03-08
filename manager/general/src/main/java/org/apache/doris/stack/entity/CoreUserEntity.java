@@ -18,8 +18,9 @@
 package org.apache.doris.stack.entity;
 
 import org.apache.doris.stack.model.ldap.LdapUserInfo;
+import org.apache.doris.stack.model.request.user.NewUserAddReq;
 import org.apache.doris.stack.model.request.user.UserAddReq;
-import org.apache.doris.stack.model.request.space.UserSpaceCreateReq;
+import org.apache.doris.stack.model.response.space.NewUserSpaceInfo;
 import org.apache.doris.stack.model.response.user.UserInfo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -40,16 +41,16 @@ public class CoreUserEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
-    @Column(length = 254, nullable = false)
+    @Column(length = 254)
     private String email;
 
     @Column(length = 254, name = "first_name", nullable = false)
     private String firstName;
 
     @Column(length = 254, name = "last_name", nullable = false)
-    private String lastName;
+    private String lastName = "";
 
     @Column(length = 254, name = "password", nullable = false)
     private String password;
@@ -99,35 +100,32 @@ public class CoreUserEntity {
     @Column(length = 5, name = "locale")
     private String locale;
 
-    public CoreUserEntity(UserSpaceCreateReq.UserAdminInfo usInfo) {
-        this.email = usInfo.getEmail();
-        this.firstName = usInfo.getName();
-        this.lastName = "palo";
-        this.dateJoined = new Timestamp(System.currentTimeMillis());
-        this.isSuperuser = true;
-        this.isActive = true;
-        this.isQbnewb = true;
-        this.updatedAt = new Timestamp(System.currentTimeMillis());
-        this.password = "";
-        this.passwordSalt = "";
-    }
+    @Column(name = "cluster_id")
+    private Integer clusterId = 0;
 
-    public CoreUserEntity(UserSpaceCreateReq.UserAdminInfo usInfo, LdapUserInfo ldapUserInfo) {
-        this.email = usInfo.getEmail();
-        this.firstName = (ldapUserInfo.getLastName() == null ? "" : ldapUserInfo.getLastName())
-                + (ldapUserInfo.getFirstName() == null ? "" : ldapUserInfo.getFirstName());
-        this.lastName = "palo";
-        this.dateJoined = new Timestamp(System.currentTimeMillis());
-        this.isSuperuser = true;
-        this.isActive = true;
-        this.isQbnewb = true;
-        this.updatedAt = new Timestamp(System.currentTimeMillis());
-        this.password = "";
-        this.passwordSalt = "";
-    }
+    @Column(name = "is_cluster_admin")
+    private Boolean isClusterAdmin = false;
+
+    @Column(length = 254, name = "entry_UUID")
+    private String entryUUID;
 
     public CoreUserEntity(UserAddReq userAddReq) {
         this.email = userAddReq.getEmail();
+        this.firstName = userAddReq.getName();
+        this.lastName = "palo";
+        this.dateJoined = new Timestamp(System.currentTimeMillis());
+        this.isSuperuser = false;
+        this.isActive = true;
+        this.isQbnewb = true;
+        this.updatedAt = new Timestamp(System.currentTimeMillis());
+    }
+
+    public CoreUserEntity(NewUserAddReq userAddReq) {
+        if (userAddReq.getEmail() == null) {
+            this.email = "";
+        } else {
+            this.email = userAddReq.getEmail();
+        }
         this.firstName = userAddReq.getName();
         this.lastName = "palo";
         this.dateJoined = new Timestamp(System.currentTimeMillis());
@@ -173,6 +171,27 @@ public class CoreUserEntity {
         this.updatedAt = new Timestamp(System.currentTimeMillis());
         this.ssoSource = userEntity.getSsoSource();
         this.locale = userEntity.getLocale();
+        this.clusterId = userEntity.getClusterId();
+        this.isClusterAdmin = userEntity.getIsClusterAdmin();
+    }
+
+    public UserInfo castToUserInfoWithoutClusterInfo() {
+        UserInfo userInfo = new UserInfo();
+        userInfo.setEmail(this.email);
+        userInfo.setLdapAuth(this.ldapAuth);
+        userInfo.setName(this.firstName);
+        userInfo.setLocale(this.locale);
+        userInfo.setLastLogin(this.lastLogin);
+        userInfo.setActive(this.isActive);
+        userInfo.setQbnewb(this.isQbnewb);
+        userInfo.setUpdatedAt(this.updatedAt);
+        userInfo.setSuperAdmin(this.isSuperuser);
+        userInfo.setLoginAttributes(this.loginAttributes);
+        userInfo.setId(this.id);
+        userInfo.setDateJoined(this.dateJoined);
+        userInfo.setCommonName(this.firstName);
+        userInfo.setGoogleAuth(this.googleAuth);
+        return userInfo;
     }
 
     public UserInfo castToUserInfo() {
@@ -185,12 +204,24 @@ public class CoreUserEntity {
         userInfo.setActive(this.isActive);
         userInfo.setQbnewb(this.isQbnewb);
         userInfo.setUpdatedAt(this.updatedAt);
-        userInfo.setAdmin(this.isSuperuser);
+        userInfo.setSuperAdmin(this.isSuperuser);
         userInfo.setLoginAttributes(this.loginAttributes);
         userInfo.setId(this.id);
         userInfo.setDateJoined(this.dateJoined);
         userInfo.setCommonName(this.firstName);
         userInfo.setGoogleAuth(this.googleAuth);
+
+        if (this.clusterId == null) {
+            userInfo.setSpaceId(0);
+        } else {
+            userInfo.setSpaceId(this.clusterId);
+        }
+
+        if (this.isClusterAdmin == null) {
+            userInfo.setAdmin(false);
+        } else {
+            userInfo.setAdmin(this.isClusterAdmin);
+        }
         return userInfo;
     }
 
@@ -201,11 +232,78 @@ public class CoreUserEntity {
         return userInfo;
     }
 
+    public NewUserSpaceInfo.SpaceAdminUserInfo castToAdminUserInfo() {
+        NewUserSpaceInfo.SpaceAdminUserInfo userInfo = new NewUserSpaceInfo.SpaceAdminUserInfo();
+        userInfo.setId(this.id);
+        userInfo.setName(this.firstName);
+        userInfo.setEmail(this.email);
+        return userInfo;
+    }
+
     public boolean getLdapAuth() {
         return ldapAuth;
     }
 
     public void setLdapAuth(boolean ldapAuth) {
         this.ldapAuth = ldapAuth;
+    }
+
+    public Integer getClusterId() {
+        if (clusterId == null) {
+            return 0;
+        }
+        return clusterId;
+    }
+
+    public void setClusterId(Integer clusterId) {
+        if (clusterId == null) {
+            this.clusterId = 0;
+        } else {
+            this.clusterId = clusterId;
+        }
+    }
+
+    public Boolean getClusterAdmin() {
+        if (isClusterAdmin == null) {
+            return false;
+        }
+        return isClusterAdmin;
+    }
+
+    public void setIsClusterAdmin(Boolean clusterAdmin) {
+        if (clusterAdmin == null) {
+            this.isClusterAdmin = false;
+        } else {
+            isClusterAdmin = clusterAdmin;
+        }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj == null) {
+            return false;
+        }
+
+        if (obj instanceof CoreUserEntity) {
+            CoreUserEntity other = (CoreUserEntity) obj;
+            //需要比较的字段相等，则这两个对象相等
+            if (this.entryUUID.equals(other.entryUUID)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((firstName == null) ? 0 : firstName.hashCode());
+        return result;
     }
 }

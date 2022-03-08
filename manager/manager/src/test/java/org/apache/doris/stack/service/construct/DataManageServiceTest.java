@@ -27,7 +27,6 @@ import org.apache.doris.stack.component.DatabuildComponent;
 import org.apache.doris.stack.component.ManagerMetaSyncComponent;
 import org.apache.doris.stack.connector.PaloMetaInfoClient;
 import org.apache.doris.stack.dao.ClusterInfoRepository;
-import org.apache.doris.stack.dao.CoreUserRepository;
 import org.apache.doris.stack.driver.DorisDataBuildDriver;
 import org.apache.doris.stack.entity.ClusterInfoEntity;
 import org.apache.doris.stack.entity.CoreUserEntity;
@@ -43,8 +42,6 @@ import org.junit.runners.JUnit4;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.util.Optional;
 
 @RunWith(JUnit4.class)
 @Slf4j
@@ -69,9 +66,6 @@ public class DataManageServiceTest {
     private PaloMetaInfoClient metaInfoClient;
 
     @Mock
-    private CoreUserRepository userRepository;
-
-    @Mock
     private ClusterUserComponent clusterUserComponent;
 
     @Mock
@@ -93,9 +87,11 @@ public class DataManageServiceTest {
         int clusterId = 2;
         DbCreateReq createReq = new DbCreateReq();
 
+        CoreUserEntity user = mockRequestUser(userId, clusterId);
+
         // request exception
         try {
-            manageService.createDatabse(nsId, createReq, userId);
+            manageService.createDatabse(nsId, createReq, user);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
@@ -107,13 +103,10 @@ public class DataManageServiceTest {
         // mock sql
         String sql = "CREATE DATABASE db";
 
-        // mock user
-        CoreUserEntity userEntity = mockUser(userId);
-
         try {
-            when(clusterUserComponent.getClusterByUserId(userId)).thenReturn(clusterInfo);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
             when(driver.createDb(createReq.getName())).thenReturn(sql);
-            manageService.createDatabse(nsId, createReq, userId);
+            manageService.createDatabse(nsId, createReq, user);
         } catch (Exception e) {
             log.error("create database test error.");
             e.printStackTrace();
@@ -121,12 +114,12 @@ public class DataManageServiceTest {
 
         // Metadata storage exception, regression creation
         try {
-            when(clusterUserComponent.getClusterByUserId(userId)).thenReturn(clusterInfo);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
             when(driver.createDb(createReq.getName())).thenReturn(sql);
-            DataDescription description = new DataDescription(createReq.getDescribe(), userEntity.getFirstName());
+            DataDescription description = new DataDescription(createReq.getDescribe(), user.getFirstName());
             when(syncComponent.addDatabase(createReq.getName(), JSON.toJSONString(description),
                     nsId, clusterId)).thenThrow(new Exception("save metabase error"));
-            manageService.createDatabse(nsId, createReq, userId);
+            manageService.createDatabse(nsId, createReq, user);
         } catch (Exception e) {
             log.debug("create database test error {}.", e.getMessage());
         }
@@ -143,9 +136,11 @@ public class DataManageServiceTest {
         int userId = 2;
         int clusterId = 3;
 
+        CoreUserEntity user = mockRequestUser(userId, clusterId);
+
         // delete exception
         try {
-            manageService.deleteDatabse(nsId, -1, userId);
+            manageService.deleteDatabse(nsId, -1, user);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), NoPermissionException.MESSAGE);
         }
@@ -157,9 +152,9 @@ public class DataManageServiceTest {
         ManagerDatabaseEntity databaseEntity = mockDatabase(dbId, clusterId, "db");
 
         try {
-            when(clusterUserComponent.getClusterByUserId(userId)).thenReturn(clusterInfo);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
             when(databuildComponent.checkClusterDatabase(dbId, clusterId)).thenReturn(databaseEntity);
-            manageService.deleteDatabse(nsId, dbId, userId);
+            manageService.deleteDatabse(nsId, dbId, user);
         } catch (Exception e) {
             log.error("Get database info error {}.", e.getMessage());
         }
@@ -176,6 +171,8 @@ public class DataManageServiceTest {
         int userId = 2;
         int clusterId = 3;
 
+        CoreUserEntity user = mockRequestUser(userId, clusterId);
+
         // mock request
         TableCreateReq createTableInfo = new TableCreateReq();
         createTableInfo.setName("table");
@@ -183,19 +180,17 @@ public class DataManageServiceTest {
         ClusterInfoEntity clusterInfo = mockClusterInfo(clusterId);
         //
         ManagerDatabaseEntity databaseEntity = mockDatabase(dbId, clusterId, "db");
-        // mock user
-        CoreUserEntity userEntity = mockUser(userId);
         String sql = "create table";
 
         try {
-            when(clusterUserComponent.getClusterByUserId(userId)).thenReturn(clusterInfo);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
             when(databuildComponent.checkClusterDatabase(dbId, clusterId)).thenReturn(databaseEntity);
             when(driver.createTable(createTableInfo)).thenReturn(sql);
             // test get create table sql
-            String sqlResult = manageService.createTableSql(nsId, dbId, createTableInfo);
+            String sqlResult = manageService.createTableSql(nsId, dbId, createTableInfo, user);
             Assert.assertEquals(sqlResult, sql);
             // test create table
-            manageService.createTable(nsId, dbId, createTableInfo, userId);
+            manageService.createTable(nsId, dbId, createTableInfo, user);
         } catch (Exception e) {
             log.error("create table test error.");
             e.printStackTrace();
@@ -203,12 +198,12 @@ public class DataManageServiceTest {
 
         // save metadata exception
         try {
-            when(clusterUserComponent.getClusterByUserId(userId)).thenReturn(clusterInfo);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
             when(databuildComponent.checkClusterDatabase(dbId, clusterId)).thenReturn(databaseEntity);
-            DataDescription description = new DataDescription(createTableInfo.getDescribe(), userEntity.getFirstName());
+            DataDescription description = new DataDescription(createTableInfo.getDescribe(), user.getFirstName());
             when(syncComponent.addTable(dbId, "table", JSON.toJSONString(description),
                     null)).thenThrow(new Exception("Save metadata error."));
-            manageService.createTable(nsId, dbId, createTableInfo, userId);
+            manageService.createTable(nsId, dbId, createTableInfo, user);
         } catch (Exception e) {
             log.debug("create table test error {}.", e.getMessage());
         }
@@ -222,9 +217,11 @@ public class DataManageServiceTest {
         int userId = 2;
         int clusterId = 3;
 
+        CoreUserEntity user = mockRequestUser(userId, clusterId);
+
         // sql exception
         try {
-            manageService.crateTableBySql(nsId, dbId, null, userId);
+            manageService.crateTableBySql(nsId, dbId, null, user);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
@@ -239,13 +236,11 @@ public class DataManageServiceTest {
         ClusterInfoEntity clusterInfo = mockClusterInfo(clusterId);
         // mock ddatabase
         ManagerDatabaseEntity databaseEntity = mockDatabase(dbId, clusterId, "db");
-        // mock user
-        CoreUserEntity userEntity = mockUser(userId);
 
         try {
-            when(clusterUserComponent.getClusterByUserId(userId)).thenReturn(clusterInfo);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
             when(databuildComponent.checkClusterDatabase(dbId, clusterId)).thenReturn(databaseEntity);
-            manageService.crateTableBySql(nsId, dbId, sql, userId);
+            manageService.crateTableBySql(nsId, dbId, sql, user);
         } catch (Exception e) {
             log.error("create table test error.");
             e.printStackTrace();
@@ -261,12 +256,13 @@ public class DataManageServiceTest {
         return databaseEntity;
     }
 
-    private CoreUserEntity mockUser(int userId) {
+    private CoreUserEntity mockRequestUser(int userId, int clusterId) {
         CoreUserEntity userEntity = new CoreUserEntity();
         userEntity.setId(userId);
+        userEntity.setClusterId(clusterId);
         userEntity.setFirstName("user");
+        userEntity.setIsClusterAdmin(true);
         userEntity.setSuperuser(true);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
         return userEntity;
     }
 

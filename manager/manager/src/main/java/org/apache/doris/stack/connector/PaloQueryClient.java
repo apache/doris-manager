@@ -17,8 +17,13 @@
 
 package org.apache.doris.stack.connector;
 
+import static org.apache.doris.stack.constant.ConstantDef.PALO_ANALYZER_USER_PASSWORD;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+
+import org.apache.doris.stack.dao.PermissionsGroupRoleRepository;
+import org.apache.doris.stack.entity.PermissionsGroupRoleEntity;
 import org.apache.doris.stack.model.palo.PaloResponseEntity;
 import org.apache.doris.stack.model.response.construct.NativeQueryResp;
 import org.apache.doris.stack.entity.ClusterInfoEntity;
@@ -26,6 +31,7 @@ import org.apache.doris.stack.exception.PaloRequestException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -42,6 +48,9 @@ public class PaloQueryClient extends PaloClient {
         this.poolManager = poolManager;
     }
 
+    @Autowired
+    private PermissionsGroupRoleRepository groupRoleRepository;
+
     /**
      * Create an ordinary analyst Palo large account user
      * @param ns
@@ -49,31 +58,49 @@ public class PaloQueryClient extends PaloClient {
      * @param entity
      * @return
      */
-    public String createUser(String ns, String db, ClusterInfoEntity entity, String userName) {
-        String passwd = "123456";
+    public String createUser(String ns, String db, ClusterInfoEntity entity, String userName) throws Exception {
+        String passwd = PALO_ANALYZER_USER_PASSWORD;
 
         try {
             String createSql = "create user '" + userName + "'@'%' IDENTIFIED BY '" + passwd + "'";
-            executeSQL(createSql, ns, db, entity);
+            executeSQLNew(createSql, ns, db, entity);
 
-            String permissionSql = "GRANT SELECT_PRIV ON *.* TO '" + userName + "'@'%'";
-            executeSQL(permissionSql, ns, db, entity);
+            //            String permissionSql = "GRANT SELECT_PRIV ON *.* TO '" + userName + "'@'%'";
+            //            executeSQL(permissionSql, ns, db, entity);
+
         } catch (Exception e) {
             log.warn("create user exception {}.", e.getMessage());
-            e.printStackTrace();
+            throw e;
         }
 
         return passwd;
     }
 
     public void deleteUser(String ns, String db, ClusterInfoEntity entity, String userName) {
-        try {
-            String deleteSql = "DROP USER '" + userName + "'@'%'";
-            executeSQL(deleteSql, ns, db, entity);
-        } catch (Exception e) {
-            log.warn("delete user exception {}.", e.getMessage());
-            e.printStackTrace();
+        if (userName.startsWith("Analyzer") || userName.startsWith("Administrators")) {
+            try {
+                String deleteSql = "DROP USER '" + userName + "'@'%'";
+                executeSQL(deleteSql, ns, db, entity);
+            } catch (Exception e) {
+                log.warn("delete user exception {}.", e);
+            }
         }
+    }
+
+    public String createAdminRoleUser(String ns, String db, ClusterInfoEntity entity, String userName) throws Exception {
+
+        log.debug("create admin role user for cluster {}", entity.getId());
+        try {
+            String createSql =
+                    "CREATE USER '" + userName + "'@'%' IDENTIFIED BY '" + PALO_ANALYZER_USER_PASSWORD + "' DEFAULT ROLE 'admin'";
+
+            executeCreateAdminUserSQL(createSql, ns, db, entity);
+        } catch (Exception e) {
+            log.warn("create user exception {}.", e.getMessage());
+            throw e;
+        }
+        return PALO_ANALYZER_USER_PASSWORD;
+
     }
 
     public double countSQL(String sql, String ns, String db, ClusterInfoEntity entity) {
@@ -86,13 +113,116 @@ public class PaloQueryClient extends PaloClient {
                 return Double.parseDouble(data.get(0).get(0));
             }
         } catch (Exception e) {
-            log.error("execute count sql {} error {}", sql, e.getMessage());
-            e.printStackTrace();
+            log.error("execute count sql {} error {}", sql, e);
             return 0.0;
         }
     }
 
+    // execute sql by admin user, not cluster root
     public NativeQueryResp executeSQL(String sql, String ns, String db, ClusterInfoEntity entity) throws Exception {
+        String url = getHostUrl(entity.getAddress(), entity.getHttpPort());
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(url);
+        buffer.append("/api/query/");
+        buffer.append(ns);
+        buffer.append("/");
+        buffer.append(db);
+        url = buffer.toString();
+        log.debug("Send execute sql {} request, url is {}.", sql, url);
+
+        PermissionsGroupRoleEntity groupRoleEntity = groupRoleRepository.findById(entity.getAdminGroupId()).get();
+
+        Map<String, String> headers = Maps.newHashMap();
+        setHeaders(headers);
+        setAuthHeaders(headers, groupRoleEntity.getPaloUserName(), groupRoleEntity.getPassword());
+
+        Map<String, String> responseBody = Maps.newHashMap();
+        responseBody.put("stmt", sql);
+
+        PaloResponseEntity response = poolManager.doPost(url, headers, responseBody);
+
+        if (response.getCode() != REQUEST_SUCCESS_CODE) {
+            // SQL execution error
+            throw new PaloRequestException("Query palo error:" + response.getData());
+        }
+
+        JSONObject jsonObject = JSON.parseObject(response.getData());
+        NativeQueryResp resp = new NativeQueryResp();
+        String type = jsonObject.getString("type");
+        resp.setType(type);
+        int time = jsonObject.getInteger("time");
+        resp.setTime(time);
+
+        if (type.equals(NativeQueryResp.Type.result_set.name())) {
+            List<List<String>> dataResult = Lists.newArrayList();
+            String dataStr = jsonObject.getString("data");
+            List<String> dataList = JSON.parseArray(dataStr, String.class);
+            for (String data : dataList) {
+                List<String> dataInfo = JSON.parseArray(data, String.class);
+                dataResult.add(dataInfo);
+            }
+            resp.setData(dataResult);
+
+            String metaStr = jsonObject.getString("meta");
+            List<NativeQueryResp.Meta> metaList = JSON.parseArray(metaStr, NativeQueryResp.Meta.class);
+            resp.setMeta(metaList);
+        }
+        return resp;
+    }
+
+    // execute sql by admin user, not cluster root
+    // TODO：创建用户的时候还是使用用户传入的用户名和密码要不然可能出现Admin组的数据还没写入，这里读取不到信息的错误
+    public NativeQueryResp executeSQLNew(String sql, String ns, String db, ClusterInfoEntity entity) throws Exception {
+        String url = getHostUrl(entity.getAddress(), entity.getHttpPort());
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(url);
+        buffer.append("/api/query/");
+        buffer.append(ns);
+        buffer.append("/");
+        buffer.append(db);
+        url = buffer.toString();
+        log.debug("Send execute sql {} request, url is {}.", sql, url);
+
+        Map<String, String> headers = Maps.newHashMap();
+        setHeaders(headers);
+        setAuthHeaders(headers, entity.getUser(), entity.getPasswd());
+
+        Map<String, String> responseBody = Maps.newHashMap();
+        responseBody.put("stmt", sql);
+
+        PaloResponseEntity response = poolManager.doPost(url, headers, responseBody);
+
+        if (response.getCode() != REQUEST_SUCCESS_CODE) {
+            // SQL execution error
+            throw new PaloRequestException("Query palo error:" + response.getData());
+        }
+
+        JSONObject jsonObject = JSON.parseObject(response.getData());
+        NativeQueryResp resp = new NativeQueryResp();
+        String type = jsonObject.getString("type");
+        resp.setType(type);
+        int time = jsonObject.getInteger("time");
+        resp.setTime(time);
+
+        if (type.equals(NativeQueryResp.Type.result_set.name())) {
+            List<List<String>> dataResult = Lists.newArrayList();
+            String dataStr = jsonObject.getString("data");
+            List<String> dataList = JSON.parseArray(dataStr, String.class);
+            for (String data : dataList) {
+                List<String> dataInfo = JSON.parseArray(data, String.class);
+                dataResult.add(dataInfo);
+            }
+            resp.setData(dataResult);
+
+            String metaStr = jsonObject.getString("meta");
+            List<NativeQueryResp.Meta> metaList = JSON.parseArray(metaStr, NativeQueryResp.Meta.class);
+            resp.setMeta(metaList);
+        }
+        return resp;
+    }
+
+    // only for create admin user of the space
+    public NativeQueryResp executeCreateAdminUserSQL(String sql, String ns, String db, ClusterInfoEntity entity) throws Exception {
         String url = getHostUrl(entity.getAddress(), entity.getHttpPort());
         StringBuffer buffer = new StringBuffer();
         buffer.append(url);

@@ -19,9 +19,9 @@ package org.apache.doris.stack.exception;
 
 public class DorisConnectionException extends Exception {
 
-    public static final String MESSAGE = "引擎连接信息有误，请检查后重新输入";
+    public static final String MESSAGE = "引擎连接信息错误，请检查后重新输入. 错误信息为:";
 
-    public DorisConnectionException() {
-        super(MESSAGE);
+    public DorisConnectionException(String errorInfo) {
+        super(MESSAGE + errorInfo);
     }
 }

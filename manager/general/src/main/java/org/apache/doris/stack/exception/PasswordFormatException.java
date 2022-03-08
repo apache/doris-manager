@@ -19,7 +19,7 @@ package org.apache.doris.stack.exception;
 
 public class PasswordFormatException extends Exception {
 
-    public static final String MESSAGE = "密码强度太低，请重新输入";
+    public static final String MESSAGE = "密码格式错误（长度或者字符内容不支持），请重新输入";
 
     public PasswordFormatException() {
         super(MESSAGE);

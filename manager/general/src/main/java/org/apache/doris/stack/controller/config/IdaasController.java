@@ -17,6 +17,7 @@
 
 package org.apache.doris.stack.controller.config;
 
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,7 +54,9 @@ public class IdaasController {
                           HttpServletResponse response) throws Exception {
 
         log.debug("Admin User update IDAAS service info.");
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // check is super admin user
+        authenticationService.checkUserIsAdmin(user);
         idaasService.update(idaasSettingReq);
         return ResponseEntityBuilder.ok();
     }
@@ -64,7 +67,9 @@ public class IdaasController {
                           HttpServletResponse response) throws Exception {
 
         log.debug("Admin User get IDAAS service info.");
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // check is super admin user
+        authenticationService.checkUserIsAdmin(user);
         return ResponseEntityBuilder.ok(idaasService.setting());
     }
 }

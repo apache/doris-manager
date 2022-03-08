@@ -22,17 +22,22 @@ import org.springframework.http.ResponseEntity;
 
 public class ResponseEntityBuilder {
     public static ResponseEntity badRequest(Object data) {
-        ResponseBody body = new ResponseBody().code(RestApiStatusCode.BAD_REQUEST).msg("异常请求：" + data);
+        ResponseBody body = new ResponseBody().code(RestApiStatusCode.BAD_REQUEST).msg(data.toString());
+        return ResponseEntity.status(HttpStatus.OK).body(body);
+    }
+
+    public static ResponseEntity usernameDuplicateRequest(Object data) {
+        ResponseBody body = new ResponseBody().code(RestApiStatusCode.COMMON_ERROR).msg(data.toString());
         return ResponseEntity.status(HttpStatus.OK).body(body);
     }
 
     public static ResponseEntity okWithCommonError(String msg) {
-        ResponseBody body = new ResponseBody().code(RestApiStatusCode.COMMON_ERROR).msg("错误：" + msg);
+        ResponseBody body = new ResponseBody().code(RestApiStatusCode.COMMON_ERROR).msg(msg);
         return ResponseEntity.status(HttpStatus.OK).body(body);
     }
 
     public static ResponseEntity okWithCommonError(String msg, RestApiStatusCode code) {
-        ResponseBody body = new ResponseBody().code(code).msg("错误：" + msg);
+        ResponseBody body = new ResponseBody().code(code).msg(msg);
         return ResponseEntity.status(HttpStatus.OK).body(body);
     }
 
@@ -47,12 +52,17 @@ public class ResponseEntityBuilder {
     }
 
     public static ResponseEntity unauthorized(Object data) {
-        ResponseBody body = new ResponseBody().code(RestApiStatusCode.UNAUTHORIZED).msg("错误：" + data);
+        ResponseBody body = new ResponseBody().code(RestApiStatusCode.UNAUTHORIZED).msg(data.toString());
         return ResponseEntity.status(HttpStatus.OK).body(body);
     }
 
     public static ResponseEntity noPermission(Object data) {
-        ResponseBody body = new ResponseBody().code(RestApiStatusCode.NOPERMISSION).msg("错误：" + data);
+        ResponseBody body = new ResponseBody().code(RestApiStatusCode.NOPERMISSION).msg(data.toString());
+        return ResponseEntity.status(HttpStatus.OK).body(body);
+    }
+
+    public static ResponseEntity noSpace(Object data) {
+        ResponseBody body = new ResponseBody().code(RestApiStatusCode.NOT_SPACE).msg(data.toString());
         return ResponseEntity.status(HttpStatus.OK).body(body);
     }
 

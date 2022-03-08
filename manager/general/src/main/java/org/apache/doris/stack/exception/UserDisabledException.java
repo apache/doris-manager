@@ -19,7 +19,7 @@ package org.apache.doris.stack.exception;
 
 public class UserDisabledException extends Exception {
 
-    public static final String MESSAGE = "用户名已经被禁用，请联系管理员";
+    public static final String MESSAGE = "用户已经被停用，请联系管理员激活后再操作";
 
     public UserDisabledException() {
         super(MESSAGE);

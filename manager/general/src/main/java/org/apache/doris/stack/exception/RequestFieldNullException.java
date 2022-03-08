@@ -22,7 +22,7 @@ package org.apache.doris.stack.exception;
  */
 public class RequestFieldNullException extends Exception {
 
-    public static final String MESSAGE = "请求信息异常，请刷新后重试或联系技术人员";
+    public static final String MESSAGE = "存在必填字段未填写，请重新填写";
 
     public RequestFieldNullException() {
         super(MESSAGE);

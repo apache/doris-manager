@@ -18,6 +18,7 @@
 package org.apache.doris.stack.controller.construct;
 
 import org.apache.doris.stack.controller.BaseController;
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.rest.ResponseEntityBuilder;
 import org.apache.doris.stack.service.user.AuthenticationService;
 import org.apache.doris.stack.service.construct.MetadataService;
@@ -53,9 +54,8 @@ public class MetadataController extends BaseController {
     public Object syncPaloMetadata(
             HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("sync palo metadata.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        metadataService.syncMetadataByUserId(studioUserId);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        metadataService.syncMetadataByUserId(user);
         return ResponseEntityBuilder.ok();
     }
 
@@ -66,9 +66,8 @@ public class MetadataController extends BaseController {
             @PathVariable(value = NS_KEY) int nsId,
             HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("get database list by namespace.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        return ResponseEntityBuilder.ok(metadataService.getDatabaseListByNs(nsId, studioUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(metadataService.getDatabaseListByNs(nsId, user));
     }
 
     @ApiOperation(value = "Get database details")
@@ -77,9 +76,8 @@ public class MetadataController extends BaseController {
     public Object getDatabaseInfo(@PathVariable(value = DB_KEY) int dbId,
             HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("get database info by id.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        return ResponseEntityBuilder.ok(metadataService.getDatabaseInfo(dbId, studioUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(metadataService.getDatabaseInfo(dbId, user));
     }
 
     @ApiOperation(value = "Get a list of all tables in the database")
@@ -88,9 +86,8 @@ public class MetadataController extends BaseController {
     public Object getTables(@PathVariable(value = DB_KEY) int dbId,
             HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("get table list by database.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        return ResponseEntityBuilder.ok(metadataService.getTableListByDb(dbId, studioUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(metadataService.getTableListByDb(dbId, user));
     }
 
     @ApiOperation(value = "Get details of table")
@@ -99,9 +96,8 @@ public class MetadataController extends BaseController {
     public Object getTableInfo(@PathVariable(value = TABLE_KEY) int tableId,
             HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("get table info by id.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        return ResponseEntityBuilder.ok(metadataService.getTableInfo(tableId, studioUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(metadataService.getTableInfo(tableId, user));
     }
 
     @ApiOperation(value = "Gets a list of all fields in a table")
@@ -110,9 +106,8 @@ public class MetadataController extends BaseController {
     public Object getTableFields(@PathVariable(value = TABLE_KEY) int tableId,
             HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("get field list by table.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        return ResponseEntityBuilder.ok(metadataService.getFieldListByTable(tableId, studioUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(metadataService.getFieldListByTable(tableId, user));
     }
 
     @ApiOperation(value = "Get schema information of table")
@@ -121,8 +116,7 @@ public class MetadataController extends BaseController {
     public Object getTableSchema(@PathVariable(value = TABLE_KEY) int tableId,
             HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("get table schema by id.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        return ResponseEntityBuilder.ok(metadataService.getTableSchema(tableId, studioUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(metadataService.getTableSchema(tableId, user));
     }
 }

@@ -30,6 +30,11 @@ public class IndexController implements ErrorController {
         return "forward:/index.html";
     }
 
+    @RequestMapping(value = "/")
+    public String index() {
+        return "forward:/index.html";
+    }
+
     public String getErrorPath() {
         return PATH;
     }

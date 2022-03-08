@@ -17,6 +17,7 @@
 
 package org.apache.doris.stack.controller.construct;
 
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.model.request.construct.FileImportReq;
 import org.apache.doris.stack.model.request.construct.HdfsConnectReq;
 import org.apache.doris.stack.model.request.construct.HdfsImportReq;
@@ -63,11 +64,10 @@ public class DataImportController extends BaseController {
             @RequestParam("file") MultipartFile file,
             HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("upload local file.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
         String contentType = request.getContentType();
         return ResponseEntityBuilder.ok(dataImportService.uploadLocalFile(tableId, columnSeparator, file,
-                studioUserId, contentType));
+                user, contentType));
     }
 
     @ApiOperation(value = "Test the connectivity between the storage engine and the HDFS file system, "
@@ -79,9 +79,8 @@ public class DataImportController extends BaseController {
             @RequestBody HdfsConnectReq info,
             HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("Test hdfs connection.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        return ResponseEntityBuilder.ok(dataImportService.hdfsPreview(info, studioUserId, tableId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(dataImportService.hdfsPreview(info, user, tableId));
     }
 
     @ApiOperation(value = "Import the HDFS file into the data table and return the results. "
@@ -92,9 +91,8 @@ public class DataImportController extends BaseController {
                              @RequestBody HdfsImportReq importInfo,
                              HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("submit hdfs import task.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        return ResponseEntityBuilder.ok(dataImportService.submitHdfsImport(importInfo, studioUserId, tableId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(dataImportService.submitHdfsImport(importInfo, user, tableId));
     }
 
     @ApiOperation(value = "Execute the HDFS file to import into the data table and view the SQL statement")
@@ -104,9 +102,8 @@ public class DataImportController extends BaseController {
                              @RequestBody HdfsImportReq importInfo,
                              HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("get palo hdfs import task sql.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        return ResponseEntityBuilder.ok(dataImportService.submitHdfsImportSql(importInfo, studioUserId, tableId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(dataImportService.submitHdfsImportSql(importInfo, user, tableId));
     }
 
     @ApiOperation(value = "The execution file is imported into the data table and the results are returned")
@@ -116,10 +113,9 @@ public class DataImportController extends BaseController {
             @RequestBody FileImportReq importInfo,
             HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("submit file import task.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
         return ResponseEntityBuilder.ok(dataImportService.submitFileImport(tableId, importInfo,
-                studioUserId));
+                user));
     }
 
     @ApiOperation(value = "Verify whether the data import task name in Doris cluster is duplicate or meets the rules. "
@@ -132,9 +128,8 @@ public class DataImportController extends BaseController {
                                 @RequestParam(value = "taskName") String taskName,
                                 HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("check import task name.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        dataImportService.nameDuplicate(dbId, taskName);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        dataImportService.nameDuplicate(dbId, taskName, user);
         return ResponseEntityBuilder.ok();
 
     }
@@ -148,8 +143,7 @@ public class DataImportController extends BaseController {
                               @PathVariable("pageSize") int pageSize,
                               HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("get task list by page.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        return ResponseEntityBuilder.ok(dataImportService.getTaskList(tableId, page, pageSize, studioUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(dataImportService.getTaskList(tableId, page, pageSize, user));
     }
 }

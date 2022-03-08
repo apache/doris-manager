@@ -18,10 +18,13 @@
 package org.apache.doris.stack.dao;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import org.apache.doris.stack.entity.LoginHistoryEntity;
+
+import java.sql.Timestamp;
 
 public interface LoginHistoryRepository extends JpaRepository<LoginHistoryEntity, Integer> {
 
@@ -30,4 +33,8 @@ public interface LoginHistoryRepository extends JpaRepository<LoginHistoryEntity
 
     @Query("select count(*) from LoginHistoryEntity c where c.userId = :userId and c.deviceId = :deviceId")
     Integer getLoginCountByUserIdAndDeviceId(@Param("userId") int userId, @Param("deviceId") String deviceId);
+
+    @Modifying
+    @Query("delete from LoginHistoryEntity c where c.timestamp < :expireTime")
+    void deleteExpired(@Param("expireTime") Timestamp expireTime);
 }

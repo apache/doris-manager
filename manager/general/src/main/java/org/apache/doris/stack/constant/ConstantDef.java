@@ -37,6 +37,10 @@ public class ConstantDef {
     // MySQL (Doris is the same as MySQL) has its own default metabase name
     public static final String MYSQL_DEFAULT_SCHEMA = "information_schema";
 
+    public static final String PALO_ANALYZER_USER_NAME = "Analyzer";
+
+    public static final String PALO_ANALYZER_USER_PASSWORD = "paloUser543232";
+
     // MySQL (Doris is consistent with MySQL) has its own default metabase ID,
     // which does not really exist in the metabase
     public static final int MYSQL_SCHEMA_DB_ID = -1;
@@ -110,5 +114,8 @@ public class ConstantDef {
 
     // new token mark
     public static final String NEW_TOKEN_MARK = "new#";
+
+    public static final String EMAIL_REGEX = "[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@"
+            + "(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?";
 
 }

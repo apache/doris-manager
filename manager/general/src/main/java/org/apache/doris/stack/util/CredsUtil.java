@@ -17,15 +17,31 @@
 
 package org.apache.doris.stack.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.mindrot.jbcrypt.BCrypt;
 import org.bouncycastle.crypto.digests.SHA3Digest;
 
+import java.util.Base64;
 import java.util.Random;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * @Description：A tool class that handles one-way encryption and authentication of passwords
  */
 public class CredsUtil {
+
+    /**
+    * Encrypt Key
+    * AES must be 128 bits
+    */
+    private static final String ENCRYPT_KEY = "12dfA67887iyW321";
+
+    private static final String ALGORITHM_STR = "AES/ECB/PKCS5Padding";
+
+    private static final String EMPTY_PASSWORD_STR = "45dfA67d87iyW321";
 
     private CredsUtil() {
         throw new UnsupportedOperationException();
@@ -101,4 +117,83 @@ public class CredsUtil {
         digest.doFinal(result, 0);
         return org.bouncycastle.util.encoders.Hex.toHexString(result);
     }
+
+    /**
+     * base 64 encode
+     * @param bytes to be encoded
+     * @return base 64 code
+     */
+    private static String base64Encode(byte[] bytes) {
+        Base64.Encoder encoder = Base64.getEncoder();
+        return encoder.encodeToString(bytes);
+    }
+
+    /**
+     * base 64 decode
+     * @param base64Code to be decode
+     * @return decode byte array
+     */
+    private static byte[] base64Decode(String base64Code) {
+        Base64.Decoder decoder = Base64.getDecoder();
+        return decoder.decode(base64Code);
+    }
+
+    /**
+     * AES encrypt
+     * @param content
+     * @return encrypt byte[]
+     */
+    private static byte[] aesEncryptToBytes(String content) throws Exception {
+        KeyGenerator kgen = KeyGenerator.getInstance("AES");
+        kgen.init(128);
+        Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
+        cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(ENCRYPT_KEY.getBytes(), "AES"));
+
+        return cipher.doFinal(content.getBytes("utf-8"));
+    }
+
+    /**
+     * AES encrypt
+     *
+     * @param content
+     * @return encrypted string
+     */
+    public static String aesEncrypt(String content) throws Exception {
+        if (content.trim().equals("")) {
+            content = EMPTY_PASSWORD_STR;
+        }
+        return base64Encode(aesEncryptToBytes(content));
+    }
+
+    /**
+     * AES decrypt
+     *
+     * @param encryptBytes
+     * @return decrypt string
+     */
+    private static String aesDecryptByBytes(byte[] encryptBytes) throws Exception {
+        KeyGenerator kgen = KeyGenerator.getInstance("AES");
+        kgen.init(128);
+
+        Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
+        cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(ENCRYPT_KEY.getBytes(), "AES"));
+        byte[] decryptBytes = cipher.doFinal(encryptBytes);
+
+        return new String(decryptBytes);
+    }
+
+    /**
+     * AES decrypt
+     *
+     * @param encryptStr
+     * @return decrypt string
+     */
+    public static String aesDecrypt(String encryptStr) throws Exception {
+        String decryptPassword = StringUtils.isEmpty(encryptStr) ? null : aesDecryptByBytes(base64Decode(encryptStr));
+        if (decryptPassword != null && decryptPassword.equals(EMPTY_PASSWORD_STR)) {
+            return "";
+        }
+        return decryptPassword;
+    }
+
 }

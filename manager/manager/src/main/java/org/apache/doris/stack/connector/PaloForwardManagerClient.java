@@ -17,14 +17,17 @@
 
 package org.apache.doris.stack.connector;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONException;
-import org.apache.doris.stack.model.palo.PaloResponseEntity;
+import lombok.extern.slf4j.Slf4j;
+
 import org.apache.doris.stack.entity.ClusterInfoEntity;
 import org.apache.doris.stack.exception.PaloRequestException;
+import org.apache.doris.stack.model.palo.PaloResponseEntity;
 import org.apache.doris.stack.rest.ResponseEntityBuilder;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONException;
 import com.google.common.collect.Maps;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +36,8 @@ import java.util.Map;
 @Component
 @Slf4j
 public class PaloForwardManagerClient extends PaloClient {
+    private static final String FE_MONITOR_CHECK_API = "/rest/v2/manager/monitor/value/node_num";
+
     protected HttpClientPoolManager poolManager;
 
     @Autowired
@@ -76,5 +81,20 @@ public class PaloForwardManagerClient extends PaloClient {
             throw new PaloRequestException("post exception:" + response.getData());
         }
         return ResponseEntityBuilder.ok(JSON.parse(response.getData()));
+    }
+
+    public boolean doesFeMonitorExist(ClusterInfoEntity entity) {
+        String url = "http://" + entity.getAddress() + ":" + entity.getHttpPort() + FE_MONITOR_CHECK_API;
+        Map<String, String> headers = Maps.newHashMap();
+        setHeaders(headers);
+        setAuthHeaders(headers, entity.getUser(), entity.getPasswd());
+        PaloResponseEntity response;
+        try {
+            response = poolManager.doGet(url, headers);
+        } catch (Exception e) {
+            log.debug("Test fe monitoring interface exists. url:{}, exception:{}", url, e.getMessage());
+            return false;
+        }
+        return response.getData() != null;
     }
 }

@@ -24,6 +24,7 @@ import org.springframework.util.StringUtils;
 public class UserLoginReq {
     private String password;
 
+    // user name or email
     private String username;
 
     private boolean remember;

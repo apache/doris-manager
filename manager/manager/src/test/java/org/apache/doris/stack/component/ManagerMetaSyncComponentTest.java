@@ -75,12 +75,12 @@ public class ManagerMetaSyncComponentTest {
         ClusterInfoEntity clusterInfo = mockClusterInfo();
 
         ManagerDatabaseEntity databaseEntity = new ManagerDatabaseEntity();
-        databaseEntity.setClusterId(clusterInfo.getId());
+        databaseEntity.setClusterId((int) clusterInfo.getId());
         databaseEntity.setId(1);
         databaseEntity.setName("db");
         List<ManagerDatabaseEntity> databaseEntities = Lists.newArrayList(databaseEntity);
 
-        when(databaseRepository.getByClusterId(clusterInfo.getId())).thenReturn(databaseEntities);
+        when(databaseRepository.getByClusterId((int) clusterInfo.getId())).thenReturn(databaseEntities);
 
         try {
             syncComponent.deleteClusterMetadata(clusterInfo);
@@ -96,7 +96,7 @@ public class ManagerMetaSyncComponentTest {
     @Test
     public void syncPaloClusterMetadataTestAddDb() {
         ClusterInfoEntity clusterInfo = mockClusterInfo();
-        int clusterId = clusterInfo.getId();
+        int clusterId = (int) clusterInfo.getId();
 
         try {
             // Engine latest database list
@@ -136,7 +136,7 @@ public class ManagerMetaSyncComponentTest {
     @Test
     public void syncPaloClusterMetadataTestReduceDb() {
         ClusterInfoEntity clusterInfo = mockClusterInfo();
-        int clusterId = clusterInfo.getId();
+        int clusterId = (int) clusterInfo.getId();
 
         try {
             // Engine latest database list
@@ -175,7 +175,7 @@ public class ManagerMetaSyncComponentTest {
     @Test
     public void syncPaloClusterMetadataTestUpdateDb() {
         ClusterInfoEntity clusterInfo = mockClusterInfo();
-        int clusterId = clusterInfo.getId();
+        int clusterId = (int) clusterInfo.getId();
 
         try {
             // Engine latest database list
@@ -405,7 +405,8 @@ public class ManagerMetaSyncComponentTest {
         tableSchema.setSchema(schemas);
         when(metaInfoClient.getTableBaseSchema(ConstantDef.DORIS_DEFAULT_NS, dbName, tableAddName, clusterInfo)).thenReturn(tableSchema);
 
-        ManagerTableEntity tableEntity = new ManagerTableEntity(dbId, tableAddName, "", tableSchema);
+        ManagerTableEntity tableEntity = new ManagerTableEntity(dbId, tableAddName, "",
+                tableSchema.isBaseIndex(), tableSchema.getKeyType());
         tableEntity.setId(1);
         when(tableRepository.save(any())).thenReturn(tableEntity);
 

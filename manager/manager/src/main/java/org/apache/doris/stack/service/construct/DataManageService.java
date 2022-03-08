@@ -18,6 +18,7 @@
 package org.apache.doris.stack.service.construct;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import org.apache.doris.stack.constant.ConstantDef;
 import org.apache.doris.stack.model.palo.TableSchemaInfo;
 import org.apache.doris.stack.model.request.construct.DbCreateReq;
@@ -26,8 +27,6 @@ import org.apache.doris.stack.component.ClusterUserComponent;
 import org.apache.doris.stack.component.DatabuildComponent;
 import org.apache.doris.stack.component.ManagerMetaSyncComponent;
 import org.apache.doris.stack.connector.PaloMetaInfoClient;
-import org.apache.doris.stack.dao.ClusterInfoRepository;
-import org.apache.doris.stack.dao.CoreUserRepository;
 import org.apache.doris.stack.driver.DorisDataBuildDriver;
 import org.apache.doris.stack.entity.ClusterInfoEntity;
 import org.apache.doris.stack.entity.CoreUserEntity;
@@ -46,8 +45,6 @@ import org.springframework.util.StringUtils;
 @Service
 @Slf4j
 public class DataManageService extends BaseService {
-    @Autowired
-    private ClusterInfoRepository clusterInfoRepository;
 
     @Autowired
     private NativeQueryService nativeQueryService;
@@ -62,9 +59,6 @@ public class DataManageService extends BaseService {
     private PaloMetaInfoClient metaInfoClient;
 
     @Autowired
-    private CoreUserRepository userRepository;
-
-    @Autowired
     private ClusterUserComponent clusterUserComponent;
 
     @Autowired
@@ -74,30 +68,29 @@ public class DataManageService extends BaseService {
      * create database
      * @param nsId
      * @param createDbInfo
-     * @param studioUserId
+     * @param user
      * @throws Exception
      */
     @Transactional
-    public int createDatabse(int nsId, DbCreateReq createDbInfo, int studioUserId) throws Exception {
-        log.debug("User {} create database {}.", studioUserId, createDbInfo.getName());
+    public int createDatabse(int nsId, DbCreateReq createDbInfo, CoreUserEntity user) throws Exception {
+        log.debug("User {} create database {}.", user.getId(), createDbInfo.getName());
         checkRequestBody(createDbInfo.hasEmptyField());
 
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
 
         String sql = driver.createDb(createDbInfo.getName());
         log.info("Create database,execute sql {}.", sql);
         // TODO:When creating a database, the database name is not required for executing SQL statements.
         //  It is set as the default metadata DB to avoid error reporting. In the future,
         //  Doris optimization interface is required
-        nativeQueryService.executeSql(nsId, 0, sql, studioUserId);
+        nativeQueryService.executeSql(nsId, 0, sql, user, clusterInfo);
         log.info("Create database success, save metadata.");
 
-        CoreUserEntity userEntity = userRepository.findById(studioUserId).get();
-        DataDescription description = new DataDescription(createDbInfo.getDescribe(), userEntity.getFirstName());
+        DataDescription description = new DataDescription(createDbInfo.getDescribe(), user.getFirstName());
 
         try {
             int dbId = syncComponent.addDatabase(createDbInfo.getName(), JSON.toJSONString(description),
-                    nsId, clusterInfo.getId());
+                    nsId, (int) clusterInfo.getId());
             log.info("save metadata db {} success.", dbId);
             return dbId;
         } catch (Exception e) {
@@ -105,85 +98,83 @@ public class DataManageService extends BaseService {
             // If you want to roll back, you need to delete the data in the engine
             log.error("store database metadata exception,delete db in doris.");
             String deleteSql = "DROP DATABASE " + createDbInfo.getName();
-            nativeQueryService.executeSql(deleteSql, createDbInfo.getName(), studioUserId);
+            nativeQueryService.executeSql(deleteSql, createDbInfo.getName(), user, clusterInfo);
             log.info("Delete database success.");
             throw e;
         }
     }
 
     @Transactional
-    public void deleteDatabse(int nsId, int dbId, int studioUserId) throws Exception {
+    public void deleteDatabse(int nsId, int dbId, CoreUserEntity user) throws Exception {
         if (dbId == ConstantDef.MYSQL_SCHEMA_DB_ID) {
             log.error("No permission to delete information_schema database.");
             throw new NoPermissionException();
         }
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
 
-        ManagerDatabaseEntity databaseEntity = databuildComponent.checkClusterDatabase(dbId, clusterInfo.getId());
+        ManagerDatabaseEntity databaseEntity = databuildComponent.checkClusterDatabase(dbId, (int) clusterInfo.getId());
         String sql = "DROP DATABASE " + databaseEntity.getName();
         log.info("Delete database sql {}.", sql);
-        nativeQueryService.executeSql(nsId, dbId, sql, studioUserId);
+        nativeQueryService.executeSql(nsId, dbId, sql, user, clusterInfo);
         log.info("Delete database success, delete metadata");
 
-        syncComponent.deleteDatabase(clusterInfo.getId(), dbId);
+        syncComponent.deleteDatabase((int) clusterInfo.getId(), dbId);
         log.info("Delete database {} metadata success.", dbId);
     }
 
     @Transactional
-    public int createTable(int nsId, int dbId, TableCreateReq createTableInfo, int studioUserId) throws Exception {
-        log.debug("User {} create table {} in database {}.", studioUserId, createTableInfo.getName(), dbId);
+    public int createTable(int nsId, int dbId, TableCreateReq createTableInfo, CoreUserEntity user) throws Exception {
+        log.debug("User {} create table {} in database {}.", user.getId(), createTableInfo.getName(), dbId);
 
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
-        ManagerDatabaseEntity databaseEntity = databuildComponent.checkClusterDatabase(dbId, clusterInfo.getId());
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
+        ManagerDatabaseEntity databaseEntity = databuildComponent.checkClusterDatabase(dbId, (int) clusterInfo.getId());
 
         String sql = driver.createTable(createTableInfo);
         log.info("Create table in db {}, execute sql {}.", databaseEntity.getName(), sql);
-        nativeQueryService.executeSql(nsId, dbId, sql, studioUserId);
+        nativeQueryService.executeSql(nsId, dbId, sql, user, clusterInfo);
 
-        CoreUserEntity userEntity = userRepository.findById(studioUserId).get();
-        DataDescription description = new DataDescription(createTableInfo.getDescribe(), userEntity.getFirstName());
+        DataDescription description = new DataDescription(createTableInfo.getDescribe(), user.getFirstName());
 
         try {
             int tableId = saveTableMetadata(dbId, createTableInfo.getName(),
-                    clusterInfo, databaseEntity.getName(), JSON.toJSONString(description));
+                    clusterInfo, databaseEntity.getName(), JSON.toJSONString(description, SerializerFeature.DisableCircularReferenceDetect));
 
             log.info("save metadata table {} success.", tableId);
             return tableId;
         } catch (Exception e) {
             log.error("store table metadata exception,delete table in doris.");
             String deleteSql = "DROP TABLE " + createTableInfo.getName();
-            nativeQueryService.executeSql(nsId, dbId, deleteSql, studioUserId);
+            nativeQueryService.executeSql(nsId, dbId, deleteSql, user, clusterInfo);
             log.info("Delete table success.");
             throw e;
         }
     }
 
-    public String createTableSql(int nsId, int dbId, TableCreateReq createTableInfo) throws Exception {
+    public String createTableSql(int nsId, int dbId, TableCreateReq createTableInfo,
+                                 CoreUserEntity user) throws Exception {
+        clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
         String sql = driver.createTable(createTableInfo);
         return sql;
     }
 
     @Transactional
-    public int crateTableBySql(int nsId, int dbId, String sql, int studioUserId) throws Exception {
+    public int crateTableBySql(int nsId, int dbId, String sql, CoreUserEntity user) throws Exception {
         if (StringUtils.isEmpty(sql)) {
             log.error("The query sql is empty");
             throw new RequestFieldNullException();
         }
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
-        ManagerDatabaseEntity databaseEntity = databuildComponent.checkClusterDatabase(dbId, clusterInfo.getId());
-
-        CoreUserEntity userEntity = userRepository.findById(studioUserId).get();
-        DataDescription description = new DataDescription("create by sql.", userEntity.getFirstName());
-        log.info("User {} Create table,execute sql {}.", userEntity.getFirstName(), sql);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
+        ManagerDatabaseEntity databaseEntity = databuildComponent.checkClusterDatabase(dbId, (int) clusterInfo.getId());
+        DataDescription description = new DataDescription("create by sql.", user.getFirstName());
+        log.info("User {} Create table,execute sql {}.", user.getFirstName(), sql);
         String tableName = parseCreateTableSqlGetName(sql);
-        nativeQueryService.executeSql(nsId, dbId, sql, studioUserId);
+        nativeQueryService.executeSql(nsId, dbId, sql, user, clusterInfo);
         try {
             int id = saveTableMetadata(dbId, tableName, clusterInfo,
                     databaseEntity.getName(), JSON.toJSONString(description));
             return id;
         } catch (Exception e) {
-            log.error("Save meta data error.");
-            e.printStackTrace();
+            log.error("Save meta data error {}.", e.getMessage());
             throw new MetaDataSyncException("Create table success, Save meta data error.");
         }
     }

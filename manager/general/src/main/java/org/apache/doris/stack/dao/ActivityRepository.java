@@ -21,10 +21,12 @@ import org.apache.doris.stack.entity.ActivityEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 public interface ActivityRepository extends JpaRepository<ActivityEntity, Integer>,
@@ -46,6 +48,19 @@ public interface ActivityRepository extends JpaRepository<ActivityEntity, Intege
     List<List<String>> getByModelsGroupByUserIdAndModelAndModelId(@Param("models") List<String> models,
                                                            @Param("userId") int userId, Pageable pageable);
 
+    @Query("select max(s.id) as max_id, s.userId, s.model, s.modelId from ActivityEntity s where s.model in (:models) "
+            + "and s.userId = :userId  and s.clusterId = :clusterId group by s.userId, s.model, s.modelId order by max_id desc")
+    List<List<String>> getByModelsGroupByUserIdAndModelAndModelIdAndClusterId(@Param("models") List<String> models,
+                                                                              @Param("userId") int userId,
+                                                                              @Param("clusterId") int clusterId,
+                                                                              Pageable pageable);
+
+    @Modifying
+    @Query("delete from ActivityEntity c where c.timestamp < :expireTime")
+    void deleteExpired(@Param("expireTime") Timestamp expireTime);
+
     Page<ActivityEntity> findByUserId(int userId, Pageable pageable);
+
+    Page<ActivityEntity> findByUserIdAndClusterId(int userId, int clusterId, Pageable pageable);
 
 }

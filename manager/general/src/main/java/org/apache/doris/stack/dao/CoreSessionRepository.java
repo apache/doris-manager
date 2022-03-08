@@ -18,13 +18,17 @@
 package org.apache.doris.stack.dao;
 
 import org.apache.doris.stack.entity.CoreSessionEntity;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 
 public interface CoreSessionRepository extends JpaRepository<CoreSessionEntity, String> {
 
@@ -40,13 +44,16 @@ public interface CoreSessionRepository extends JpaRepository<CoreSessionEntity, 
     @Query("delete from CoreSessionEntity c where c.createdAt < :expireTime")
     void deleteExpireSession(@Param("expireTime") Timestamp expireTime);
 
+    @Query("select c.id from CoreSessionEntity c where c.createdAt < :expireTime")
+    List<String> selectExpireSession(@Param("expireTime") Timestamp expireTime);
+
     @Query("select count(c.id) from CoreSessionEntity c where c.userId = :userId and c.createdAt > :timeBefore")
     Integer getSessionCountBeforeByUserId(@Param("userId") int userId, @Param("timeBefore") Timestamp timeBefore);
 
     @Query("select count(c.id) from CoreSessionEntity c where c.userId = :userId")
     Integer getSessionCountByUserId(@Param("userId") int userId);
 
-    // jpa不支持limit
+    // jpa not support limit
     @Modifying
     @Query(value = "delete from core_session  where core_session.user_id = :userId order by core_session.created_at limit :count",
             nativeQuery = true)
@@ -58,4 +65,22 @@ public interface CoreSessionRepository extends JpaRepository<CoreSessionEntity, 
     void deleteSessionBeforeByUserId(@Param("userId") int userId, @Param("timeBefore") Timestamp timeBefore,
                                      @Param("count") int count);
 
+    @Transactional
+    @Modifying
+    @Query("delete from CoreSessionEntity c")
+    void deleteAllSessions();
+
+    @Override
+    // 缓存sessionId
+    @Cacheable(value = "sessions", key = "#p0")
+    Optional<CoreSessionEntity> findById(String sessionId);
+
+    @Override
+    // 删除缓存，同时删数据
+    @CacheEvict(value = "sessions", key = "#p0")
+    void deleteById(String sessionId);
+
+    // 删除缓存，数据已批量删除
+    @CacheEvict(value = "sessions", key = "#p0")
+    void deleteSessionById(String sessionId);
 }

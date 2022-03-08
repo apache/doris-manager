@@ -17,8 +17,11 @@
 
 package org.apache.doris.stack.controller.config;
 
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.model.request.config.ConfigUpdateReq;
 import org.apache.doris.stack.model.request.config.InitStudioReq;
+import org.apache.doris.stack.model.request.config.LdapAuthTypeReq;
+import org.apache.doris.stack.model.request.user.NewUserAddReq;
 import org.apache.doris.stack.model.response.config.SettingItem;
 import org.apache.doris.stack.rest.ResponseEntityBuilder;
 import org.apache.doris.stack.service.config.SettingService;
@@ -34,6 +37,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
@@ -56,9 +60,43 @@ public class SettingController {
     public Object initStudio(@RequestBody InitStudioReq initStudioReq, HttpServletRequest request,
                              HttpServletResponse response) throws Exception {
         log.debug("init studio.");
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // check is super admin user
+        authenticationService.checkUserIsAdmin(user);
         settingService.initStudio(initStudioReq);
         log.debug("init studio successful.");
+        return ResponseEntityBuilder.ok();
+    }
+
+    @ApiOperation(value = "Initialize ldap setting")
+    @PostMapping(value = "init/ldapStudio", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object initLdapStudio(@RequestBody InitStudioReq initStudioReq, HttpServletRequest request,
+                             HttpServletResponse response) throws Exception {
+        log.debug("init ldap studio.");
+        settingService.initLdapStudio(initStudioReq);
+        log.debug("init ldap studio successful.");
+        return ResponseEntityBuilder.ok();
+    }
+
+    @ApiOperation(value = "sync ldap manually")
+    @GetMapping(value = "syncLdapUser", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object syncLdapUser(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        log.debug("sync ldap manually");
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // 检查是否为Admin用户账号
+        authenticationService.checkUserIsAdmin(user);
+        settingService.syncLdapUser();
+        log.debug("init ldap studio successful.");
+        return ResponseEntityBuilder.ok();
+    }
+
+    @ApiOperation(value = "Initialize stack service authentication type")
+    @PostMapping(value = "init/authType", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object initStudioAuthType(@RequestBody LdapAuthTypeReq authType, HttpServletRequest request,
+                                     HttpServletResponse response) throws Exception {
+        log.debug("init studio auth type.");
+        settingService.initStudioAuthType(authType);
+        log.debug("init studio auth type successful.");
         return ResponseEntityBuilder.ok();
     }
 
@@ -67,9 +105,18 @@ public class SettingController {
     public Object getAllConfig(HttpServletRequest request,
                                HttpServletResponse response) throws Exception {
         log.debug("get config info.");
-        int userId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(userId);
-        return ResponseEntityBuilder.ok(settingService.getAllConfig(userId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(settingService.getAllConfig(user));
+    }
+
+    @ApiOperation(value = "system init last step, config the admin user")
+    @PostMapping(value = "/admin", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object addAdminUser(@RequestBody NewUserAddReq userAddReq,
+                               HttpServletRequest request,
+                               HttpServletResponse response) throws Exception {
+        String sessionId = settingService.addAdminUser(userAddReq);
+        authenticationService.setResponseCookie(response, sessionId);
+        return ResponseEntityBuilder.ok(sessionId);
     }
 
     @ApiOperation(value = "Get all global configuration information of stack(super administrator access)")
@@ -77,7 +124,9 @@ public class SettingController {
     public Object getAllGlobalConfig(HttpServletRequest request,
                                HttpServletResponse response) throws Exception {
         log.debug("get config info.");
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // check is super admin user
+        authenticationService.checkUserIsAdmin(user);
         return ResponseEntityBuilder.ok(settingService.getAllPublicConfig());
     }
 
@@ -87,7 +136,9 @@ public class SettingController {
                                  HttpServletRequest request,
                                  HttpServletResponse response) throws Exception {
         log.debug("get config info.");
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // check is super admin user
+        authenticationService.checkUserIsAdmin(user);
         return ResponseEntityBuilder.ok(settingService.getConfigByKey(key));
     }
 
@@ -97,12 +148,13 @@ public class SettingController {
                                  HttpServletRequest request,
                                  HttpServletResponse response) throws Exception {
         log.debug("get config info.");
-        int userId = authenticationService.checkUserAuthWithCookie(request, response);
-        if (userId < 1) {
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        if (user.isSuperuser()) {
+            // Platform level configuration
             return ResponseEntityBuilder.ok(settingService.getConfigByKey(key));
         } else {
-            authenticationService.checkUserIsAdmin(userId);
-            return ResponseEntityBuilder.ok(settingService.getConfigByKey(key, userId));
+            // In space configuration
+            return ResponseEntityBuilder.ok(settingService.getConfigByKey(key, user));
         }
     }
 
@@ -113,14 +165,29 @@ public class SettingController {
                                     HttpServletRequest request,
                                     HttpServletResponse response) throws Exception {
         log.debug("get config info.");
-        int userId = authenticationService.checkAllUserAuthWithCookie(request, response);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
         SettingItem resutl;
-        if (userId < 1) {
+        if (user.isSuperuser()) {
             resutl = settingService.superUpdateConfigByKey(key, updateReq);
         } else {
-            authenticationService.checkUserIsAdmin(userId);
-            resutl = settingService.amdinUpdateConfigByKey(key, userId, updateReq);
+            resutl = settingService.amdinUpdateConfigByKey(key, user, updateReq);
         }
         return ResponseEntityBuilder.ok(resutl);
+    }
+
+    @ApiOperation(value = "system init reset")
+    @GetMapping(value = "reset", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object reset(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        log.debug("system init reset.");
+        int userId = authenticationService.checkUserAuthWithCookie(request, response);
+        settingService.reset(userId);
+        return ResponseEntityBuilder.ok();
+    }
+
+    @ApiOperation(value = "LDAP authentication obtains a list of all users and selects one as the administrator")
+    @GetMapping(value = "/ldapUsers", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object getUser(HttpServletRequest request, @RequestParam(value = "q", required = false, defaultValue = "") String q,
+                          HttpServletResponse response) throws Exception {
+        return ResponseEntityBuilder.ok(settingService.getAllUsers(q));
     }
 }

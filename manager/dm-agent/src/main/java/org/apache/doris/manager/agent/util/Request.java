@@ -19,6 +19,8 @@ package org.apache.doris.manager.agent.util;
 
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.doris.manager.common.heartbeat.HeartBeatEventInfo;
+import org.apache.doris.manager.common.heartbeat.HeartBeatEventResult;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -33,11 +35,42 @@ import org.apache.http.util.EntityUtils;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
 public class Request {
+
+    public static List<HeartBeatEventInfo> getHeartBeatEventInfo(String requestUrl) {
+        String getHeartBeatEventResults = sendGetRequest(requestUrl, new HashMap<>());
+        log.info("getHeartBeatEventResults:" + getHeartBeatEventResults);
+//        ManagerServerResponse response = JSON.parseObject(getHeartBeatEventResults, ManagerServerResponse.class);
+        if (getHeartBeatEventResults == null) {
+            return new ArrayList<>();
+        }
+        return JSON.parseArray(getHeartBeatEventResults, HeartBeatEventInfo.class);
+    }
+
+    public static void sendHeartBeatEventResult(String requestUrl, List<HeartBeatEventResult> results) {
+       sendPostRequest(requestUrl, JSON.toJSONString(results));
+    }
+
+    public static String sendPostRequest(String requestUrl, String bodyJson) {
+        HttpPost httpPost = new HttpPost(requestUrl);
+        httpPost.setConfig(timeout());
+
+        httpPost.setEntity(new StringEntity(bodyJson, "utf-8"));
+        httpPost.addHeader("Content-Type", "application/json");
+
+        try {
+            return request(httpPost);
+        } catch (IOException e) {
+            log.error("request url error:{},param:{}", requestUrl, bodyJson, e);
+            throw new RuntimeException(e);
+        }
+    }
 
     public static String sendPostRequest(String requestUrl, Map<String, Object> params) {
         HttpPost httpPost = new HttpPost(requestUrl);
@@ -105,11 +138,5 @@ public class Request {
                 .setConnectionRequestTimeout(5000)
                 .setSocketTimeout(5000).build();
         return requestConfig;
-    }
-
-    public static void main(String[] args) {
-        String rResult = sendGetRequest("http://www.test.com", new HashMap<>());
-        System.out.println(rResult);
-
     }
 }

@@ -17,9 +17,10 @@
 
 package org.apache.doris.stack.controller;
 
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.model.request.space.ClusterCreateReq;
-import org.apache.doris.stack.model.request.space.UserSpaceCreateReq;
-import org.apache.doris.stack.model.request.space.UserSpaceUpdateReq;
+import org.apache.doris.stack.model.request.space.ClusterNameCheckReq;
+import org.apache.doris.stack.model.request.space.NewUserSpaceCreateReq;
 import org.apache.doris.stack.rest.ResponseEntityBuilder;
 import org.apache.doris.stack.service.PaloUserSpaceService;
 import org.apache.doris.stack.service.user.AuthenticationService;
@@ -56,18 +57,20 @@ public class PaloUserSpaceController extends BaseController {
     @PostMapping(value = "create", produces = MediaType.APPLICATION_JSON_VALUE)
     public Object create(
             HttpServletRequest request, HttpServletResponse response,
-            @RequestBody UserSpaceCreateReq createReq) throws Exception {
+            @RequestBody NewUserSpaceCreateReq createReq) throws Exception {
         log.debug("Super user create palo user space.");
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
-        return ResponseEntityBuilder.ok(spaceService.create(createReq));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // check is super admin user
+        authenticationService.checkUserIsAdmin(user);
+        return ResponseEntityBuilder.ok(spaceService.create(createReq, user));
     }
 
     @ApiOperation(value = "Get a list of all spaces (super administrator access)")
     @GetMapping(value = "all", produces = MediaType.APPLICATION_JSON_VALUE)
     public Object getAll(HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("Super user get all palo user space.");
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
-        return ResponseEntityBuilder.ok(spaceService.getAllSpaceBySuperUser());
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(spaceService.getAllSpaceByUser(user));
     }
 
     @ApiOperation(value = "Verify the correctness of Palo cluster information, return true correctly, "
@@ -77,10 +80,9 @@ public class PaloUserSpaceController extends BaseController {
             HttpServletRequest request, HttpServletResponse response,
             @RequestBody ClusterCreateReq clusterCreateReq) throws Exception {
         log.debug("Palo cluster info validate by superUser.");
-        int userId = authenticationService.checkAllUserAuthWithCookie(request, response);
-        if (userId > 0) {
-            authenticationService.checkUserIsAdmin(userId);
-        }
+        authenticationService.checkNewUserAuthWithCookie(request, response);
+        // TODO：check is super admin user
+//        authenticationService.checkUserIsAdmin(user);
         spaceService.validateCluster(clusterCreateReq);
         return ResponseEntityBuilder.ok(true);
     }
@@ -88,16 +90,12 @@ public class PaloUserSpaceController extends BaseController {
     @ApiOperation(value = "Verify whether the space name meets the requirements. If it meets the requirements, "
             + "it will return true, and the error will directly return an exception. (super administrator / "
             + "space administrator access)")
-    @GetMapping(value = "name/{name}/check" , produces = MediaType.APPLICATION_JSON_VALUE)
-    public Object nameCheck(
-            HttpServletRequest request, HttpServletResponse response,
-            @PathVariable(value = "name") String name) throws Exception {
+    @PostMapping(value = "name/check" , produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object nameCheck(HttpServletRequest request, HttpServletResponse response,
+                            @RequestBody ClusterNameCheckReq nameReq) throws Exception {
         log.debug("Palo cluster info validate by superUser.");
-        int userId = authenticationService.checkAllUserAuthWithCookie(request, response);
-        if (userId > 0) {
-            authenticationService.checkUserIsAdmin(userId);
-        }
-        return ResponseEntityBuilder.ok(spaceService.nameCheck(name));
+        authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(spaceService.nameCheck(nameReq.getName()));
     }
 
     @ApiOperation(value = "Modify the user space information. If the cluster information already exists, "
@@ -106,11 +104,10 @@ public class PaloUserSpaceController extends BaseController {
     public Object update(
             HttpServletRequest request, HttpServletResponse response,
             @PathVariable(value = SPACE_KEY) int spaceId,
-            @RequestBody UserSpaceUpdateReq updateReq) throws Exception {
+            @RequestBody NewUserSpaceCreateReq updateReq) throws Exception {
         log.debug("Super user update palo user space.");
-        int userId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(userId);
-        return ResponseEntityBuilder.ok(spaceService.update(userId, spaceId, updateReq));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(spaceService.update(user, spaceId, updateReq));
     }
 
     @ApiOperation(value = "Obtain and view space information according to "
@@ -120,11 +117,8 @@ public class PaloUserSpaceController extends BaseController {
                           HttpServletResponse response,
                           @PathVariable(value = SPACE_KEY) int spaceId) throws Exception {
         log.debug("Get space by id.");
-        int userId = authenticationService.checkAllUserAuthWithCookie(request, response);
-        if (userId > 0) {
-            authenticationService.checkUserIsAdmin(userId);
-        }
-        return ResponseEntityBuilder.ok(spaceService.getById(userId, spaceId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(spaceService.getById(user, spaceId));
     }
 
     @ApiOperation(value = "Delete space (super administrator access)")
@@ -132,7 +126,9 @@ public class PaloUserSpaceController extends BaseController {
     public Object deleteSpace(@PathVariable(value = SPACE_KEY) int spaceId,
                                 HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("delete space by spaceId: {}", spaceId);
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // check is super admin user
+        authenticationService.checkUserIsAdmin(user);
         spaceService.deleteSpace(spaceId);
         return ResponseEntityBuilder.ok();
     }

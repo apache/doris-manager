@@ -18,9 +18,6 @@
 package org.apache.doris.stack;
 
 import org.apache.doris.stack.service.config.SettingService;
-import org.apache.doris.stack.service.impl.ServerProcessImpl;
-import org.apache.doris.stack.service.user.AuthenticationService;
-import org.apache.doris.stack.service.user.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -31,24 +28,14 @@ import org.springframework.stereotype.Component;
 @Order(value = 1)
 @Slf4j
 public class StartManagerRunner implements CommandLineRunner {
-    @Autowired
-    private AuthenticationService authenticationService;
 
     @Autowired
     private SettingService settingService;
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private ServerProcessImpl serverProcess;
-
     @Override
     public void run(String... args) {
         try {
-            authenticationService.initSuperUser();
             settingService.initConfig();
-            userService.initDefaultUserGroup();
         } catch (Exception e) {
             log.error("start manager failed, error detail:{}", e);
         }

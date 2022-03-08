@@ -40,12 +40,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.apache.doris.stack.model.ldap.LdapConnectionInfo;
 import org.apache.doris.stack.model.ldap.LdapUserInfo;
 import org.apache.doris.stack.model.ldap.LdapUserInfoReq;
-import org.apache.doris.stack.model.request.config.InitStudioReq;
 import org.apache.doris.stack.model.request.user.PasswordResetReq;
-import org.apache.doris.stack.model.request.user.PasswordUpdateReq;
 import org.apache.doris.stack.model.request.user.UserLoginReq;
 import org.apache.doris.stack.model.response.config.LdapSettingResp;
-import org.apache.doris.stack.model.response.user.UserInfo;
 import org.apache.doris.stack.util.UuidUtil;
 import org.apache.doris.stack.component.IdaasComponent;
 import org.apache.doris.stack.component.LdapComponent;
@@ -57,15 +54,12 @@ import org.apache.doris.stack.dao.CoreSessionRepository;
 import org.apache.doris.stack.dao.CoreUserRepository;
 import org.apache.doris.stack.dao.LoginHistoryRepository;
 import org.apache.doris.stack.dao.PermissionsGroupMembershipRepository;
-import org.apache.doris.stack.dao.SuperUserRepository;
 import org.apache.doris.stack.entity.CoreSessionEntity;
 import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.entity.PermissionsGroupMembershipEntity;
 import org.apache.doris.stack.entity.SettingEntity;
-import org.apache.doris.stack.entity.SuperUserEntity;
 import org.apache.doris.stack.exception.AuthorizationException;
 import org.apache.doris.stack.exception.LdapConnectionException;
-import org.apache.doris.stack.exception.NoAdminPermissionException;
 import org.apache.doris.stack.exception.RequestFieldNullException;
 import org.apache.doris.stack.exception.ResetPasswordTokenException;
 import org.apache.doris.stack.exception.UserFailedLoginTooManyException;
@@ -91,26 +85,7 @@ import javax.servlet.http.HttpServletResponse;
 @Slf4j
 public class AuthenticationServiceTest {
 
-    private static final String SUPER_USER_NAME_KEY = "super-user-name";
-    public static final String SUPER_USER_NAME_VALUE = "Admin";
-
-    private static final String SUPER_USER_SLAT = "super-user-salt";
-
-    private static final String SUPER_USER_PASSWORD_KEY = "super-user-password";
-    private static final String SUPER_USER_PASSWORD_VALUE = "Admin@123";
-
-    private static final String SUPER_USER_BE_ADD = "super-user-added";
-
-    private static final String SUPER_USER_TOKEN = "super-user-token";
-    private static final String SUPER_USER_TOKEN_PREFIX = "super-user-token-";
-
-    private static final String SUPER_USER_LOGIN_TIME = "super-user-login-time";
-
     private static final String COOKIE_NAME = "studio.SESSION";
-    //
-    private static final String SET_COOKIE = "Set-Cookie";
-
-    private static final int TOKEN_AGE = 48;
 
     @InjectMocks
     AuthenticationService authenticationService;
@@ -120,9 +95,6 @@ public class AuthenticationServiceTest {
 
     @Mock
     private CoreSessionRepository sessionRepository;
-
-    @Mock
-    private SuperUserRepository superUserRepository;
 
     @Mock
     private UtilService utilService;
@@ -163,41 +135,6 @@ public class AuthenticationServiceTest {
     }
 
     /**
-     * When the test system starts for the first time, initialize the super administrator user
-     */
-    @Transactional
-    @Test
-    public void initSuperUser() {
-        log.debug("test init super user.");
-        SuperUserEntity superUserOldName = new SuperUserEntity();
-        superUserOldName.setKey(SUPER_USER_NAME_KEY);
-        // Superuser already exists, return the superuser name entity
-        when(superUserRepository.findById(SUPER_USER_NAME_KEY)).thenReturn(Optional.of(superUserOldName));
-        // reset password
-        when(environment.getProperty("super.user.password.reset")).thenReturn("true");
-        String passwd = "dsse#21ed222.";
-        // get Ciphertext
-        when(utilService.encryptPassword(any(String.class), any(String.class))).thenReturn(passwd);
-        // delete Superuser token
-        superUserRepository.deleteByPrefix(SUPER_USER_TOKEN_PREFIX);
-        authenticationService.initSuperUser();
-
-        // No Superuser
-        when(superUserRepository.findById(SUPER_USER_NAME_KEY)).thenReturn(Optional.empty());
-        SuperUserEntity superName = new SuperUserEntity(SUPER_USER_NAME_KEY, SUPER_USER_NAME_VALUE);
-        // save super user name
-        superUserRepository.save(superName);
-        String salt = UuidUtil.newUuid();
-        SuperUserEntity superSalt = new SuperUserEntity(SUPER_USER_SLAT, salt);
-        // save super user salt
-        superUserRepository.save(superSalt);
-        SuperUserEntity superPassWord = new SuperUserEntity(SUPER_USER_PASSWORD_KEY, passwd);
-        // save super user passwd
-        superUserRepository.save(superPassWord);
-        authenticationService.initSuperUser();
-    }
-
-    /**
      * Test email password login
      */
     @Test
@@ -205,7 +142,7 @@ public class AuthenticationServiceTest {
     public void testLogin() throws Exception {
         log.debug("test login.");
         String passwd = "ewe232";
-        String userName = "cai@xxx.com";
+        String userName = "cai@test.com";
         int userId = 1;
         when(environment.getProperty(PropertyDefine.LOGIN_DELAY_TIME_PROPERTY)).thenReturn("300000");
         when(environment.getProperty(PropertyDefine.MAX_LOGIN_FAILED_TIMES_PROPERTY)).thenReturn("10");
@@ -227,22 +164,6 @@ public class AuthenticationServiceTest {
             Assert.assertEquals(RequestFieldNullException.MESSAGE, e.getMessage());
         }
 
-        // super user login
-        loginReq.setPassword(passwd);
-        loginReq.setUsername(SUPER_USER_NAME_VALUE);
-        String salt = "uuidsalt";
-        String passwdHash = "passhash";
-        SuperUserEntity superUserSalt = new SuperUserEntity();
-        superUserSalt.setKey(SUPER_USER_SLAT);
-        superUserSalt.setValue(salt);
-        SuperUserEntity superUserPassword = new SuperUserEntity();
-        superUserPassword.setKey(SUPER_USER_PASSWORD_KEY);
-        superUserPassword.setValue(passwdHash);
-        // mock super user salt
-        when(superUserRepository.findById(SUPER_USER_SLAT)).thenReturn(Optional.of(superUserSalt));
-        // mock super user passwd
-        when(superUserRepository.findById(SUPER_USER_PASSWORD_KEY)).thenReturn(Optional.of(superUserPassword));
-
         ConcurrentHashMap<Integer, Long> loginAllowMap = AuthenticationService.loginNotAllowMap;
         ConcurrentHashMap<Integer, List<Long>> failedLoginMap = AuthenticationService.failedLoginMap;
         List<Long> loginAttempts = new ArrayList<>();
@@ -254,29 +175,9 @@ public class AuthenticationServiceTest {
         // mock the historical login times of the device
         when(loginHistoryRepository.getLoginCountByUserIdAndDeviceId(userId, "50990858")).thenReturn(0);
 
-        authenticationService.login(loginReq, request);
-
-        // The current account exists/the account is delayed & the current time is not up to the allowed login time
-
-        loginAllowMap.put(0, System.currentTimeMillis() + 10000000);
-        try {
-            authenticationService.login(loginReq, request);
-        } catch (Exception e) {
-            Assert.assertEquals(UserFailedLoginTooManyException.MESSAGE, e.getMessage());
-        }
-        failedLoginMap.put(0, loginAttempts);
-        // The number of super administrators online at the same time exceeds the threshold
-        loginAllowMap.remove(0);
-        when(sessionRepository.getSessionCountBeforeByUserId(anyInt(), any())).thenReturn(1550);
-        when(sessionRepository.getSessionCountByUserId(0)).thenReturn(5550);
-        try {
-            authenticationService.login(loginReq, request);
-        } catch (Exception e) {
-            Assert.assertEquals(UserLoginTooManyException.MESSAGE, e.getMessage());
-        }
-
         // Ordinary user login
         loginReq.setUsername(userName);
+        loginReq.setPassword(passwd);
         CoreUserEntity userEntity = new CoreUserEntity();
         userEntity.setId(userId);
         // Enable LDAP
@@ -357,6 +258,7 @@ public class AuthenticationServiceTest {
         // mock user
         failedLoginMap.put(userId, Lists.newArrayList(System.currentTimeMillis()));
         when(userRepository.getByEmailAndLdapAuth(userName, false)).thenReturn(Lists.newArrayList(userEntity));
+
         authenticationService.login(loginReq, request);
 
         failedLoginMap.put(userId, Lists.newArrayList(System.currentTimeMillis()));
@@ -418,10 +320,7 @@ public class AuthenticationServiceTest {
         }
         cookie = new Cookie(COOKIE_NAME, sessionId);
         request.addCookie(cookie);
-        // Super administrator token not exist
-        SuperUserEntity superTokens = new SuperUserEntity();
-        superTokens.setValue(sessionId);
-        when(superUserRepository.getByValue(sessionId)).thenReturn(null);
+//        when(superUserRepository.getByValue(sessionId)).thenReturn(null);
         CoreSessionEntity sessionEntity = new CoreSessionEntity();
         sessionEntity.setId(sessionId);
         when(sessionRepository.findById(sessionId)).thenReturn(Optional.empty());
@@ -445,24 +344,6 @@ public class AuthenticationServiceTest {
         // cookie not expired
         sessionEntity.setCreatedAt(new Timestamp(System.currentTimeMillis() * 1000L));
         authenticationService.logout(request, response);
-
-        // not Super administrator token
-        when(superUserRepository.getByValue(sessionId)).thenReturn(superTokens);
-        superTokens.setValue("efsfsd");
-        authenticationService.logout(request, response);
-
-        superTokens.setValue(sessionId);
-        superTokens.setKey("super-user-token-1020898738844");
-        // cookie expired
-        try {
-            authenticationService.logout(request, response);
-        } catch (Exception e) {
-            Assert.assertEquals(AuthorizationException.MESSAGE, e.getMessage());
-        }
-        // cookie not expired
-        superTokens.setKey("super-user-token-1624530895000");
-        authenticationService.logout(request, response);
-
    }
 
     @Test
@@ -492,12 +373,12 @@ public class AuthenticationServiceTest {
         when(environment.getProperty(PropertyDefine.MAX_SESSION_AGE_PROPERTY)).thenReturn("q");
         // Failed to get the maximum validity period of session
         try {
-            authenticationService.clearExpiredCookie();
+            authenticationService.clearExpiredCookieAndLoginHistory();
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
         when(environment.getProperty(PropertyDefine.MAX_SESSION_AGE_PROPERTY)).thenReturn("1000");
-        authenticationService.clearExpiredCookie();
+        authenticationService.clearExpiredCookieAndLoginHistory();
     }
 
     @Test
@@ -507,65 +388,6 @@ public class AuthenticationServiceTest {
         when(environment.getProperty(PropertyDefine.MAX_SESSION_AGE_PROPERTY)).thenReturn("2000");
         HttpServletResponse response = new MockHttpServletResponse();
         authenticationService.setResponseCookie(response, sessionId);
-
-    }
-
-    @Test
-    public void testUpdateSuperUserPassword() throws Exception {
-        log.debug("test update super user password.");
-        PasswordUpdateReq updateReq = new PasswordUpdateReq();
-        String password = "32eefs";
-        String oldPassword = "ds3333";
-        // Request exception
-        try {
-            authenticationService.updateSuperUserPassword(updateReq);
-        } catch (Exception e) {
-            Assert.assertEquals(RequestFieldNullException.MESSAGE, e.getMessage());
-        }
-        updateReq.setPassword(oldPassword);
-        updateReq.setOldPassword(oldPassword);
-        // The old and new passwords are the same
-        try {
-            authenticationService.updateSuperUserPassword(updateReq);
-        } catch (Exception e) {
-            Assert.assertEquals("The new password is the same as the old one", e.getMessage());
-        }
-        updateReq.setPassword(password);
-        String salt = "sdaw323";
-        String passwdHash = "dsde";
-        SuperUserEntity superUserSalt = new SuperUserEntity();
-        superUserSalt.setKey(SUPER_USER_SLAT);
-        superUserSalt.setValue(salt);
-        // mock super administrator salt
-        when(superUserRepository.findById(SUPER_USER_SLAT)).thenReturn(Optional.of(superUserSalt));
-        SuperUserEntity superUserPasswd = new SuperUserEntity();
-        superUserPasswd.setKey(SUPER_USER_PASSWORD_KEY);
-        superUserPasswd.setValue(passwdHash);
-        // mock super administrator password
-        when(superUserRepository.findById(SUPER_USER_PASSWORD_KEY)).thenReturn(Optional.of(superUserPasswd));
-        when(utilService.verifyPassword(salt, oldPassword, passwdHash)).thenReturn(true);
-        // mock super administrator password hash
-        when(utilService.encryptPassword(any(String.class), any(String.class))).thenReturn(passwdHash);
-
-        UserInfo userInfo = new UserInfo();
-        userInfo.setName(SUPER_USER_NAME_VALUE);
-        SuperUserEntity loginTime = new SuperUserEntity();
-        loginTime.setKey(SUPER_USER_LOGIN_TIME);
-        loginTime.setValue("1620899011109");
-        // mock last login time
-        when(superUserRepository.findById(SUPER_USER_LOGIN_TIME)).thenReturn(Optional.of(loginTime));
-        SettingEntity authType = new SettingEntity();
-        authType.setKey("auth_type");
-        authType.setValue("studio");
-        // mock auth type
-        when(settingComponent.readSetting("auth_type")).thenReturn(authType);
-        userInfo.setAuthType(InitStudioReq.AuthType.studio);
-        userInfo.setLastLogin(new Timestamp(1620899011109L));
-        userInfo.setActive(true);
-        userInfo.setSuperAdmin(true);
-        userInfo.setId(0);
-
-        Assert.assertEquals(userInfo, authenticationService.updateSuperUserPassword(updateReq));
 
     }
 
@@ -591,30 +413,13 @@ public class AuthenticationServiceTest {
         // cookie not expired
         sessionEntity.setCreatedAt(new Timestamp(System.currentTimeMillis() * 1000L));
         // mock user
-        Assert.assertEquals(1, authenticationService.checkAllUserAuthWithCookie(request, response));
+        Assert.assertEquals(1, authenticationService.checkUserAuthWithCookie(request, response));
 
         // Super administrator
         sessionEntity.setUserId(0);
         // mock session
         when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(sessionEntity));
-        Assert.assertEquals(0, authenticationService.checkAllUserAuthWithCookie(request, response));
-    }
-
-    @Test
-    public void testCheckUserIsAdmin() throws Exception {
-        log.debug("test check user is admin.");
-        int userId = 1;
-        CoreUserEntity userEntity = new CoreUserEntity();
-        userEntity.setId(userId);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        // User is not an administrator
-        try {
-            authenticationService.checkUserIsAdmin(userId);
-        } catch (Exception e) {
-            Assert.assertEquals(NoAdminPermissionException.MESSAGE, e.getMessage());
-        }
-        userEntity.setSuperuser(true);
-        authenticationService.checkUserIsAdmin(userId);
+        Assert.assertEquals(0, authenticationService.checkUserAuthWithCookie(request, response));
     }
 
     @Test
@@ -696,7 +501,7 @@ public class AuthenticationServiceTest {
     @Transactional
     public void testForgetPassword() throws Exception {
         log.debug("test forget password.");
-        String email = "{\"email\":\"sss@xxx.com\"}";
+        String email = "{\"email\":\"sss@test.com\"}";
         String hostName = "ss";
         when(ldapComponent.enabled()).thenReturn(true);
         // ldap user can't be reseted password
@@ -717,7 +522,7 @@ public class AuthenticationServiceTest {
             Assert.assertEquals(ResetPasswordTokenException.MESSAGE, e.getMessage());
         }
         // mock user
-        when(userRepository.getByEmail("sss@xxx.com")).thenReturn(Lists.newArrayList(userEntity));
+        when(userRepository.getByEmail("sss@test.com")).thenReturn(Lists.newArrayList(userEntity));
         String resetTokenStr = UuidUtil.newUuid();
         // mock reset password token
         when(utilService.resetUserToken(userEntity, false)).thenReturn(resetTokenStr);
@@ -726,47 +531,6 @@ public class AuthenticationServiceTest {
         when(utilService.getResetPasswordUrl(any(Integer.class), any(String.class))).thenReturn(resetUrl);
         authenticationService.forgetPassword(email, hostName);
 
-    }
-
-    @Test
-    public void testCheckSuperAdminUserAuthWithCookie() throws Exception {
-        log.debug("test check super admin user with cookie.");
-        String sessionId = "fsfs";
-        HttpServletResponse response = new MockHttpServletResponse();
-        Connector connector = new Connector();
-        Request request = new Request(connector);
-
-        Cookie cookie = new Cookie(COOKIE_NAME, sessionId);
-        request.addCookie(cookie);
-        // Super administrator token not exist
-        SuperUserEntity superTokens = new SuperUserEntity();
-        superTokens.setValue(sessionId);
-        when(superUserRepository.getByValue(sessionId)).thenReturn(null);
-
-        CoreSessionEntity sessionEntity = new CoreSessionEntity();
-        sessionEntity.setId(sessionId);
-        // mock session
-        when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(sessionEntity));
-        sessionEntity.setCreatedAt(new Timestamp(1592991029 * 1000L));
-        sessionEntity.setUserId(1);
-        when(environment.getProperty(PropertyDefine.MAX_SESSION_AGE_PROPERTY)).thenReturn("200000");
-
-        // cookie not expired
-        sessionEntity.setCreatedAt(new Timestamp(System.currentTimeMillis() * 1000L));
-        superTokens.setValue(sessionId);
-        // cookie not expired
-        superTokens.setKey("super-user-token-1624530895000");
-        // Ordinary users
-        try {
-            authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
-        } catch (Exception e) {
-            Assert.assertEquals(AuthorizationException.MESSAGE, e.getMessage());
-        }
-
-        // Super administrator
-        sessionEntity.setUserId(0);
-        when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(sessionEntity));
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
     }
 
     @Test

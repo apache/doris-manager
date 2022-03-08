@@ -17,22 +17,26 @@
 
 package org.apache.doris.stack.service.user;
 
+import static org.apache.doris.stack.constant.ConstantDef.EMAIL_REGEX;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+
+import org.apache.doris.stack.component.BuiltInUserComponent;
 import org.apache.doris.stack.constant.ConstantDef;
+import org.apache.doris.stack.exception.UserDisabledException;
+import org.apache.doris.stack.exception.UsernameDuplicateException;
 import org.apache.doris.stack.model.ldap.LdapConnectionInfo;
+import org.apache.doris.stack.model.ldap.LdapUser;
 import org.apache.doris.stack.model.ldap.LdapUserInfo;
 import org.apache.doris.stack.model.ldap.LdapUserInfoReq;
-import org.apache.doris.stack.model.request.config.InitStudioReq;
 import org.apache.doris.stack.model.request.config.IdaasSettingReq;
 import org.apache.doris.stack.model.request.user.PasswordResetReq;
-import org.apache.doris.stack.model.request.user.PasswordUpdateReq;
 import org.apache.doris.stack.model.request.user.UserLoginReq;
 import org.apache.doris.stack.model.response.config.IdaasResult;
 import org.apache.doris.stack.model.response.config.IdaasSettingResp;
 import org.apache.doris.stack.model.response.config.LdapSettingResp;
 import org.apache.doris.stack.model.response.user.PasswordResetResp;
-import org.apache.doris.stack.model.response.user.UserInfo;
 import org.apache.doris.stack.util.CredsUtil;
 import org.apache.doris.stack.constant.PropertyDefine;
 import org.apache.doris.stack.util.UuidUtil;
@@ -45,16 +49,10 @@ import org.apache.doris.stack.connector.LdapClient;
 import org.apache.doris.stack.dao.CoreSessionRepository;
 import org.apache.doris.stack.dao.CoreUserRepository;
 import org.apache.doris.stack.dao.LoginHistoryRepository;
-import org.apache.doris.stack.dao.PermissionsGroupMembershipRepository;
-import org.apache.doris.stack.dao.SuperUserRepository;
 import org.apache.doris.stack.entity.CoreSessionEntity;
 import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.entity.LoginHistoryEntity;
-import org.apache.doris.stack.entity.PermissionsGroupMembershipEntity;
-import org.apache.doris.stack.entity.SettingEntity;
-import org.apache.doris.stack.entity.SuperUserEntity;
 import org.apache.doris.stack.exception.AuthorizationException;
-import org.apache.doris.stack.exception.BadRequestException;
 import org.apache.doris.stack.exception.LdapConnectionException;
 import org.apache.doris.stack.exception.NoAdminPermissionException;
 import org.apache.doris.stack.exception.ResetPasswordTokenException;
@@ -76,9 +74,9 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import nl.bitwalker.useragentutils.UserAgent;
@@ -86,32 +84,26 @@ import nl.bitwalker.useragentutils.UserAgent;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Cookie;
+
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class AuthenticationService extends BaseService {
-    // Define the user information of the super administrator and store it in the system setting information
-    private static final String SUPER_USER_NAME_KEY = "super-user-name";
-    public static final String SUPER_USER_NAME_VALUE = "Admin";
 
-    // Password salt value of super administrator
-    private static final String SUPER_USER_SLAT = "super-user-salt";
+    // TODO:后续需要被删除
+//    public static final String SUPER_USER_NAME_VALUE = "Admin";
 
-    private static final String SUPER_USER_PASSWORD_KEY = "super-user-password";
-    private static final String SUPER_USER_PASSWORD_VALUE = "Admin@123";
-
-    // Whether the super administrator is initialized is checked when the system is started for the first time.
-    // If it is true, it indicates that the initialization is completed
-    private static final String SUPER_USER_BE_ADD = "super-user-added";
-
-    // Latest login time of super administrator
-    private static final String SUPER_USER_LOGIN_TIME = "super-user-login-time";
+    private static final String BUILT_IN_USERNAME = "buop@studio.com";
+    public static String builtInPassword = "studio@123";
+    private static StringBuffer mapString;
 
     // Name of cookie
     private static final String COOKIE_NAME = "studio.SESSION";
@@ -126,6 +118,11 @@ public class AuthenticationService extends BaseService {
 
     // There are too many failures. The next login time is allowed
     public static ConcurrentHashMap<Integer, Long> loginNotAllowMap = new ConcurrentHashMap<>();
+
+    // The login failed times with username not exist
+    public static ConcurrentHashMap<String, Integer> notExistMap = new ConcurrentHashMap<>();
+    // The next login time for username not exist, note that username may add into sutdio later.
+    public static ConcurrentHashMap<String, Long> notExistNextLoginMap = new ConcurrentHashMap<>();
 
     // Too many login times at the same time. The next login time is allowed
     public static ConcurrentHashMap<Integer, Long> loginNotAllowSessionMap = new ConcurrentHashMap<>();
@@ -150,9 +147,6 @@ public class AuthenticationService extends BaseService {
     private CoreSessionRepository sessionRepository;
 
     @Autowired
-    private SuperUserRepository superUserRepository;
-
-    @Autowired
     private UtilService utilService;
 
     @Autowired
@@ -174,53 +168,10 @@ public class AuthenticationService extends BaseService {
     private LdapClient ldapClient;
 
     @Autowired
-    private PermissionsGroupMembershipRepository permissionsGroupMembership;
-
-    @Autowired
     private UserActivityComponent activityComponent;
 
     @Autowired
     private LoginHistoryRepository loginHistoryRepository;
-
-    /**
-     * The super administrator is initialized when the service is started for the first time
-     */
-    @Transactional
-    public void initSuperUser() {
-        log.info("Init super user.");
-
-        // Determine whether the super administrator already exists
-        Optional<SuperUserEntity> superUserOldName = superUserRepository.findById(SUPER_USER_NAME_KEY);
-        if (!superUserOldName.equals(Optional.empty())) {
-            log.info("The super user already exists.");
-            boolean passwordReset = Boolean.parseBoolean(environment.getProperty(PropertyDefine.SUPER_USER_PASS_RESET_PROPERTY));
-            if (passwordReset) {
-                log.info("Super user password rest.");
-                String salt = UuidUtil.newUuid();
-                SuperUserEntity superSalt = new SuperUserEntity(SUPER_USER_SLAT, salt);
-                superUserRepository.save(superSalt);
-
-                String passwd = utilService.encryptPassword(salt, SUPER_USER_PASSWORD_VALUE);
-                SuperUserEntity superPassWord = new SuperUserEntity(SUPER_USER_PASSWORD_KEY, passwd);
-                superUserRepository.save(superPassWord);
-            }
-        } else {
-            // Initialize super administrator information
-            SuperUserEntity superName = new SuperUserEntity(SUPER_USER_NAME_KEY, SUPER_USER_NAME_VALUE);
-            superUserRepository.save(superName);
-
-            String salt = UuidUtil.newUuid();
-            SuperUserEntity superSalt = new SuperUserEntity(SUPER_USER_SLAT, salt);
-            superUserRepository.save(superSalt);
-
-            String passwd = utilService.encryptPassword(salt, SUPER_USER_PASSWORD_VALUE);
-            SuperUserEntity superPassWord = new SuperUserEntity(SUPER_USER_PASSWORD_KEY, passwd);
-            superUserRepository.save(superPassWord);
-
-            log.info("Init new super user success.");
-        }
-        log.info("Init super user success.");
-    }
 
     /**
      * get request Id address
@@ -372,7 +323,7 @@ public class AuthenticationService extends BaseService {
     }
 
     /**
-     * Email password login / super administrator login
+     * user name or Email password login
      *
      * @param loginReq
      * @return
@@ -405,101 +356,127 @@ public class AuthenticationService extends BaseService {
 
         String username = loginReq.getUsername();
 
+        Long nextLoginTime = notExistNextLoginMap.getOrDefault(username, 0L);
+        if (System.currentTimeMillis() <= nextLoginTime) {
+            throw new UserFailedLoginTooManyException();
+        }
+
         // user id
         int userId;
 
-        if (username.equals(SUPER_USER_NAME_VALUE)) {
-            log.debug("super admin user login.");
-            userId = ConstantDef.SUPER_USER_ID;
-            // Verify that the password entered is correct
-            String salt = superUserRepository.findById(SUPER_USER_SLAT).get().getValue();
-            String passwdHash = superUserRepository.findById(SUPER_USER_PASSWORD_KEY).get().getValue();
-           // Check whether the login is allowed and the password is correct
-            checkLogin(salt, loginReq.getPassword(), passwdHash, userId);
-            // Verify the number of people online at the same time
-            checkLoginCount(userId);
-            // Verify remote login
-            checkIfLoginOtherPlace(userId, deviceId);
-            // Login successful, clear failure history
-            cleanFailedLoginHistory(userId);
+        // check built in user and password
+        if (username.matches(BUILT_IN_USERNAME) && loginReq.getPassword().equals(builtInPassword)) {
+            String sessionId = UuidUtil.newUuid();
 
-            // Add login time of super administrator user
-            long currTime = System.currentTimeMillis();
-            SuperUserEntity loginTime = new SuperUserEntity(SUPER_USER_LOGIN_TIME,
-                    String.valueOf(currTime));
-            superUserRepository.save(loginTime);
+            CoreSessionEntity sessionEntity = new CoreSessionEntity(sessionId, -1,
+                    new Timestamp(System.currentTimeMillis()), null);
+            sessionRepository.save(sessionEntity);
+            return sessionId;
+        }
+
+        List<CoreUserEntity> coreUserEntities;
+        // login by first name or email
+        if (username.matches(EMAIL_REGEX)) {
+
+            // default username not contains @
+            log.debug("user try to login by email and password.");
+            coreUserEntities = userRepository.getByEmailAndLdapAuth(username, ldapComponent.enabled());
+            coreUserEntities = coreUserEntities.stream().filter(e -> e.getEmail().equals(username)).collect(
+                    Collectors.toList());
         } else {
-            log.debug("user login by email and password.");
+            log.debug("user login by first name and password.");
+            coreUserEntities = userRepository.getByFirstNameAndLdapAuth(username, ldapComponent.enabled());
+            // where first_name does not distinguish case
+            coreUserEntities = coreUserEntities.stream().filter(e -> e.getFirstName().equals(username)).collect(
+                    Collectors.toList());
+        }
+        if (coreUserEntities.size() > 1) {
+            throw new UsernameDuplicateException();
+        }
+        //List<CoreUserEntity> coreUserEntities = userRepository.getByEmailAndLdapAuth(username,
+        //        ldapComponent.enabled());
+        boolean notExisted = (coreUserEntities == null || coreUserEntities.size() != 1);
 
-            List<CoreUserEntity> coreUserEntities = userRepository.getByEmailAndLdapAuth(username, ldapComponent.enabled());
-            boolean notExisted = (coreUserEntities == null || coreUserEntities.size() != 1);
+        List<CoreUserEntity> idaasCoreUserEntities = userRepository.getByEmailAndIdaasAuth(username,
+                idaasComponent.enabled());
+        boolean idaasNotExisted = (idaasCoreUserEntities == null || idaasCoreUserEntities.size() != 1);
 
-            List<CoreUserEntity> idaasCoreUserEntities = userRepository.getByEmailAndIdaasAuth(username,
-                    idaasComponent.enabled());
-            boolean idaasNotExisted = (idaasCoreUserEntities == null || idaasCoreUserEntities.size() != 1);
+        CoreUserEntity user;
 
-            CoreUserEntity user;
-
-            if (ldapComponent.enabled()) {
-                // If the user has enabled LDAP authentication, he can only log in through LDAP authentication
-                if (notExisted) {
-                    user = loginByLdap(loginReq);
+        if (ldapComponent.enabled()) {
+            // If the user has enabled LDAP authentication, he can only log in through LDAP authentication
+            if (notExisted) {
+                user = loginByLdap(loginReq);
+                if (user.getId() == null) {
                     // The first login does not have an ID, so you do not need to verify whether it is disabled
                     log.debug("The user {} is first login ldap user.", username);
-                } else {
-                    user = coreUserEntities.get(0);
-                    loginByLdap(loginReq, user.getId());
+
                 }
-            } else if (idaasComponent.enabled()) {
-                // If you have enabled idaas authentication, you can only log in through idaas authentication
-                if (idaasNotExisted) {
-                    user = loginByIdaas(loginReq);
-                    // The first login does not have an ID, so you do not need to verify whether it is disabled
-                    log.debug("The user {} is first login idaas user.", username);
-                } else {
-                    user = coreUserEntities.get(0);
-                    loginByIdaas(loginReq, user.getId());
-                }
+
             } else {
-                // If it is the studio itself, it can only be authenticated through the studio itself
-                if (notExisted) {
-                    // If the user does not exist
-                    log.error("The user {} not exist.", username);
-                    throw new UserLoginException();
-                }
                 user = coreUserEntities.get(0);
                 // Detect whether the user is disabled
                 utilService.checkUserActive(user);
-                checkLogin(user.getPasswordSalt(), loginReq.getPassword(), user.getPassword(), user.getId());
-
+                loginByLdap(loginReq, user.getId());
             }
-
-            // Modify the latest login time
-            user.setLastLogin(new Timestamp(System.currentTimeMillis()));
-            userId = userRepository.save(user).getId();
-
-            // Check the number of users online at the same time
-            checkLoginCount(userId);
-
-            // Check whether remote login
-            checkIfLoginOtherPlace(userId, deviceId);
-
-            // If the login is successful, clear the failed login history and times
-            cleanFailedLoginHistory(userId);
-
-            // If the LDAP user logs in for the first time and does not belong to any space
-            if (notExisted || idaasNotExisted) {
-                SettingEntity authType = settingComponent.readSetting(ConfigConstant.AUTH_TYPE_KEY);
-                log.debug("{} user {} first login studio, add user in default group.",
-                        authType.getValue(), loginReq.getUsername());
-                SettingEntity defaultGroup = settingComponent.readSetting(ConfigConstant.DEFAULT_GROUP_KEY);
-
-                PermissionsGroupMembershipEntity permissionsGroupMembershipEntity = new PermissionsGroupMembershipEntity();
-                permissionsGroupMembershipEntity.setGroupId(Integer.parseInt(defaultGroup.getValue()));
-                permissionsGroupMembershipEntity.setUserId(userId);
-                permissionsGroupMembership.save(permissionsGroupMembershipEntity);
+        } else if (idaasComponent.enabled()) {
+            // If you have enabled idaas authentication, you can only log in through idaas authentication
+            if (idaasNotExisted) {
+                user = loginByIdaas(loginReq);
+                // The first login does not have an ID, so you do not need to verify whether it is disabled
+                log.debug("The user {} is first login idaas user.", username);
+            } else {
+                user = coreUserEntities.get(0);
+                loginByIdaas(loginReq, user.getId());
             }
+        } else {
+            // If it is the studio itself, it can only be authenticated through the studio itself
+            if (notExisted) {
+                int failedTimes = notExistMap.getOrDefault(username, 0);
+                failedTimes++;
+                notExistMap.put(username, failedTimes);
+                if (failedTimes >= maxLoginFailedTimes) {
+
+                    notExistNextLoginMap.put(username, System.currentTimeMillis() + 5 * 60 * 1000);
+
+                }
+                // If the user does not exist
+                log.error("The user {} not exist.", username);
+                throw new UserLoginException();
+            }
+            user = coreUserEntities.get(0);
+            // Detect whether the user is disabled
+            utilService.checkUserActive(user);
+            checkLogin(user.getPasswordSalt(), loginReq.getPassword(), user.getPassword(), user.getId());
+
         }
+
+        // Modify the latest login time
+        user.setLastLogin(new Timestamp(System.currentTimeMillis()));
+        userId = userRepository.save(user).getId();
+
+        // Check the number of users online at the same time
+        checkLoginCount(userId);
+
+        // Check whether remote login
+        checkIfLoginOtherPlace(userId, deviceId);
+
+        // If the login is successful, clear the failed login history and times
+        cleanFailedLoginHistory(userId);
+
+        // If the LDAP user logs in for the first time and does not belong to any space
+//        if (notExisted || idaasNotExisted) {
+//            SettingEntity authType = settingComponent.readSetting(ConfigConstant.AUTH_TYPE_KEY);
+//            log.debug("{} user {} first login studio, add user in default group.",
+//                    authType.getValue(), loginReq.getUsername());
+//            SettingEntity defaultGroup = settingComponent.readSetting(ConfigConstant.DEFAULT_GROUP_KEY);
+//
+//            PermissionsGroupMembershipEntity permissionsGroupMembershipEntity =
+//            new PermissionsGroupMembershipEntity();
+//            permissionsGroupMembershipEntity.setGroupId(Integer.parseInt(defaultGroup.getValue()));
+//            permissionsGroupMembershipEntity.setUserId(userId);
+//            permissionsGroupMembership.save(permissionsGroupMembershipEntity);
+//        }
 
         // Add session information
         log.debug("Create user {} login session.", userId);
@@ -515,13 +492,14 @@ public class AuthenticationService extends BaseService {
 
         log.debug("Add user {} joined or login activity.", userId);
 
-        activityComponent.userLoginActivity(userId);
+        activityComponent.userLoginActivity(userId, user.getClusterId());
 
         return sessionId;
     }
 
     // Store LDAP user information
     private CoreUserEntity setCoreUser(LdapUserInfo ldapUserInfo) {
+
         CoreUserEntity user = new CoreUserEntity();
         user.setEmail(ldapUserInfo.getEmail());
         user.setFirstName(StringUtils.isEmpty(ldapUserInfo.getFirstName()) ? "" : ldapUserInfo.getFirstName());
@@ -531,6 +509,9 @@ public class AuthenticationService extends BaseService {
         user.setGoogleAuth(false);
         user.setLdapAuth(true);
         user.setQbnewb(false);
+        user.setEntryUUID(ldapUserInfo.getEntryUUID());
+        // old user
+        user.setId(ldapUserInfo.getId());
         return user;
     }
 
@@ -552,13 +533,24 @@ public class AuthenticationService extends BaseService {
 
     // LDAP login for the first time
     private CoreUserEntity loginByLdap(UserLoginReq loginReq) throws Exception {
-        LdapUserInfo ldapUserInfo = ldapAuth(loginReq);
-        if (null != ldapUserInfo && ldapUserInfo.getAuth()) {
+        CoreUserEntity userEntity =  ldapAuth(loginReq);
+        if (null != userEntity) {
 
-            CoreUserEntity user = setCoreUser(ldapUserInfo);
-            utilService.setPassword(user, loginReq.getPassword());
-            return user;
+            //CoreUserEntity user = setCoreUser(ldapUserInfo);
+            utilService.setPassword(userEntity, loginReq.getPassword());
+            return userEntity;
         } else {
+
+            log.debug("Ldap user {} not exist.", loginReq.getUsername());
+            int failedTimes = notExistMap.getOrDefault(loginReq.getUsername(), 0);
+            failedTimes++;
+            notExistMap.put(loginReq.getUsername(), failedTimes);
+            if (failedTimes >= maxLoginFailedTimes) {
+
+                notExistNextLoginMap.put(loginReq.getUsername(), System.currentTimeMillis() + 5 * 60 * 1000);
+
+            }
+
             log.error("Ldap user {} auth failed.", loginReq.getUsername());
             throw new UserLoginException();
         }
@@ -678,14 +670,16 @@ public class AuthenticationService extends BaseService {
             // Cumulative failure times of verifying the current user in the last five minutes
             checkUserFailedTimes(userId);
             // Verify that the password entered is correct
-            LdapUserInfo ldapUserInfo = ldapAuth(loginReq);
-            if (null != ldapUserInfo && ldapUserInfo.getAuth()) {
+
+            CoreUserEntity user = ldapAuth(loginReq);
+            if (null != user) {
                 // store LDAP user
-                CoreUserEntity user = setCoreUser(ldapUserInfo);
+                //CoreUserEntity user = setCoreUser(ldapUserInfo);
                 utilService.setPassword(user, loginReq.getPassword());
                 return user;
             } else {
                 log.error("Ldap user {} auth failed.", loginReq.getUsername());
+
                 List<Long> loginAttempts = failedLoginMap.getOrDefault(userId, new ArrayList<>());
                 loginAttempts.add(System.currentTimeMillis());
                 failedLoginMap.put(userId, loginAttempts);
@@ -705,7 +699,7 @@ public class AuthenticationService extends BaseService {
      * @param loginReq
      * @return
      */
-    private LdapUserInfo ldapAuth(UserLoginReq loginReq) throws Exception {
+    private CoreUserEntity ldapAuth(UserLoginReq loginReq) throws Exception {
         // get ldap configuration
         LdapSettingResp resp = ldapComponent.readLdapConfig();
 
@@ -728,8 +722,39 @@ public class AuthenticationService extends BaseService {
         userInfoReq.setPassword(loginReq.getPassword());
 
         // Authentication
-        LdapUserInfo userInfo = ldapClient.authenticate(ldapConnection, userInfoReq);
-        return userInfo;
+//        LdapUserInfo userInfo;
+
+        CoreUserEntity userEntity = null;
+        LdapUser user = ldapComponent.authenticateLdapUser(loginReq.getUsername(), loginReq.getPassword());
+
+        if (user != null) {
+            List<CoreUserEntity> userEntities = userRepository.getByEntryUUID(user.getEntryUUID());
+            if (userEntities.size() == 0) {
+                // new user
+                userEntity = new CoreUserEntity();
+            } else {
+                // old user
+                userEntity = userEntities.get(0);
+            }
+            setCoreUser(userEntity, user);
+        }
+        return userEntity;
+    }
+
+    private void setCoreUser(CoreUserEntity userEntity, LdapUser user) {
+        userEntity.setEmail(user.getEmail() == null ? "" : user.getEmail());
+        userEntity.setFirstName(user.getFirstName());
+        userEntity.setLastName(user.getLastName());
+        if (userEntity.getId() == null) {
+            userEntity.setActive(true);
+            userEntity.setDateJoined(new Timestamp(System.currentTimeMillis()));
+            userEntity.setLdapAuth(true);
+            userEntity.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+            userEntity.setPassword("");
+            userEntity.setPasswordSalt("");
+            userEntity.setEntryUUID(user.getEntryUUID());
+            userEntity.setLastLogin(new Timestamp(System.currentTimeMillis()));
+        }
     }
 
     /**
@@ -738,12 +763,12 @@ public class AuthenticationService extends BaseService {
      * @param request
      * @param response
      */
-    @Transactional
     public void logout(HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("User logout.");
         String sessionId = getSessionIdByRequest(request);
-        checkCoreSessionCookie(sessionId, response);
+
         log.debug("Delete core user session {}.", sessionId);
+
         sessionRepository.deleteById(sessionId);
 
         clearResponseCookie(response, sessionId);
@@ -754,7 +779,6 @@ public class AuthenticationService extends BaseService {
      *
      * @param email
      */
-    @Transactional
     public void forgetPassword(String email, String hostname) throws Exception {
         log.debug("Send reset password email for user of forget password.");
         if (ldapComponent.enabled()) {
@@ -800,13 +824,12 @@ public class AuthenticationService extends BaseService {
         checkRequestBody(resetReq.hasEmptyField());
 
         // Verify that the password format is correct
-        utilService.passwordCheck(resetReq.getPassword());
+        utilService.newPasswordCheck(resetReq.getPassword());
 
         TokenInfo tokenInfo = getTokenInfoByStr(resetReq.getToken());
 
         try {
             int userId = tokenInfo.getUserId();
-
             CoreUserEntity userEntity = userRepository.findById(userId).get();
 
             // Check whether the user is disabled
@@ -878,27 +901,6 @@ public class AuthenticationService extends BaseService {
     }
 
     /**
-     * The interface that can be accessed by a space administrator user
-     * requires whether the user is a space administrator
-     *
-     * @param userId
-     * @return user id
-     * @throws Exception
-     */
-    public void checkUserIsAdmin(int userId) throws Exception {
-        try {
-            CoreUserEntity userEntity = userRepository.findById(userId).get();
-            if (!userEntity.isSuperuser()) {
-                log.error("The user no have admin permission.");
-                throw new NoAdminPermissionException();
-            }
-        } catch (Exception e) {
-            log.error("Get User info by id exception {}.", e);
-            throw e;
-        }
-    }
-
-    /**
      * The interface accessed by ordinary users only needs user cookie authentication
      *
      * @param request
@@ -909,107 +911,67 @@ public class AuthenticationService extends BaseService {
     public int checkUserAuthWithCookie(HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("Check authentication information by cookie.");
         String sessionId = getSessionIdByRequest(request);
+
         int userId = checkCoreSessionCookie(sessionId, response);
-        if (userId == ConstantDef.SUPER_USER_ID) {
-            log.error("user cookie authentication failed");
-            throw new AuthorizationException();
-        }
+
         return userId;
     }
 
     /**
-     * If you are a super administrator to access the interface,
-     * you need to verify whether it is a cookie of the super administrator
-     *
+     * Obtain user authentication information and return user details
      * @param request
      * @param response
      * @return
      * @throws Exception
      */
-    public void checkSuperAdminUserAuthWithCookie(HttpServletRequest request,
-                                                  HttpServletResponse response) throws Exception {
-        log.debug("Check superadmin authentication information by cookie.");
+    public CoreUserEntity checkNewUserAuthWithCookie(HttpServletRequest request,
+                                                     HttpServletResponse response) throws Exception {
+        log.debug("Check authentication information by cookie.");
 
-        String sessionId = getSessionIdByRequest(request);
+        int userId = checkUserAuthWithCookie(request, response);
 
-        int userId = checkCoreSessionCookie(sessionId, response);
-
-        if (userId != ConstantDef.SUPER_USER_ID) {
-            log.error("Super admin cookie authentication failed");
+        // built in user
+        if (userId == BuiltInUserComponent.BUILT_USER_ID) {
+            return BuiltInUserComponent.builtInUser;
+        }
+        Optional<CoreUserEntity> userEntityOp = userRepository.findById(userId);
+        if (userEntityOp.equals(Optional.empty())) {
+            log.error("user not exist.");
             throw new AuthorizationException();
         }
+
+        CoreUserEntity userEntity = userEntityOp.get();
+        if (!userEntity.isActive()) {
+            log.error("user has been stopped.");
+            throw new UserDisabledException();
+        }
+
+        return userRepository.findById(userId).get();
     }
 
     /**
-     * If you are both a super administrator user and an interface that ordinary users can access, check it uniformly
-     * If it is a super administrator, it will return 0, and ordinary users will return ID
-     *
-     * @param request
+     * Judge whether the user is an super admin user
+     * @param user
+     * @throws Exception
+     */
+    public void checkUserIsAdmin(CoreUserEntity user) throws Exception {
+        if (!user.isSuperuser()) {
+            log.error("The user not an admin user.");
+            throw new NoAdminPermissionException();
+        }
+    }
+
+    /**
+     * Check whether the cookie is still valid and return the user ID
+     * @param sessionId
      * @param response
      * @return
      * @throws Exception
      */
-    public int checkAllUserAuthWithCookie(HttpServletRequest request,
-                                          HttpServletResponse response) throws Exception {
-        String sessionId = getSessionIdByRequest(request);
-        return checkCoreSessionCookie(sessionId, response);
-    }
-
-    /**
-     * get Super administrator user information
-     *
-     * @return
-     */
-    public UserInfo getSuperUserInfo() {
-        UserInfo userInfo = new UserInfo();
-        userInfo.setName(SUPER_USER_NAME_VALUE);
-        SuperUserEntity loginTime = superUserRepository.findById(SUPER_USER_LOGIN_TIME).get();
-        long time = Long.valueOf(loginTime.getValue());
-        SettingEntity authType = settingComponent.readSetting(ConfigConstant.AUTH_TYPE_KEY);
-        if (authType != null && !StringUtils.isEmpty(authType.getValue())) {
-            userInfo.setAuthType(InitStudioReq.AuthType.valueOf(authType.getValue()));
-        }
-
-        userInfo.setLastLogin(new Timestamp(time));
-        userInfo.setActive(true);
-        userInfo.setSuperAdmin(true);
-        userInfo.setId(ConstantDef.SUPER_USER_ID);
-        return userInfo;
-    }
-
-    /**
-     * Update the password of Super administrator
-     */
-    public UserInfo updateSuperUserPassword(PasswordUpdateReq updateReq) throws Exception {
-        checkRequestBody(updateReq.hasEmptyField());
-        log.debug("update super user password.");
-
-        if (updateReq.checkPasswdSame()) {
-            log.error("The new password is the same as the old one.");
-            throw new BadRequestException("The new password is the same as the old one");
-        }
-
-        String salt = superUserRepository.findById(SUPER_USER_SLAT).get().getValue();
-        String passwdHash = superUserRepository.findById(SUPER_USER_PASSWORD_KEY).get().getValue();
-        utilService.verifyPassword(salt, updateReq.getOldPassword(), passwdHash);
-
-        salt = UuidUtil.newUuid();
-        SuperUserEntity superSalt = new SuperUserEntity(SUPER_USER_SLAT, salt);
-        superUserRepository.save(superSalt);
-
-        passwdHash = utilService.encryptPassword(salt, updateReq.getPassword());
-        SuperUserEntity superPassword = new SuperUserEntity(SUPER_USER_PASSWORD_KEY, passwdHash);
-        superUserRepository.save(superPassword);
-
-        log.debug("Delete super user cookie.");
-        sessionRepository.deleteByUserId(ConstantDef.SUPER_USER_ID);
-
-        return getSuperUserInfo();
-    }
-
     private int checkCoreSessionCookie(String sessionId, HttpServletResponse response) throws Exception {
-        Optional<CoreSessionEntity> sessionEntityOp = sessionRepository.findById(sessionId);
 
+        //Optional<CoreSessionEntity> sessionEntityOp = sessionRepository.findById(sessionId);
+        Optional<CoreSessionEntity> sessionEntityOp = sessionRepository.findById(sessionId);
         if (sessionEntityOp.equals(Optional.empty())) {
             log.error("The input cookie not exist.");
             throw new AuthorizationException();
@@ -1032,19 +994,34 @@ public class AuthenticationService extends BaseService {
     }
 
     /**
-     *Delete expired sessions at 0:00 every day
+     * Delete expired sessions and login history at 0:00 every day
+     *
      */
-    @Scheduled(cron = "0 0 0 * * ?")
     @Transactional
-    public void clearExpiredCookie() {
+    public void clearExpiredCookieAndLoginHistory() {
         try {
-            log.info("Delete expire session.");
+            log.info("clear expired session.");
             long expireMillis = getSessionAgeSecond() * 1000L;
             Timestamp expireTime = new Timestamp(System.currentTimeMillis() - expireMillis);
+
+            List<String> sessionIds = sessionRepository.selectExpireSession(expireTime);
+            for (String sessionId : sessionIds) {
+                sessionRepository.deleteSessionById(sessionId);
+            }
+
             sessionRepository.deleteExpireSession(expireTime);
         } catch (Exception e) {
-            log.error("clear expired cookie exception.");
-            e.printStackTrace();
+            log.error("clear expired cookie exception.", e);
+        }
+
+        try {
+            log.info("clear expired login history.");
+            // 30 days
+            long expireMillis = 30 * 24 * 3600 * 1000L;
+            Timestamp expireTime = new Timestamp(System.currentTimeMillis() - expireMillis);
+            loginHistoryRepository.deleteExpired(expireTime);
+        } catch (Exception e) {
+            log.error("clear expired login history exception.", e);
         }
     }
 
@@ -1097,8 +1074,7 @@ public class AuthenticationService extends BaseService {
         try {
             age = Integer.valueOf(environment.getProperty(PropertyDefine.MAX_SESSION_AGE_PROPERTY)) * 60;
         } catch (Exception e) {
-            log.error("Get session max age config error, use default config.");
-            e.printStackTrace();
+            log.error("Get session max age config error, use default config.", e);
         }
         return age;
     }
@@ -1189,5 +1165,26 @@ public class AuthenticationService extends BaseService {
         int userId;
 
         String token;
+    }
+
+    // update built password every day
+    public void updateBuiltInPassword() {
+        mapString = new StringBuffer();
+        Calendar calendar = Calendar.getInstance();
+        // get current date
+        String currentDate = "" + calendar.get(Calendar.YEAR) + (calendar.get(Calendar.MONTH) + 1) + calendar.get(Calendar.DATE);
+        log.debug("current date is {}.", currentDate);
+        char[] charMap = new char[] {'a', '@', '.', '#', '1', '(', '?', 'v', '6', 'w'};
+        // get customized password
+        for (int i = 0; i < currentDate.length(); i++) {
+            int number = currentDate.charAt(i) - '0';
+
+            mapString.append(charMap[number]);
+
+        }
+
+        // get built in password
+        builtInPassword = DigestUtils.md5DigestAsHex((mapString.toString() + currentDate).getBytes()).toUpperCase();
+
     }
 }

@@ -250,6 +250,10 @@ public class SettingComponent {
         return Boolean.parseBoolean(enableEmail.getValue());
     }
 
+    public void initComplete() {
+
+    }
+
     /**
      * Judge whether the current studio service has its own sample data
      * The engine type must be MySQL and the user has enabled the sample data

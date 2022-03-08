@@ -32,4 +32,10 @@ public class Topic {
     // Record of the user's latest login for the first time
     public static final String USE_LOGIN =  "user-login";
 
+    // User switches to space for access
+    public static final String USE_ACCESS =  "user-access";
+
+    // User exits the current space
+    public static final String USE_EXIT =  "user-exit";
+
 }
