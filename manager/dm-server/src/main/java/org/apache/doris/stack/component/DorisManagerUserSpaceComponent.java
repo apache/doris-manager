@@ -471,7 +471,7 @@ public class DorisManagerUserSpaceComponent extends BaseService {
             queryClient.deleteUser(ConstantDef.DORIS_DEFAULT_NS, ConstantDef.MYSQL_DEFAULT_SCHEMA, clusterInfo, allUserGroup.getPaloUserName());
         }
 
-        // 删除用户所在空间后，将clusterId置0
+        // After deleting the user's space, set clusterid to 0
         List<CoreUserEntity> users = userRepository.getByClusterId(spaceId);
         for (CoreUserEntity user : users) {
             user.setClusterId(0L);

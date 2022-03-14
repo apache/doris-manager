@@ -83,7 +83,7 @@ public class SettingController {
     public Object syncLdapUser(HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("sync ldap manually");
         CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
-        // 检查是否为Admin用户账号
+        // Check whether it is an admin user account
         authenticationService.checkUserIsAdmin(user);
         settingService.syncLdapUser();
         log.debug("init ldap studio successful.");

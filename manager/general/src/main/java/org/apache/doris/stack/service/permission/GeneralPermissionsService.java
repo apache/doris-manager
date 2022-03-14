@@ -76,7 +76,7 @@ public class GeneralPermissionsService extends BaseService {
         long clusterId = clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
 
         log.debug("user {} get cluster {} all permissionGroup", userId, clusterId);
-        // 获取空间内所有用户权限组ID
+        // Get all user permission group IDs in the space
         List<PermissionsGroupRoleEntity> groups = groupRoleRepository.getByClusterId(clusterId);
 
         List<PermissionsGroupInfo> result = new ArrayList<>();
