@@ -56,8 +56,7 @@ public class DorisClusterInstanceController {
         log.debug("Super user create palo user space.");
         CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
         // check is super admin user
-        authenticationService.checkUserIsAdmin(user);
-        instanceService.operateInstance(instanceId, operateType);
+        instanceService.operateInstance(user, instanceId, operateType);
         return ResponseEntityBuilder.ok();
     }
 

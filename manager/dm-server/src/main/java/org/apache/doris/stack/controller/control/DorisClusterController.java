@@ -80,8 +80,6 @@ public class DorisClusterController {
                        @RequestBody ModelControlReq req) throws Exception {
         log.debug("Super user stop a doris cluster..");
         CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
-        // check is super admin user
-        authenticationService.checkUserIsAdmin(user);
         clusterService.stopCluster(user, req.getClusterId());
         return ResponseEntityBuilder.ok();
     }
@@ -92,8 +90,6 @@ public class DorisClusterController {
                         @RequestBody ModelControlReq req) throws Exception {
         log.debug("Super user stop a doris cluster..");
         CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
-        // check is super admin user
-        authenticationService.checkUserIsAdmin(user);
         clusterService.startCluster(user, req.getClusterId());
         return ResponseEntityBuilder.ok();
     }
@@ -104,8 +100,6 @@ public class DorisClusterController {
                           @RequestBody ModelControlReq req) throws Exception {
         log.debug("Super user restart a doris cluster..");
         CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
-        // check is super admin user
-        authenticationService.checkUserIsAdmin(user);
         clusterService.restartCluster(user, req.getClusterId());
         return ResponseEntityBuilder.ok();
     }
@@ -117,10 +111,7 @@ public class DorisClusterController {
                                 HttpServletResponse response) throws Exception {
         log.debug("Super user create palo user space.");
         CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
-        // check is super admin user
-        authenticationService.checkUserIsAdmin(user);
-
-        return ResponseEntityBuilder.ok(clusterService.getClusterModules(clusterId));
+        return ResponseEntityBuilder.ok(clusterService.getClusterModules(user, clusterId));
     }
 
     // TODO:Later, it is implemented in dorisclustermodulecontroller
@@ -131,10 +122,7 @@ public class DorisClusterController {
                                        HttpServletResponse response) throws Exception {
         log.debug("Super user create palo user space.");
         CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
-        // check is super admin user
-        authenticationService.checkUserIsAdmin(user);
-
-        return ResponseEntityBuilder.ok(clusterService.getClusterInstances(clusterId));
+        return ResponseEntityBuilder.ok(clusterService.getClusterInstances(user, clusterId));
     }
 
     @ApiOperation(value = "Super user get cluster resource nodes list")
@@ -144,10 +132,7 @@ public class DorisClusterController {
                               HttpServletResponse response) throws Exception {
         log.debug("Super user create palo user space.");
         CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
-        // check is super admin user
-        authenticationService.checkUserIsAdmin(user);
-
-        return ResponseEntityBuilder.ok(clusterService.getClusterResourceNodes(clusterId));
+        return ResponseEntityBuilder.ok(clusterService.getClusterResourceNodes(user, clusterId));
     }
 
     @ApiOperation(value = "Super user get JDBC service status of Doris cluster")
@@ -157,10 +142,7 @@ public class DorisClusterController {
                               HttpServletResponse response) throws Exception {
         log.debug("Super user get JDBC service status of Doris cluster.");
         CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
-        // check is super admin user
-        authenticationService.checkUserIsAdmin(user);
-
-        return ResponseEntityBuilder.ok(clusterService.checkJdbcServiceReady(clusterId));
+        return ResponseEntityBuilder.ok(clusterService.checkJdbcServiceReady(user, clusterId));
     }
 
 }

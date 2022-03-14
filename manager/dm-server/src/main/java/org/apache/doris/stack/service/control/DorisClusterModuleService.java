@@ -18,6 +18,7 @@
 package org.apache.doris.stack.service.control;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.doris.stack.component.ClusterUserComponent;
 import org.apache.doris.stack.dao.ClusterInfoRepository;
 import org.apache.doris.stack.dao.ClusterInstanceRepository;
 import org.apache.doris.stack.dao.ClusterModuleRepository;
@@ -25,6 +26,7 @@ import org.apache.doris.stack.dao.HeartBeatEventRepository;
 import org.apache.doris.stack.dao.ResourceNodeRepository;
 import org.apache.doris.stack.entity.ClusterInstanceEntity;
 import org.apache.doris.stack.entity.ClusterModuleEntity;
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.entity.HeartBeatEventEntity;
 import org.apache.doris.stack.entity.ResourceNodeEntity;
 import org.apache.doris.stack.model.response.control.ClusterInstanceInfo;
@@ -52,12 +54,17 @@ public class DorisClusterModuleService {
     @Autowired
     private ClusterInfoRepository clusterInfoRepository;
 
+    @Autowired
+    private ClusterUserComponent userComponent;
+
     /**
      * TODO:Subsequent improvement
      * @return
      */
-    public List<ClusterInstanceInfo> getClusterMoudleInstanceList(long moduleId) {
+    public List<ClusterInstanceInfo> getClusterMoudleInstanceList(CoreUserEntity user, long moduleId) throws Exception {
         ClusterModuleEntity moduleEntity = moduleRepository.findById(moduleId).get();
+
+        userComponent.checkUserSpuerAdminOrClusterAdmin(user, moduleEntity.getClusterId());
 
         List<ClusterInstanceEntity> instanceEntities = instanceRepository.getByModuleId(moduleId);
 

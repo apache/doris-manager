@@ -52,9 +52,7 @@ public class DorisClusterModuleController {
                                        HttpServletResponse response) throws Exception {
         log.debug("Super user create palo user space.");
         CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
-        // check is super admin user
-        authenticationService.checkUserIsAdmin(user);
 
-        return ResponseEntityBuilder.ok(moduleService.getClusterMoudleInstanceList(moduleId));
+        return ResponseEntityBuilder.ok(moduleService.getClusterMoudleInstanceList(user, moduleId));
     }
 }

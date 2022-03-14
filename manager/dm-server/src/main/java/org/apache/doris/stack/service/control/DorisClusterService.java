@@ -21,6 +21,7 @@ import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.doris.manager.common.util.ConfigDefault;
 import org.apache.doris.manager.common.util.ServerAndAgentConstant;
+import org.apache.doris.stack.component.ClusterUserComponent;
 import org.apache.doris.stack.control.ModelControlRequestType;
 import org.apache.doris.stack.control.ModelControlResponse;
 import org.apache.doris.stack.control.request.DorisClusterRequest;
@@ -99,6 +100,9 @@ public class DorisClusterService {
     @Autowired
     private JdbcSampleClient jdbcSampleClient;
 
+    @Autowired
+    private ClusterUserComponent userComponent;
+
     @Transactional
     public ModelControlResponse creation(CoreUserEntity user, DorisClusterCreationReq creationReq) throws Exception {
         log.info("Rquest info is {}", JSON.toJSON(creationReq));
@@ -129,6 +133,7 @@ public class DorisClusterService {
     }
 
     public ModelControlResponse stopCluster(CoreUserEntity user, long clusterId) throws Exception {
+        userComponent.checkUserSpuerAdminOrClusterAdmin(user, clusterId);
         DorisClusterRequest request = new DorisClusterRequest();
         request.setType(ModelControlRequestType.STOP);
         request.setClusterId(clusterId);
@@ -138,6 +143,7 @@ public class DorisClusterService {
     }
 
     public ModelControlResponse startCluster(CoreUserEntity user, long clusterId) throws Exception {
+        userComponent.checkUserSpuerAdminOrClusterAdmin(user, clusterId);
         DorisClusterRequest request = new DorisClusterRequest();
         request.setType(ModelControlRequestType.START);
         request.setClusterId(clusterId);
@@ -147,6 +153,7 @@ public class DorisClusterService {
     }
 
     public ModelControlResponse restartCluster(CoreUserEntity user, long clusterId) throws Exception {
+        userComponent.checkUserSpuerAdminOrClusterAdmin(user, clusterId);
         DorisClusterRequest request = new DorisClusterRequest();
         request.setType(ModelControlRequestType.RESTART);
         request.setClusterId(clusterId);
@@ -159,7 +166,8 @@ public class DorisClusterService {
      * TODO:Subsequent improvement
      * @return
      */
-    public List<ClusterModuleInfo> getClusterModules(long clusterId) {
+    public List<ClusterModuleInfo> getClusterModules(CoreUserEntity user, long clusterId) throws Exception {
+        userComponent.checkUserSpuerAdminOrClusterAdmin(user, clusterId);
 
         List<ClusterModuleEntity> moduleEntities = moduleRepository.getByClusterId(clusterId);
 
@@ -190,7 +198,8 @@ public class DorisClusterService {
      * TODO:Subsequent improvement
      * @return
      */
-    public List<ClusterInstanceInfo> getClusterInstances(long clusterId) {
+    public List<ClusterInstanceInfo> getClusterInstances(CoreUserEntity user, long clusterId) throws Exception {
+        userComponent.checkUserSpuerAdminOrClusterAdmin(user, clusterId);
 
         List<ClusterModuleEntity> moduleEntities = moduleRepository.getByClusterId(clusterId);
 
@@ -223,7 +232,8 @@ public class DorisClusterService {
      * TODO:Subsequent improvement
      * @return
      */
-    public List<ResourceNodeInfo> getClusterResourceNodes(long clusterId) {
+    public List<ResourceNodeInfo> getClusterResourceNodes(CoreUserEntity user, long clusterId) throws Exception {
+        userComponent.checkUserSpuerAdminOrClusterAdmin(user, clusterId);
 
         ClusterInfoEntity clusterInfo = clusterInfoRepository.findById(clusterId).get();
         long resourceClusterId = clusterInfo.getResourceClusterId();
@@ -250,7 +260,8 @@ public class DorisClusterService {
         return nodeInfos;
     }
 
-    public boolean checkJdbcServiceReady(long clusterId) {
+    public boolean checkJdbcServiceReady(CoreUserEntity user, long clusterId) throws Exception {
+        userComponent.checkUserSpuerAdminOrClusterAdmin(user, clusterId);
         ClusterInfoEntity clusterInfoEntity = clusterInfoRepository.findById(clusterId).get();
         if (clusterInfoEntity.getAddress() != null && !clusterInfoEntity.getAddress().isEmpty()) {
             log.info("The cluster {} is already access user space.", clusterId);
