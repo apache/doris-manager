@@ -24,6 +24,7 @@ import org.apache.doris.stack.connector.PaloLoginClient;
 import org.apache.doris.stack.connector.PaloQueryClient;
 import org.apache.doris.stack.constant.ConstantDef;
 import org.apache.doris.stack.control.ModelControlLevel;
+import org.apache.doris.stack.control.ModelControlRequestType;
 import org.apache.doris.stack.control.manager.DorisClusterManager;
 import org.apache.doris.stack.dao.ClusterInfoRepository;
 import org.apache.doris.stack.dao.ClusterUserMembershipRepository;
@@ -46,6 +47,7 @@ import org.apache.doris.stack.exception.DorisSpaceDuplicatedException;
 import org.apache.doris.stack.exception.DorisUerOrPassErrorException;
 import org.apache.doris.stack.exception.DorisUserNoPermissionException;
 import org.apache.doris.stack.exception.NameDuplicatedException;
+import org.apache.doris.stack.exception.NoAdminPermissionException;
 import org.apache.doris.stack.exception.RequestFieldNullException;
 import org.apache.doris.stack.exception.StudioNotInitException;
 import org.apache.doris.stack.exception.UserNotExistException;
@@ -375,7 +377,7 @@ public class DorisManagerUserSpaceComponent extends BaseService {
             for (ClusterInfoEntity clusterInfo : clusterInfos) {
 
                 NewUserSpaceInfo spaceInfo = clusterInfo.transToNewModel();
-                getClusterRequestInfo(userEntity, spaceInfo, clusterInfo.getId());
+                getClusterRequestInfo(spaceInfo, clusterInfo.getId());
                 getAdminGroupUserList(spaceInfo, clusterInfo.getAdminGroupId());
                 spaceInfos.add(spaceInfo);
             }
@@ -387,7 +389,12 @@ public class DorisManagerUserSpaceComponent extends BaseService {
             for (ClusterUserMembershipEntity clusterUserMembershipEntity : userMembershipEntities) {
                 long clusterId = clusterUserMembershipEntity.getClusterId();
                 ClusterInfoEntity clusterInfoEntity = clusterInfoRepository.findById(clusterId).get();
-                spaceInfos.add(clusterInfoEntity.transToNewModel());
+                NewUserSpaceInfo spaceInfo = clusterInfoEntity.transToNewModel();
+                getClusterRequestInfo(spaceInfo, clusterInfoEntity.getId());
+                if (!spaceInfo.isRequestCompleted()) {
+                    continue;
+                }
+                spaceInfos.add(spaceInfo);
             }
             return spaceInfos;
         }
@@ -399,7 +406,13 @@ public class DorisManagerUserSpaceComponent extends BaseService {
         setClusterStatus(clusterInfo);
 
         NewUserSpaceInfo result = clusterInfo.transToNewModel();
-        getClusterRequestInfo(user, result, spaceId);
+        getClusterRequestInfo(result, spaceId);
+
+        if (!result.isRequestCompleted() && !user.isSuperuser()) {
+            log.error("Ordinary users do not have permission to view unfinished space");
+            throw new NoAdminPermissionException();
+        }
+
         getAdminGroupUserList(result, clusterInfo.getAdminGroupId());
 
         return result;
@@ -496,10 +509,8 @@ public class DorisManagerUserSpaceComponent extends BaseService {
         userSpaceInfo.setSpaceAdminUserId(idList);
     }
 
-    private void getClusterRequestInfo(CoreUserEntity user, NewUserSpaceInfo spaceInfo, long clusterId) {
-        if (!user.isSuperuser()) {
-            return;
-        }
+    // Get the creation or takeover request of cluster space
+    private void getClusterRequestInfo(NewUserSpaceInfo spaceInfo, long clusterId) {
         List<ModelControlRequestEntity> requestEntities =
                 requestRepository.getByModelLevelAndIdAndCompleted(ModelControlLevel.DORIS_CLUSTER,
                         clusterId, false);
@@ -507,10 +518,16 @@ public class DorisManagerUserSpaceComponent extends BaseService {
             spaceInfo.setRequestCompleted(true);
         } else {
             ModelControlRequestEntity requestEntity = requestEntities.get(0);
-            spaceInfo.setRequestCompleted(false);
-            spaceInfo.setRequestId(requestEntity.getId());
-            spaceInfo.setRequestInfo(JSON.parse(requestEntity.getRequestInfo()));
-            spaceInfo.setEventType(requestEntity.getCurrentEventType());
+            // TODO: Get the creation or takeover request of cluster space
+            if (ModelControlRequestType.CREATION.equals(requestEntity.getRequestType())
+                    || ModelControlRequestType.TAKE_OVER.equals(requestEntity.getRequestType())) {
+                spaceInfo.setRequestCompleted(false);
+                spaceInfo.setRequestId(requestEntity.getId());
+                spaceInfo.setRequestInfo(JSON.parse(requestEntity.getRequestInfo()));
+                spaceInfo.setEventType(requestEntity.getCurrentEventType());
+            } else {
+                spaceInfo.setRequestCompleted(true);
+            }
         }
     }
 

@@ -142,15 +142,8 @@ public class CommonPropertyUtil {
             StringBuffer url = new StringBuffer();
             url.append("jdbc:mysql://");
             if (StringUtils.isEmpty(DB_HOST)) {
-                url.append("10.138.64.225");
-                properties.put(PropertyDefine.MYSQL_HOST_PROPERTY, "10.138.64.225");
-
-//                url.append("10.128.166.31");
-//                properties.put(PropertyDefine.MYSQL_HOST_PROPERTY, "10.128.166.31");
-
-//                url.append("10.138.24.115");
-//                properties.put(PropertyDefine.MYSQL_HOST_PROPERTY, "10.138.24.115");
-
+                url.append("127.0.0.1");
+                properties.put(PropertyDefine.MYSQL_HOST_PROPERTY, "127.0.0.1");
             } else {
                 url.append(DB_HOST);
                 properties.put(PropertyDefine.MYSQL_HOST_PROPERTY, DB_HOST);
@@ -165,11 +158,7 @@ public class CommonPropertyUtil {
             }
             url.append("/");
             if (StringUtils.isEmpty(DB_DBNAME)) {
-//                url.append("studio403");
-//                url.append("test1");
                 url.append("test1");
-//                url.append("initstudio");
-
             } else {
                 url.append(DB_DBNAME);
             }
@@ -179,14 +168,12 @@ public class CommonPropertyUtil {
 
             if (StringUtils.isEmpty(DB_USER)) {
                 properties.put("spring.datasource.username", "root");
-//                properties.put("spring.datasource.username", "caijunhui_dba");
             } else {
                 properties.put("spring.datasource.username", DB_USER);
             }
 
             if (StringUtils.isEmpty(DB_PASS)) {
-                properties.put("spring.datasource.password", "dfs556a@s2");
-//                properties.put("spring.datasource.password", "cai_dba1357we#");
+                properties.put("spring.datasource.password", "testPass");
             } else {
                 properties.put("spring.datasource.password", DB_PASS);
             }
@@ -219,8 +206,8 @@ public class CommonPropertyUtil {
             StringBuffer url = new StringBuffer();
             url.append("jdbc:postgresql://");
             if (StringUtils.isEmpty(DB_HOST)) {
-                url.append("nj03-bdg-pingo4-server32.nj03.baidu.com");
-                properties.put(PropertyDefine.POSTGRESQL_HOST_PROPERTY, "nj03-bdg-pingo4-server32.nj03.baidu.com");
+                url.append("127.0.0.1");
+                properties.put(PropertyDefine.POSTGRESQL_HOST_PROPERTY, "127.0.0.1");
             } else {
                 url.append(DB_HOST);
                 properties.put(PropertyDefine.POSTGRESQL_HOST_PROPERTY, DB_HOST);
@@ -235,7 +222,7 @@ public class CommonPropertyUtil {
             }
             url.append("/");
             if (StringUtils.isEmpty(DB_DBNAME)) {
-                url.append("bdl");
+                url.append("test");
             } else {
                 url.append(DB_DBNAME);
             }
@@ -243,13 +230,13 @@ public class CommonPropertyUtil {
             properties.put("spring.datasource.url", url.toString());
 
             if (StringUtils.isEmpty(DB_USER)) {
-                properties.put("spring.datasource.username", "postgres");
+                properties.put("spring.datasource.username", "root");
             } else {
                 properties.put("spring.datasource.username", DB_USER);
             }
 
             if (StringUtils.isEmpty(DB_PASS)) {
-                properties.put("spring.datasource.password", "PostGres");
+                properties.put("spring.datasource.password", "testPass");
             } else {
                 properties.put("spring.datasource.password", DB_PASS);
             }

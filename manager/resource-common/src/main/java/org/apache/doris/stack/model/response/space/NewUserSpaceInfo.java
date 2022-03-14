@@ -73,7 +73,9 @@ public class NewUserSpaceInfo {
 
     private String requestType;
 
-    private boolean isRequestCompleted;
+    // If you do not need to judge whether the request is completed or the content of the request does not exist,
+    // it returns true by default
+    private boolean isRequestCompleted = true;
 
     private int eventType;
 
