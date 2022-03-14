@@ -57,9 +57,7 @@ public class HeartBeatService {
 //    @PostConstruct
     @Scheduled(cron = "0/5 * * * * ?")
     public void heartBeat() {
-        System.out.println("aaaaa1");
         if (agentNodeId.isEmpty() || serverEndpoint.isEmpty()) {
-            System.out.println("aaaaa2");
             agentNodeId = environment.getProperty("agent.node.id");
             serverEndpoint = environment.getProperty("manager.server.endpoint");
             heartBeatUrl = "http://" + serverEndpoint + "/api/control/node/" + agentNodeId + "/agent/heartbeat";

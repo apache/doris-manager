@@ -125,7 +125,7 @@ public class NewUserService extends BaseService {
     public List<UserInfo> getAllUser(CoreUserEntity requestUser, boolean includeDeactivated, String queryStr) throws Exception {
         log.debug("Get all users {} include not active user", includeDeactivated);
 
-        int clusterId = requestUser.getClusterId();
+        long clusterId = requestUser.getClusterId();
         clusterUserComponent.checkUserSpuerAdminOrClusterAdmin(requestUser, clusterId);
 
         List<CoreUserEntity> userEntities;
@@ -184,7 +184,7 @@ public class NewUserService extends BaseService {
         }
 
         // If you are operating in a space, the space administrator role can view all users in the space
-        int clusterId = requestUser.getClusterId();
+        long clusterId = requestUser.getClusterId();
         if (clusterId > 0) {
             ClusterInfoEntity clusterInfoEntity = clusterInfoRepository.findById((long) clusterId).get();
             List<PermissionsGroupMembershipEntity> groupMembershipEntities =
@@ -214,7 +214,7 @@ public class NewUserService extends BaseService {
 
         UserInfo userInfo = user.castToUserInfo();
 
-        int clusterId = userInfo.getSpaceId();
+        long clusterId = userInfo.getSpaceId();
 
         boolean managerEnable = false;
         if (clusterId > 0) {
@@ -255,10 +255,10 @@ public class NewUserService extends BaseService {
      * @throws Exception
      */
     @Transactional
-    public UserInfo updateUserCurrentCluster(CoreUserEntity user, int clusterId) throws Exception {
+    public UserInfo updateUserCurrentCluster(CoreUserEntity user, long clusterId) throws Exception {
         log.debug("Update current user cluster id to {}.", clusterId);
         // Cluster ID before switching
-        int oldClusterId = user.getClusterId();
+        long oldClusterId = user.getClusterId();
 
         // check cluster Id
         Optional<ClusterInfoEntity> clusterInfoEntityOp = clusterInfoRepository.findById((long) clusterId);
@@ -596,7 +596,7 @@ public class NewUserService extends BaseService {
 
     public List<UserInfo> getSpaceUserList(CoreUserEntity user, String queryStr) throws Exception {
         int userId = user.getId();
-        int clusterId = user.getClusterId();
+        long clusterId = user.getClusterId();
         log.debug("User {} get current cluster {} user.", userId, user.getClusterId());
 
         clusterUserComponent.checkUserClusterAdminPermission(user, clusterId);
@@ -627,7 +627,7 @@ public class NewUserService extends BaseService {
 
     public void addUserToSpace(CoreUserEntity requestUser, int userId) throws Exception {
         int requestId = requestUser.getId();
-        int clusterId = requestUser.getClusterId();
+        long clusterId = requestUser.getClusterId();
         log.debug("User {} add user {} to current space {}", requestId, userId, clusterId);
         // admin user add self into space
         //checkUserSlefException(requestId, userId);
@@ -646,7 +646,7 @@ public class NewUserService extends BaseService {
     @Transactional
     public void moveUser(int userId, CoreUserEntity requestUser) throws Exception {
         int requestId = requestUser.getId();
-        int clusterId = requestUser.getClusterId();
+        long clusterId = requestUser.getClusterId();
 
         log.debug("user {} remove user {} from cluster.", requestId, userId, clusterId);
 

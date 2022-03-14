@@ -44,19 +44,19 @@ public class PermissionsGroupRoleEntity {
 
     private String role;
 
-    private int clusterId;
+    private long clusterId;
 
     private String paloUserName;
 
     private String password;
 
-    public PermissionsGroupRoleEntity(String groupName, String role, int clusterId) {
+    public PermissionsGroupRoleEntity(String groupName, String role, long clusterId) {
         this.groupName = groupName;
         this.role = role;
         this.clusterId = clusterId;
     }
 
-    public PermissionsGroupRoleEntity(String groupName, String role, int clusterId,
+    public PermissionsGroupRoleEntity(String groupName, String role, long clusterId,
                                       String paloUserName, String password) {
         this.groupName = groupName;
         this.role = role;

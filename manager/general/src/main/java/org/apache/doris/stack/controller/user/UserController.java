@@ -103,7 +103,7 @@ public class UserController extends BaseController {
 
     @ApiOperation(value = "User modifies the space ID being used (all users, platform level API)")
     @PostMapping(value = "current", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Object updateUserCurrentCluster(@RequestParam(value = "cluster_id") int clusterId,
+    public Object updateUserCurrentCluster(@RequestParam(value = "cluster_id") long clusterId,
                                            HttpServletRequest request,
                                            HttpServletResponse response) throws Exception {
         CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);

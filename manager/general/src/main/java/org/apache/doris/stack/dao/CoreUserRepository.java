@@ -61,7 +61,7 @@ public interface CoreUserRepository extends JpaRepository<CoreUserEntity, Intege
     List<CoreUserEntity> getByActive(@Param("isActive") boolean isActive);
 
     @Query("select c from CoreUserEntity c where c.clusterId = :clusterId")
-    List<CoreUserEntity> getByClusterId(@Param("clusterId") int clusterId);
+    List<CoreUserEntity> getByClusterId(@Param("clusterId") long clusterId);
 
     @Query("select c.id from CoreUserEntity c where c.ldapAuth = false and c.id in (:userIds)")
     List<Integer> getAllStudioUser(@Param("userIds") List<Integer> userIds);
@@ -86,21 +86,21 @@ public interface CoreUserRepository extends JpaRepository<CoreUserEntity, Intege
     void deleteAllUsers();
 
     @Override
-    // 缓存user信息
+    // Cache user information
     @Cacheable(value = "sessions", key = "#p0")
     Optional<CoreUserEntity> findById(Integer id);
 
     @Override
-    // 删除缓存，同时删数据
+    // Delete cache and delete data at the same time
     @CacheEvict(value = "sessions", key = "#p0")
     void deleteById(Integer id);
 
-    // 删除缓存，数据已批量删除
+    // Delete cache, data has been deleted in batch
     @CacheEvict(value = "sessions", key = "#p0")
     void deleteUserById(Integer id);
 
     @Override
-    // 更新用户信息，更新缓存，新增不影响
+    // Update user information, update cache, and the addition will not affect
     @CachePut(value = "sessions", key = "#userEntity.id")
     CoreUserEntity save(CoreUserEntity userEntity);
 }

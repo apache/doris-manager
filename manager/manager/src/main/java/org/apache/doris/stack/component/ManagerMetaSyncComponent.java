@@ -58,7 +58,7 @@ public class ManagerMetaSyncComponent extends BaseService {
      * @param clusterInfo
      */
     public void deleteClusterMetadata(ClusterInfoEntity clusterInfo) throws Exception {
-        int clusterId = (int) clusterInfo.getId();
+        long clusterId = clusterInfo.getId();
         log.debug("Delete cluster {} manager metadata.", clusterId);
         // Delete all databases metadata in the space
         List<ManagerDatabaseEntity> databaseEntities = databaseRepository.getByClusterId(clusterId);
@@ -74,7 +74,7 @@ public class ManagerMetaSyncComponent extends BaseService {
      * @throws Exception
      */
     public void syncPaloClusterMetadata(ClusterInfoEntity clusterInfo) throws Exception {
-        int clusterId = (int) clusterInfo.getId();
+        long clusterId = clusterInfo.getId();
         try {
             log.info("Start to sync palo cluster {} metadata to manager.", clusterId);
             List<String> databaseList = metaInfoClient.getDatabaseList(ConstantDef.DORIS_DEFAULT_NS, clusterInfo);
@@ -202,7 +202,7 @@ public class ManagerMetaSyncComponent extends BaseService {
      * @return
      * @throws Exception
      */
-    public int addDatabase(String db, String description, int nsId, int clusterId) throws Exception {
+    public int addDatabase(String db, String description, int nsId, long clusterId) throws Exception {
         try {
             // Judge whether the database has been cached
             List<ManagerDatabaseEntity> existDb = databaseRepository.getByClusterIdAndName(clusterId, db);
@@ -226,7 +226,7 @@ public class ManagerMetaSyncComponent extends BaseService {
         }
     }
 
-    public void deleteDatabase(int clusterId, int dbId) throws Exception {
+    public void deleteDatabase(long clusterId, int dbId) throws Exception {
         ManagerDatabaseEntity databaseEntity = databaseRepository.findById(dbId).get();
         deleteDatabase(databaseEntity.getName(), clusterId);
     }
@@ -237,7 +237,7 @@ public class ManagerMetaSyncComponent extends BaseService {
      *
      * @throws Exception
      */
-    private void deleteDatabase(String db, int clusterId) throws Exception {
+    private void deleteDatabase(String db, long clusterId) throws Exception {
         log.debug("delete cluster {} database {} metadata", clusterId, db);
         try {
             // Get database information

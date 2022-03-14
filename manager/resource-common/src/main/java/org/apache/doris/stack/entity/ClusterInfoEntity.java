@@ -172,7 +172,7 @@ public class ClusterInfoEntity {
 
     public NewUserSpaceInfo transToNewModel() {
         NewUserSpaceInfo userSpaceInfo = new NewUserSpaceInfo();
-        userSpaceInfo.setId((int) this.id);
+        userSpaceInfo.setId(this.id);
         userSpaceInfo.setName(this.name);
         userSpaceInfo.setDescription(this.description);
         userSpaceInfo.setPaloAddress(this.address);

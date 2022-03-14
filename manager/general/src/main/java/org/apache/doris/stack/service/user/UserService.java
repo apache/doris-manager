@@ -115,7 +115,7 @@
 //     */
 //    public List<UserInfo> getAllUser(boolean includeDeactivated, int userId) throws Exception {
 //        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(userId);
-//        int clusterId = clusterInfo.getId();
+//        long clusterId = clusterInfo.getId();
 //
 //        if (includeDeactivated) {
 //            log.debug("get space {} all users", clusterId);
@@ -176,7 +176,7 @@
 //            userInfo.setActive(true);
 //            return userInfo;
 //        }
-//        int clusterId = clusterUserComponent.getClusterIdByUserId(userId);
+//        long clusterId = clusterUserComponent.getClusterIdByUserId(userId);
 //        CoreUserEntity userEntity = userRepository.findById(userId).get();
 //
 //        UserInfo userInfo;
@@ -436,7 +436,7 @@
 //    @Transactional
 //    public boolean moveUser(int userId, int requestId) throws Exception {
 //        log.debug("Admin user {} move active user {}.", requestId, userId);
-//        int clusterId = clusterUserComponent.checkUserSameCluster(requestId, userId);
+//        long clusterId = clusterUserComponent.checkUserSameCluster(requestId, userId);
 //        CoreUserEntity user = userRepository.findById(userId).get();
 //        utilService.checkUserActive(user);
 //        if (!user.getLdapAuth()) {

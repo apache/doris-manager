@@ -144,7 +144,7 @@ public class SettingComponent {
      * @param key
      * @param value
      */
-    public StudioSettingEntity addNewAdminSetting(int clusterId, String key, String value) throws Exception {
+    public StudioSettingEntity addNewAdminSetting(long clusterId, String key, String value) throws Exception {
         log.debug("Add a new admin setting key {} value {} for cluster {}.", key, value, clusterId);
         if (ConfigConstant.ALL_ADMIN_CONFIGS.containsKey(key)) {
             StudioSettingEntity studioSettingEntity = new StudioSettingEntity(key, clusterId, value);
@@ -165,7 +165,7 @@ public class SettingComponent {
      * @param key
      * @return
      */
-    public StudioSettingEntity readAdminSetting(int clusterId, String key) {
+    public StudioSettingEntity readAdminSetting(long clusterId, String key) {
         log.debug("Read a admin setting key {} from cluster {}.", key, clusterId);
         String value = ConfigCache.readAdminConfig(clusterId, key);
 
@@ -186,14 +186,14 @@ public class SettingComponent {
         return new StudioSettingEntity(key, clusterId, value);
     }
 
-    public void deleteAdminSetting(int clusterId, String key) {
+    public void deleteAdminSetting(long clusterId, String key) {
         log.debug("Delete a admin setting key {} form cluster {}.", key, clusterId);
         StudioSettingEntityPk settingEntityPk = new StudioSettingEntityPk(key, clusterId);
         studioSettingRepository.deleteById(settingEntityPk);
         ConfigCache.deleteAdminConfig(clusterId, key);
     }
 
-    public void deleteAdminSetting(int clusterId) {
+    public void deleteAdminSetting(long clusterId) {
         log.debug("Delete all admin settings form cluster {}.", clusterId);
         studioSettingRepository.deleteByClusterId(clusterId);
         ConfigCache.deleteAdminConfig(clusterId);
@@ -207,7 +207,7 @@ public class SettingComponent {
      * @param key
      * @return
      */
-    public String readAdminSettingOrDefault(int clusterId, String key) {
+    public String readAdminSettingOrDefault(long clusterId, String key) {
         log.debug("Read a admin setting key {} from cluster {}.", key, clusterId);
 
         StudioSettingEntity valueEntity = readAdminSetting(clusterId, key);

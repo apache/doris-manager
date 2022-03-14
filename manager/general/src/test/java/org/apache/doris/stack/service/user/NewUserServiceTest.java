@@ -115,7 +115,7 @@ public class NewUserServiceTest {
     public void testGetAllUser() {
         log.debug("test get all user.");
         int userId = 1;
-        int clusterId = 2;
+        long clusterId = 2;
 
         int userId1 = 2;
         int userId2 = 3;
@@ -173,7 +173,7 @@ public class NewUserServiceTest {
     @Test
     public void testGetUserById() {
         int userId = 1;
-        int clusterId = 2;
+        long clusterId = 2;
 
         CoreUserEntity requestUser = new CoreUserEntity();
         requestUser.setId(userId);
@@ -198,7 +198,6 @@ public class NewUserServiceTest {
 
             // space admin get space user information
             requestUser.setSuperuser(false);
-            // TODO：修改代码后再进行切换
 
         } catch (Exception e) {
             log.error("get user by id error");
@@ -210,7 +209,7 @@ public class NewUserServiceTest {
     @Test
     public void testGetCurrentUser() {
         int userId = 1;
-        int clusterId = 2;
+        long clusterId = 2;
         int collectionId = 4;
 
         CoreUserEntity userEntity = new CoreUserEntity();
@@ -247,7 +246,7 @@ public class NewUserServiceTest {
     @Test
     public void testUpdateUserCurrentCluster() {
         int userId = 1;
-        int clusterId = 2;
+        long clusterId = 2;
         int adminGroupId = 3;
 
         CoreUserEntity requestUser = new CoreUserEntity();

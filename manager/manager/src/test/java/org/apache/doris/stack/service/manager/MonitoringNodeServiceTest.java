@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 @RunWith(JUnit4.class)
 @Slf4j
 public class MonitoringNodeServiceTest {
-    private int clusterId;
+    private long clusterId;
 
     private ClusterInfoEntity clusterInfo;
 

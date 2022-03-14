@@ -17,14 +17,9 @@
 
 package org.apache.doris.stack.control.request.handler;
 
-import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.doris.manager.common.util.ServerAndAgentConstant;
-import org.apache.doris.stack.connector.PaloForwardManagerClient;
 import org.apache.doris.stack.control.ModelControlResponse;
 import org.apache.doris.stack.control.manager.DorisClusterManager;
 import org.apache.doris.stack.control.manager.ResourceClusterManager;
@@ -33,14 +28,15 @@ import org.apache.doris.stack.control.request.DorisClusterRequestHandler;
 import org.apache.doris.stack.control.request.content.DorisClusterTakeOverRequest;
 import org.apache.doris.stack.dao.ClusterInfoRepository;
 import org.apache.doris.stack.dao.ResourceNodeRepository;
+import org.apache.doris.stack.driver.JdbcSampleClient;
 import org.apache.doris.stack.entity.ClusterInfoEntity;
 import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.entity.ResourceNodeEntity;
-import org.apache.doris.stack.model.palo.PaloResponseEntity;
 import org.apache.doris.stack.model.request.control.DorisClusterModuleResourceConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -58,13 +54,13 @@ public class DorisClusterTakeOverRequestHandler extends DorisClusterRequestHandl
     private ResourceClusterManager resourceClusterManager;
 
     @Autowired
-    private PaloForwardManagerClient paloForwardManagerClient;
-
-    @Autowired
     private ClusterInfoRepository clusterInfoRepository;
 
     @Autowired
     private ResourceNodeRepository nodeRepository;
+
+    @Autowired
+    private JdbcSampleClient jdbcClient;
 
     @Override
     public ModelControlResponse handleRequestEvent(CoreUserEntity user, DorisClusterRequest takeOverRequest,
@@ -126,24 +122,11 @@ public class DorisClusterTakeOverRequestHandler extends DorisClusterRequestHandl
         // TODO:get cluster nodes ip info
         List<String> nodeIps = new ArrayList<>();
 
-        String nodesUrl = "http://" + clusterInfo.getAddress() + ":"
-                + clusterInfo.getHttpPort() + "/rest/v2/manager/node/node_list";
-        Object nodesListInfo = paloForwardManagerClient.forwardGet(nodesUrl, clusterInfo);
-        PaloResponseInfo responseInfo = JSON.parseObject(JSON.toJSONString(nodesListInfo), PaloResponseInfo.class);
+        Statement stmt = jdbcClient.getStatement(clusterInfo.getAddress(), clusterInfo.getQueryPort(), clusterInfo.getUser(), clusterInfo.getPasswd());
+        Set<String> feNodeIps = jdbcClient.getFeOrBeIps(stmt, "'/frontends';");
 
-        NodesInfo nodesInfo = JSON.parseObject(responseInfo.getBody().getData(), NodesInfo.class);
-
-        Set<String> feNodeIps = new HashSet<>();
-        for (String fe: nodesInfo.getBackend()) {
-            String feNode = fe.split(":")[0];
-            feNodeIps.add(feNode);
-        }
-
-        Set<String> beNodeIps = new HashSet<>();
-        for (String be: nodesInfo.getBackend()) {
-            String beNode = be.split(":")[0];
-            beNodeIps.add(beNode);
-        }
+        Set<String> beNodeIps = jdbcClient.getFeOrBeIps(stmt, "'/backends';");
+        jdbcClient.closeStatement(stmt);
 
         Set<String> allNodeDistinct = new HashSet<>();
         allNodeDistinct.addAll(feNodeIps);
@@ -204,21 +187,5 @@ public class DorisClusterTakeOverRequestHandler extends DorisClusterRequestHandl
         long clusterId = request.getClusterId();
         dorisClusterManager.checkClusterInstancesOperation(clusterId);
         return getResponse(request, true);
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    private static class NodesInfo {
-        private List<String> backend;
-
-        private List<String> frontend;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    private static class PaloResponseInfo {
-        private PaloResponseEntity body;
     }
 }

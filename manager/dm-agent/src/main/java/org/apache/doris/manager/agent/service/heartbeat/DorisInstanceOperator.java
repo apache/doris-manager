@@ -53,7 +53,7 @@ public class DorisInstanceOperator {
             downloadScript.append(packageInfo);
             downloadScript.append(" ");
             downloadScript.append(installInfo);
-
+            log.info("download Script is {}", downloadScript);
             try {
                 executePkgShellScript(downloadScript.toString(), installInfo,
                         ServerAndAgentConstant.AGENT_NAME, Maps.newHashMap());
@@ -75,7 +75,7 @@ public class DorisInstanceOperator {
                 confFile = Paths.get(installInfo, moudleName, "conf", ServerAndAgentConstant.FE_CONF_FILE).toFile();
 
             } else if (moudleName.equals(ServerAndAgentConstant.BE_NAME)) {
-                String dataPathConfig = parms.get(ConfigDefault.FE_META_CONFIG_NAME);
+                String dataPathConfig = parms.get(ConfigDefault.BE_DATA_CONFIG_NAME);
                 String[] dataPaths = dataPathConfig.split(";");
                 for (String dataPath : dataPaths) {
                     createDataPath(dataPath);
@@ -98,11 +98,11 @@ public class DorisInstanceOperator {
             Files.asCharSink(confFile, Charset.forName("UTF-8")).write(configFileContentBuffer.toString());
 
             log.info("config {} instance success");
+            return true;
         } catch (Exception e) {
             log.error("config {} instance error", e);
             return false;
         }
-        return false;
     }
 
     public boolean startInstance(String moudleName, String installInfo, String followerEndpoint) {
@@ -123,7 +123,7 @@ public class DorisInstanceOperator {
                 }
                 startScript += " --daemon";
 
-                executePkgShellScript(startScript, installInfo, moudleName, Maps.newHashMap());
+                executePkgShellScriptWithBash(startScript, installInfo, moudleName, Maps.newHashMap());
             } else {
                 log.info("{} instance is running", moudleName);
             }
@@ -297,9 +297,19 @@ public class DorisInstanceOperator {
     private void executePkgShellScript(String scriptName, String runningDir,
                                        String moduleName, Map<String, String> environment) throws Exception {
         String scripts = Paths.get(runningDir, moduleName, "bin", scriptName).toFile().getAbsolutePath();
+        int index = scripts.indexOf(":") + 1;
+        scripts = scripts.substring(0, index) + "//" + scripts.substring(index + 1);
         final String shellCmd = "sh " + scripts;
         log.info("begin to execute: `" + shellCmd + "`");
         executeShell(shellCmd, environment);
+    }
+
+    private void executePkgShellScriptWithBash(String scriptName, String runningDir,
+                                       String moduleName, Map<String, String> environment) throws Exception {
+        String scripts = Paths.get(runningDir, moduleName, "bin", scriptName).toFile().getAbsolutePath();
+        final String shellCmd = "sh " + scripts;
+        log.info("begin to execute: `" + shellCmd + "`");
+        ShellUtil.cmdExecute(shellCmd);
     }
 
     private int executeShell(String shellCmd, Map<String, String> environment) throws Exception {

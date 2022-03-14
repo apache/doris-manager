@@ -53,7 +53,7 @@ public class DatabuildComponentTest {
     public void checkClusterDatabaseTest() {
         log.debug("check database belong cluster test");
         int dbId = 1;
-        int clusterId = 2;
+        long clusterId = 2;
 
         // Check that the result is correct and return database information
         // Construct database information

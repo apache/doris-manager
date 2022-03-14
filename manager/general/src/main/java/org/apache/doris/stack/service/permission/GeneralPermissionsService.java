@@ -73,7 +73,7 @@ public class GeneralPermissionsService extends BaseService {
      */
     public List<PermissionsGroupInfo> getAllPermissionGroup(CoreUserEntity user) throws Exception {
         int userId = user.getId();
-        int clusterId = clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
+        long clusterId = clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
 
         log.debug("user {} get cluster {} all permissionGroup", userId, clusterId);
         // 获取空间内所有用户权限组ID
@@ -105,7 +105,7 @@ public class GeneralPermissionsService extends BaseService {
      */
     public PermissionsGroupInfo getPermissionGroupById(CoreUserEntity user, int groupId) throws Exception {
         int userId = user.getId();
-        int clusterId = clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
+        long clusterId = clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
         log.debug("user {} get cluster {} all permissionGroup by groupId {} ", userId, clusterId, groupId);
 
         // get role info,and check whether role belong to current space
@@ -133,7 +133,7 @@ public class GeneralPermissionsService extends BaseService {
         int userId = user.getId();
         checkRequestBody(addReq.hasEmptyField());
         ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
-        int clusterId = (int) clusterInfo.getId();
+        long clusterId = clusterInfo.getId();
 
         log.debug("user {} add permission group {} for cluster {}", userId, addReq.getName(), clusterId);
         // check role name duplicated
@@ -168,7 +168,7 @@ public class GeneralPermissionsService extends BaseService {
         int userId = user.getId();
         log.debug("user {} update group {}.", userId, groupId);
         ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
-        int clusterId = (int) clusterInfo.getId();
+        long clusterId = clusterInfo.getId();
         // check if role is admin or all user
         if (groupId == clusterInfo.getAdminGroupId() || groupId == clusterInfo.getAllUserGroupId()) {
             log.error("The group is admin group or all user group.");
@@ -230,7 +230,7 @@ public class GeneralPermissionsService extends BaseService {
      * @throws Exception
      */
     public Map<Integer, List<UserGroupMembership>> getAllMemberships(CoreUserEntity user) throws Exception {
-        int clusterId = clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
+        long clusterId = clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
         // get all roles of current space
         log.debug("get cluster all group.");
         Set<Integer> groupsId = groupRoleRepository.getGroupIdByClusterId(clusterId);
@@ -274,7 +274,7 @@ public class GeneralPermissionsService extends BaseService {
     public List<GroupMember> addMembership(CoreUserEntity user, PermissionMembershipReq req) throws Exception {
         int userId = user.getId();
         ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
-        int clusterId = (int) clusterInfo.getId();
+        long clusterId = clusterInfo.getId();
         // check role belong to current cluster
         checkClusterGroup(clusterId, req.getGroupId());
         return addUserMembership(req.getUserId(), req.getGroupId(), clusterInfo);
@@ -285,7 +285,7 @@ public class GeneralPermissionsService extends BaseService {
         log.debug("add membership for cluster {} user {}.", clusterInfo.getId(), addUserId);
 
         // check the added user belong to current space
-        clusterUserComponent.checkUserBelongToCluster(addUserId, (int) clusterInfo.getId());
+        clusterUserComponent.checkUserBelongToCluster(addUserId, clusterInfo.getId());
 
         // add role memberships
         clusterUserComponent.addGroupUserMembership(addUserId, groupId);
@@ -319,7 +319,7 @@ public class GeneralPermissionsService extends BaseService {
                                                 BatchPermissionMembershipReq req) throws Exception {
         int userId = user.getId();
         ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
-        int clusterId = (int) clusterInfo.getId();
+        long clusterId = clusterInfo.getId();
         // check role belong to space
         checkClusterGroup(clusterId, req.getGroupId());
         for (int userAddId : req.getUserIds()) {
@@ -340,7 +340,7 @@ public class GeneralPermissionsService extends BaseService {
     public void deleteMembership(CoreUserEntity user, int membershipId) throws Exception {
         int userId = user.getId();
         ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
-        int clusterId = (int) clusterInfo.getId();
+        long clusterId = clusterInfo.getId();
         log.debug("user {} delete membership {} in cluster {}", userId, membershipId, clusterId);
 
         // check Membership exists
@@ -385,7 +385,7 @@ public class GeneralPermissionsService extends BaseService {
      * @param groupId
      * @throws Exception
      */
-    public PermissionsGroupRoleEntity checkClusterGroup(int clusterId, int groupId) throws Exception {
+    public PermissionsGroupRoleEntity checkClusterGroup(long clusterId, int groupId) throws Exception {
         log.debug("Check the group {} belongs to the cluster {}.", groupId, clusterId);
         Optional<PermissionsGroupRoleEntity> groupOp = groupRoleRepository.findById(groupId);
         if (groupOp.equals(Optional.empty())) {
@@ -400,7 +400,7 @@ public class GeneralPermissionsService extends BaseService {
         return group;
     }
 
-    public void checkGroupNameDuplicate(String name, int clusterId) throws Exception {
+    public void checkGroupNameDuplicate(String name, long clusterId) throws Exception {
         log.debug("check group name {} is exist in cluster {}.", name, clusterId);
         List<PermissionsGroupRoleEntity> groupRoleEntities =
                 groupRoleRepository.getByGroupNameAndClusterId(name, clusterId);

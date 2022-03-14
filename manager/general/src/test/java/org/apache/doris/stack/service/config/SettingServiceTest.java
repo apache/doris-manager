@@ -188,7 +188,7 @@ public class SettingServiceTest {
         log.debug("Test get admin user all config.");
 
         int userId = 1;
-        int clusterId = 1;
+        long clusterId = 1;
         CoreUserEntity userEntity = new CoreUserEntity();
         userEntity.setId(userId);
         userEntity.setClusterId(clusterId);
@@ -265,7 +265,7 @@ public class SettingServiceTest {
     public void testGetAdminConfigByKey() {
         log.debug("Test admin user get config by key.");
         int userId = 1;
-        int clusterId = 1;
+        long clusterId = 1;
         CoreUserEntity userEntity = new CoreUserEntity();
         userEntity.setId(userId);
         userEntity.setClusterId(clusterId);
@@ -345,7 +345,7 @@ public class SettingServiceTest {
     public void testAmdinUpdateConfigByKey() {
         log.debug("Test admin user update config by key.");
         int userId = 1;
-        int clusterId = 2;
+        long clusterId = 2;
         CoreUserEntity userEntity = new CoreUserEntity();
         userEntity.setId(userId);
         userEntity.setClusterId(clusterId);

@@ -62,7 +62,7 @@ public class NativeQueryServiceTest {
     public void executeSqlByDbIdTest() {
         log.debug("execute sql by dbId test.");
         int nsId = 0;
-        int clusterId = 1;
+        long clusterId = 1;
         int dbId = 2;
         int userId = 3;
 
@@ -103,7 +103,7 @@ public class NativeQueryServiceTest {
     @Test
     public void executeSqlByTest() {
         log.debug("execute sql test.");
-        int clusterId = 1;
+        long clusterId = 1;
         int userId = 2;
         String dbName = "db";
         String sql = "select * from table";
@@ -122,7 +122,7 @@ public class NativeQueryServiceTest {
     }
 
     // mock cluster
-    private ClusterInfoEntity mockClusterInfo(int clusterId) {
+    private ClusterInfoEntity mockClusterInfo(long clusterId) {
         ClusterInfoEntity clusterInfo = new ClusterInfoEntity();
         clusterInfo.setId(clusterId);
         clusterInfo.setName("doris1");
@@ -135,7 +135,7 @@ public class NativeQueryServiceTest {
         return clusterInfo;
     }
 
-    private CoreUserEntity mockRequestUser(int userId, int clusterId) {
+    private CoreUserEntity mockRequestUser(int userId, long clusterId) {
         CoreUserEntity userEntity = new CoreUserEntity();
         userEntity.setId(userId);
         userEntity.setClusterId(clusterId);

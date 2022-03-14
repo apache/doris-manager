@@ -31,22 +31,22 @@ public interface ClusterUserMembershipRepository extends JpaRepository<ClusterUs
     List<ClusterUserMembershipEntity> getByUserId(@Param("userId") int userId);
 
     @Query("select s from ClusterUserMembershipEntity s where s.clusterId = :clusterId")
-    List<ClusterUserMembershipEntity> getByClusterId(@Param("clusterId") int clusterId);
+    List<ClusterUserMembershipEntity> getByClusterId(@Param("clusterId") long clusterId);
 
     @Query("select s.userId from ClusterUserMembershipEntity s where s.clusterId = :clusterId")
-    List<Integer> getUserIdsByClusterId(@Param("clusterId") int clusterId);
+    List<Integer> getUserIdsByClusterId(@Param("clusterId") long clusterId);
 
     @Query("select s from ClusterUserMembershipEntity s where s.userId = :userId and s.clusterId = :clusterId")
     List<ClusterUserMembershipEntity> getByUserIdAndClusterId(@Param("userId") int userId,
-                                                               @Param("clusterId") int clusterId);
+                                                               @Param("clusterId") long clusterId);
 
     @Modifying
     @Query("delete from ClusterUserMembershipEntity p where p.userId = :userId and p.clusterId = :clusterId")
-    void deleteByUserIdAndClusterId(@Param("userId") int userId, @Param("clusterId") int clusterId);
+    void deleteByUserIdAndClusterId(@Param("userId") int userId, @Param("clusterId") long clusterId);
 
     @Modifying
     @Query("delete from ClusterUserMembershipEntity p where p.clusterId = :clusterId")
-    void deleteByClusterId(@Param("clusterId") int clusterId);
+    void deleteByClusterId(@Param("clusterId") long clusterId);
 
     @Modifying
     @Query("delete from ClusterUserMembershipEntity p where p.userId = :userId")

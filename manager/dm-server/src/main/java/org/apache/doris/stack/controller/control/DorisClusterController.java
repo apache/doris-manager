@@ -150,4 +150,17 @@ public class DorisClusterController {
         return ResponseEntityBuilder.ok(clusterService.getClusterResourceNodes(clusterId));
     }
 
+    @ApiOperation(value = "Super user get JDBC service status of Doris cluster")
+    @GetMapping(value = "{clusterId}/jdbc/service/ready", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object getJdbcService(@PathVariable(value = "clusterId") long clusterId,
+                              HttpServletRequest request,
+                              HttpServletResponse response) throws Exception {
+        log.debug("Super user get JDBC service status of Doris cluster.");
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // check is super admin user
+        authenticationService.checkUserIsAdmin(user);
+
+        return ResponseEntityBuilder.ok(clusterService.checkJdbcServiceReady(clusterId));
+    }
+
 }

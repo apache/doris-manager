@@ -90,7 +90,7 @@ public class MetadataServiceTest {
     @Test
     public void getDatabaseListByNsTest() {
         log.debug("get database list by ns test");
-        int clusterId = 1;
+        long clusterId = 1;
         int userId = 2;
         int ns = 3;
 
@@ -120,7 +120,7 @@ public class MetadataServiceTest {
     @Test
     public void getDatabaseInfoTest() {
         log.debug("Get database info test");
-        int clusterId = 1;
+        long clusterId = 1;
         int userId = 2;
         int dbId = 3;
 
@@ -176,7 +176,7 @@ public class MetadataServiceTest {
     @Test
     public void getTableListByDbTest() {
         log.debug("Get database table list test");
-        int clusterId = 1;
+        long clusterId = 1;
         int userId = 2;
         int dbId = 3;
 
@@ -216,7 +216,7 @@ public class MetadataServiceTest {
     @Test
     public void getTableInfoTest() {
         log.debug("Get table info test");
-        int clusterId = 1;
+        long clusterId = 1;
         int userId = 2;
         int tableId = 3;
         int dbId = 4;
@@ -283,7 +283,7 @@ public class MetadataServiceTest {
     @Test
     public void getTableSchemaAndFieldListTest() {
         log.debug("Get table schema and field list test");
-        int clusterId = 1;
+        long clusterId = 1;
         int userId = 2;
         int tableId = 3;
         int dbId = 4;
@@ -353,7 +353,7 @@ public class MetadataServiceTest {
     }
 
     // mock cluster
-    private ClusterInfoEntity mockClusterInfo(int clusterId) {
+    private ClusterInfoEntity mockClusterInfo(long clusterId) {
         ClusterInfoEntity clusterInfo = new ClusterInfoEntity();
         clusterInfo.setId(clusterId);
         clusterInfo.setName("doris1");
@@ -366,7 +366,7 @@ public class MetadataServiceTest {
         return clusterInfo;
     }
 
-    private CoreUserEntity mockRequestUser(int userId, int clusterId) {
+    private CoreUserEntity mockRequestUser(int userId, long clusterId) {
         CoreUserEntity userEntity = new CoreUserEntity();
         userEntity.setId(userId);
         userEntity.setClusterId(clusterId);

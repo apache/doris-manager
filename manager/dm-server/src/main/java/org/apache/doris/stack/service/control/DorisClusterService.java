@@ -34,11 +34,14 @@ import org.apache.doris.stack.control.request.handler.DorisClusterTakeOverReques
 import org.apache.doris.stack.dao.ClusterInfoRepository;
 import org.apache.doris.stack.dao.ClusterInstanceRepository;
 import org.apache.doris.stack.dao.ClusterModuleRepository;
+import org.apache.doris.stack.dao.ClusterModuleServiceRepository;
 import org.apache.doris.stack.dao.HeartBeatEventRepository;
 import org.apache.doris.stack.dao.ResourceNodeRepository;
+import org.apache.doris.stack.driver.JdbcSampleClient;
 import org.apache.doris.stack.entity.ClusterInfoEntity;
 import org.apache.doris.stack.entity.ClusterInstanceEntity;
 import org.apache.doris.stack.entity.ClusterModuleEntity;
+import org.apache.doris.stack.entity.ClusterModuleServiceEntity;
 import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.entity.HeartBeatEventEntity;
 import org.apache.doris.stack.entity.ResourceNodeEntity;
@@ -51,6 +54,7 @@ import org.apache.doris.stack.model.response.control.ClusterModuleInfo;
 import org.apache.doris.stack.model.response.control.ResourceNodeInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +79,9 @@ public class DorisClusterService {
     private ClusterInstanceRepository instanceRepository;
 
     @Autowired
+    private ClusterModuleServiceRepository serviceRepository;
+
+    @Autowired
     private DorisClusterCreationRequestHandler creationRequestHandler;
 
     @Autowired
@@ -89,6 +96,10 @@ public class DorisClusterService {
     @Autowired
     private DorisClusterRestartRequestHandler restartRequestHandler;
 
+    @Autowired
+    private JdbcSampleClient jdbcSampleClient;
+
+    @Transactional
     public ModelControlResponse creation(CoreUserEntity user, DorisClusterCreationReq creationReq) throws Exception {
         log.info("Rquest info is {}", JSON.toJSON(creationReq));
 
@@ -103,6 +114,7 @@ public class DorisClusterService {
         return response;
     }
 
+    @Transactional
     public ModelControlResponse takeOver(CoreUserEntity user, DorisClusterTakeOverReq takeOverReq) throws Exception {
         log.info("Rquest info is {}", JSON.toJSON(takeOverReq));
         DorisClusterTakeOverRequest request = new DorisClusterTakeOverRequest();
@@ -127,7 +139,7 @@ public class DorisClusterService {
 
     public ModelControlResponse startCluster(CoreUserEntity user, long clusterId) throws Exception {
         DorisClusterRequest request = new DorisClusterRequest();
-        request.setType(ModelControlRequestType.RESIZE);
+        request.setType(ModelControlRequestType.START);
         request.setClusterId(clusterId);
         request.setRequestId(0);
         ModelControlResponse response = startRequestHandler.handleRequest(user, request);
@@ -236,6 +248,27 @@ public class DorisClusterService {
             nodeInfos.add(nodeInfo);
         }
         return nodeInfos;
+    }
+
+    public boolean checkJdbcServiceReady(long clusterId) {
+        ClusterInfoEntity clusterInfoEntity = clusterInfoRepository.findById(clusterId).get();
+        if (clusterInfoEntity.getAddress() != null && !clusterInfoEntity.getAddress().isEmpty()) {
+            log.info("The cluster {} is already access user space.", clusterId);
+            return true;
+        }
+
+        List<ClusterModuleServiceEntity> jdbcService =
+                serviceRepository.getByClusterIdAndName(clusterId, ServerAndAgentConstant.FE_JDBC_SERVICE);
+        if (jdbcService.isEmpty()) {
+            log.warn("The cluster {} no have jdbc service", clusterId);
+            return false;
+        }
+
+        ClusterModuleServiceEntity serviceEntity = jdbcService.get(0);
+        List<String> accessInfo = JSON.parseArray(serviceEntity.getAddressInfo(), String.class);
+        int feJdbcPort = serviceEntity.getPort();
+
+        return jdbcSampleClient.testConnetion(accessInfo.get(0), feJdbcPort, ServerAndAgentConstant.USER_ROOT, "");
     }
 
     private List<DeployConfigItem> getModuleDefaultConfig(String moduleName, String installInfo) {

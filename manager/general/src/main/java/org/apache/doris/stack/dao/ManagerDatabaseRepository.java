@@ -27,12 +27,12 @@ import java.util.List;
 public interface ManagerDatabaseRepository extends JpaRepository<ManagerDatabaseEntity, Integer> {
 
     @Query("select d from ManagerDatabaseEntity d where d.clusterId = :clusterId and d.name = :name")
-    List<ManagerDatabaseEntity> getByClusterIdAndName(@Param("clusterId") int clusterId,
+    List<ManagerDatabaseEntity> getByClusterIdAndName(@Param("clusterId") long clusterId,
                                                           @Param("name") String name);
 
     @Query("select d from ManagerDatabaseEntity d where d.clusterId = :clusterId")
-    List<ManagerDatabaseEntity> getByClusterId(@Param("clusterId") int clusterId);
+    List<ManagerDatabaseEntity> getByClusterId(@Param("clusterId") long clusterId);
 
     @Query("select d.name from ManagerDatabaseEntity d where d.clusterId = :clusterId")
-    List<String> getNameByClusterId(@Param("clusterId") int clusterId);
+    List<String> getNameByClusterId(@Param("clusterId") long clusterId);
 }

@@ -70,9 +70,15 @@ public class DorisClusterModuleManager {
     }
 
     public void configOperation(long clusterId, DorisClusterModuleDeployConfig deployConfig) {
-        // TODO: Step fallback operation
+
         String moduleName = deployConfig.getModuleName();
         List<ClusterModuleEntity> moduleEntities = clusterModuleRepository.getByClusterIdAndModuleName(clusterId, moduleName);
+
+        // Step fallback operation
+        // If it has been configured before, you need to delete the service information
+        for (ClusterModuleEntity moduleEntity : moduleEntities) {
+            serviceRepository.deleteByModuleId(moduleEntity.getId());
+        }
 
         ClusterModuleEntity moduleEntity = moduleEntities.get(0);
         moduleEntity.setConfig(JSON.toJSONString(deployConfig));
@@ -122,9 +128,9 @@ public class DorisClusterModuleManager {
                 }
                 index++;
             }
-            serviceCreateOperation(moduleEntity, serviceNamePorts, followerIp.toString());
+            serviceCreateOperation(moduleEntity, serviceNamePorts, followerIp);
             // TODO:Modify it when the Fe capacity is expanded
-            serviceCreateOperation(moduleEntity, editServiceNamePort, observerIps.toString());
+            serviceCreateOperation(moduleEntity, editServiceNamePort, observerIps);
         } else if (moduleName.equals(ServerAndAgentConstant.BE_NAME)) {
             // for be service, heartbeat
             for (DeployConfigItem configItem : deployConfig.getConfigs()) {
@@ -132,7 +138,7 @@ public class DorisClusterModuleManager {
                     serviceNamePorts.put(ServerAndAgentConstant.BE_HEARTBEAT_SERVICE, Integer.valueOf(configItem.getValue()));
                 }
             }
-            serviceCreateOperation(moduleEntity, serviceNamePorts, accessInfo.toString());
+            serviceCreateOperation(moduleEntity, serviceNamePorts, accessInfo);
         } else {
             // for broker service, rpc
             for (DeployConfigItem configItem : deployConfig.getConfigs()) {
@@ -140,18 +146,17 @@ public class DorisClusterModuleManager {
                     serviceNamePorts.put(ServerAndAgentConstant.BROKER_PRC_SERVICE, Integer.valueOf(configItem.getValue()));
                 }
             }
-            serviceCreateOperation(moduleEntity, serviceNamePorts, accessInfo.toString());
+            serviceCreateOperation(moduleEntity, serviceNamePorts, accessInfo);
         }
 
     }
 
-    public void serviceCreateOperation(ClusterModuleEntity module, Map<String, Integer> serviceNamePorts,
-                                       String accessInfo) {
-        // TODO:Step fallback operation
+    private void serviceCreateOperation(ClusterModuleEntity module, Map<String, Integer> serviceNamePorts,
+                                       List<String> accessInfo) {
         for (String name : serviceNamePorts.keySet()) {
             int port = serviceNamePorts.get(name);
             ClusterModuleServiceEntity serviceEntity = new ClusterModuleServiceEntity(name, module.getClusterId(),
-                    module.getId(), port, accessInfo);
+                    module.getId(), port, JSON.toJSONString(accessInfo));
             serviceRepository.save(serviceEntity);
         }
     }
@@ -192,7 +197,6 @@ public class DorisClusterModuleManager {
     }
 
     public void checkInstancesOperation(ClusterModuleEntity module) throws Exception {
-        // TODO:Step fallback operation
         List<ClusterInstanceEntity> instanceEntities = instanceRepository.getByModuleId(module.getId());
 
         for (ClusterInstanceEntity instanceEntity : instanceEntities) {

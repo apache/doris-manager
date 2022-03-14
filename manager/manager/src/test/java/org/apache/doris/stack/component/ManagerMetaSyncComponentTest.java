@@ -75,12 +75,12 @@ public class ManagerMetaSyncComponentTest {
         ClusterInfoEntity clusterInfo = mockClusterInfo();
 
         ManagerDatabaseEntity databaseEntity = new ManagerDatabaseEntity();
-        databaseEntity.setClusterId((int) clusterInfo.getId());
+        databaseEntity.setClusterId(clusterInfo.getId());
         databaseEntity.setId(1);
         databaseEntity.setName("db");
         List<ManagerDatabaseEntity> databaseEntities = Lists.newArrayList(databaseEntity);
 
-        when(databaseRepository.getByClusterId((int) clusterInfo.getId())).thenReturn(databaseEntities);
+        when(databaseRepository.getByClusterId(clusterInfo.getId())).thenReturn(databaseEntities);
 
         try {
             syncComponent.deleteClusterMetadata(clusterInfo);
@@ -96,7 +96,7 @@ public class ManagerMetaSyncComponentTest {
     @Test
     public void syncPaloClusterMetadataTestAddDb() {
         ClusterInfoEntity clusterInfo = mockClusterInfo();
-        int clusterId = (int) clusterInfo.getId();
+        long clusterId = clusterInfo.getId();
 
         try {
             // Engine latest database list
@@ -136,7 +136,7 @@ public class ManagerMetaSyncComponentTest {
     @Test
     public void syncPaloClusterMetadataTestReduceDb() {
         ClusterInfoEntity clusterInfo = mockClusterInfo();
-        int clusterId = (int) clusterInfo.getId();
+        long clusterId = clusterInfo.getId();
 
         try {
             // Engine latest database list
@@ -175,7 +175,7 @@ public class ManagerMetaSyncComponentTest {
     @Test
     public void syncPaloClusterMetadataTestUpdateDb() {
         ClusterInfoEntity clusterInfo = mockClusterInfo();
-        int clusterId = (int) clusterInfo.getId();
+        long clusterId = clusterInfo.getId();
 
         try {
             // Engine latest database list
@@ -249,7 +249,7 @@ public class ManagerMetaSyncComponentTest {
     @Test
     public void addDatabaseTest() {
         int nsId = 0;
-        int clusterId = 1;
+        long clusterId = 1;
         String db = "db1";
         String description = "desc";
         int dbId = 2;
@@ -348,7 +348,7 @@ public class ManagerMetaSyncComponentTest {
     @Test
     public void deleteDatabaseTest() {
         int dbId = 1;
-        int clusterId = 1;
+        long clusterId = 1;
         String dbName = "db";
 
         // construction database

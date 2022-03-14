@@ -46,7 +46,7 @@ public class UserActivityComponent {
      * TODO:If a space is specified, the space ID is passed in
      * @param userId
      */
-    public void userLoginActivity(int userId, int clusterId) {
+    public void userLoginActivity(int userId, long clusterId) {
         String model = ActivityModelType.user.name();
         List<ActivityEntity> activityEntities = activityRepository.getByModelAndUserId(model, userId);
         if (activityEntities == null || activityEntities.isEmpty()) {
@@ -76,7 +76,7 @@ public class UserActivityComponent {
      * @param clusterId
      * @param topic
      */
-    public void userSwitchSpace(int userId, int clusterId, String topic) {
+    public void userSwitchSpace(int userId, long clusterId, String topic) {
         String model = ActivityModelType.user.name();
         log.debug("The user {} switch space {}, add topic {} activity.", userId, clusterId, topic);
         ActivityInfoResp.Details details = new ActivityInfoResp.Details();

@@ -71,16 +71,16 @@ public interface CoreSessionRepository extends JpaRepository<CoreSessionEntity, 
     void deleteAllSessions();
 
     @Override
-    // 缓存sessionId
+    // Cache sessionid
     @Cacheable(value = "sessions", key = "#p0")
     Optional<CoreSessionEntity> findById(String sessionId);
 
     @Override
-    // 删除缓存，同时删数据
+    // Delete cache and delete data at the same time
     @CacheEvict(value = "sessions", key = "#p0")
     void deleteById(String sessionId);
 
-    // 删除缓存，数据已批量删除
+    // Delete cache, data has been deleted in batch
     @CacheEvict(value = "sessions", key = "#p0")
     void deleteSessionById(String sessionId);
 }

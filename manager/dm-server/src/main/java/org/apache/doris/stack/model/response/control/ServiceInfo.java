@@ -15,34 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package org.apache.doris.stack.entity;
+package org.apache.doris.stack.model.response.control;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+public class ServiceInfo {
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
-import javax.persistence.Table;
-
-@Entity
-@Table(name = "studio_setting")
-@Data
-@IdClass(StudioSettingEntityPk.class)
-@NoArgsConstructor
-@AllArgsConstructor
-public class StudioSettingEntity {
-
-    @Id
-    @Column(name = "[key]", columnDefinition = "VARCHAR(254)")
-    private String key;
-
-    @Id
-    @Column(name = "cluster_id", nullable = false)
-    private long clusterId;
-
-    @Column(name = "value", columnDefinition = "TEXT")
-    private String value;
 }

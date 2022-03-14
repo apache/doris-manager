@@ -84,7 +84,7 @@ public class DorisClusterManager {
 
     public void updateClusterOperation(CoreUserEntity user, long clusterId,
                                        NewUserSpaceCreateReq spaceInfo) throws Exception {
-        userSpaceComponent.update(user, (int) clusterId, spaceInfo);
+        userSpaceComponent.update(user, clusterId, spaceInfo);
     }
 
     public void createClusterResourceOperation(CoreUserEntity user, ClusterInfoEntity clusterInfoEntity,
@@ -112,7 +112,11 @@ public class DorisClusterManager {
     }
 
     public void scheduleClusterOperation(long clusterId, List<DorisClusterModuleResourceConfig> resourceConfigs) throws Exception {
-        // TODO:Step fallback operation
+        // Step fallback operation
+        // If you have done scheduling and allocation before, you need to delete the created data.
+        // If not, do nothing directly
+        deleteClusterOperation(clusterId);
+
         // Add broker node installation information, which is available for each node by default
         DorisClusterModuleResourceConfig brokerConfig = new DorisClusterModuleResourceConfig();
         brokerConfig.setModuleName(ServerAndAgentConstant.BROKER_NAME);
@@ -134,7 +138,6 @@ public class DorisClusterManager {
     }
 
     public void configClusterOperation(ClusterInfoEntity clusterInfoEntity, List<DorisClusterModuleDeployConfig> deployConfigs) {
-        // TODO:Step fallback operation
 
         ResourceClusterEntity resourceClusterEntity =
                 resourceClusterRepository.findById(clusterInfoEntity.getResourceClusterId()).get();
@@ -163,7 +166,6 @@ public class DorisClusterManager {
      * @throws Exception
      */
     public ClusterCreateReq deployClusterAfterOperation(long clusterId, String newPassword) throws Exception {
-        // TODO:get fe service info, cluster only have fe jdbc service
         List<ClusterModuleServiceEntity> serviceEntities = serviceRepository.getByClusterId(clusterId);
 
         int feJdbcPort = 0;
@@ -197,7 +199,6 @@ public class DorisClusterManager {
             }
         }
 
-        // TODO:At present, it is only a random fe host choice
         // get doris jdbc connection
         String feHost = feAccessInfo.get(0);
         Statement stmt = jdbcClient.getStatement(feHost, feJdbcPort, ServerAndAgentConstant.USER_ROOT, "");
@@ -290,6 +291,10 @@ public class DorisClusterManager {
 
     public void deleteClusterOperation(ClusterInfoEntity clusterInfo)throws Exception {
         long clusterId = clusterInfo.getId();
+        deleteClusterOperation(clusterId);
+    }
+
+    private void deleteClusterOperation(long clusterId)throws Exception {
         List<ClusterModuleEntity> moduleEntities = moduleRepository.getByClusterId(clusterId);
 
         for (ClusterModuleEntity moduleEntity : moduleEntities) {

@@ -171,7 +171,6 @@ public class PaloQueryClient extends PaloClient {
     }
 
     // execute sql by admin user, not cluster root
-    // TODO：创建用户的时候还是使用用户传入的用户名和密码要不然可能出现Admin组的数据还没写入，这里读取不到信息的错误
     public NativeQueryResp executeSQLNew(String sql, String ns, String db, ClusterInfoEntity entity) throws Exception {
         String url = getHostUrl(entity.getAddress(), entity.getHttpPort());
         StringBuffer buffer = new StringBuffer();

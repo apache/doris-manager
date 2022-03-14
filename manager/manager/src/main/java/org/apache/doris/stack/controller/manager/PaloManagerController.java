@@ -117,7 +117,7 @@ public class PaloManagerController extends BaseController {
     public Object scalarMonitor(HttpServletRequest request, HttpServletResponse response,
                                 @PathVariable("type") String type) throws Exception {
         ClusterInfoEntity clusterInfoEntity = monitorService.checkAndHandleCluster(request, response);
-        if (settingComponent.readAdminSetting((int) clusterInfoEntity.getId(), ConfigConstant.MONITOR_SOURCE).getValue()
+        if (settingComponent.readAdminSetting(clusterInfoEntity.getId(), ConfigConstant.MONITOR_SOURCE).getValue()
                 .equals(ConfigConstant.MONITOR_SRC_PALO)) {
             return paloManagerService.get(request, response, MONITOR_VALUE + type);
         } else {
@@ -133,7 +133,7 @@ public class PaloManagerController extends BaseController {
                                     @RequestParam(value = END_TIMESTAMP) long end,
                                     @RequestBody(required = false) MonitorRequestBody requestBody) throws Exception {
         ClusterInfoEntity clusterInfoEntity = monitorService.checkAndHandleCluster(request, response);
-        if (settingComponent.readAdminSetting((int) clusterInfoEntity.getId(), ConfigConstant.MONITOR_SOURCE).getValue()
+        if (settingComponent.readAdminSetting(clusterInfoEntity.getId(), ConfigConstant.MONITOR_SOURCE).getValue()
                 .equals(ConfigConstant.MONITOR_SRC_PALO)) {
             return paloManagerService.post(request, response, requestPath(type, start, end), JSON.toJSONString(requestBody, SerializerFeature.DisableCircularReferenceDetect));
         } else {

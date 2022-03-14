@@ -24,6 +24,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -31,6 +32,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import java.util.Map;
 
+@EnableCaching
 @SpringBootApplication
 @EnableScheduling
 @EnableTransactionManagement(proxyTargetClass = true)

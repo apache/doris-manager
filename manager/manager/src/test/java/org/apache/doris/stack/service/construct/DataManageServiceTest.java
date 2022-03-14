@@ -84,7 +84,7 @@ public class DataManageServiceTest {
         log.debug("Create database test");
         int nsId = 0;
         int userId = 1;
-        int clusterId = 2;
+        long clusterId = 2;
         DbCreateReq createReq = new DbCreateReq();
 
         CoreUserEntity user = mockRequestUser(userId, clusterId);
@@ -134,7 +134,7 @@ public class DataManageServiceTest {
         int nsId = 0;
         int dbId = 1;
         int userId = 2;
-        int clusterId = 3;
+        long clusterId = 3;
 
         CoreUserEntity user = mockRequestUser(userId, clusterId);
 
@@ -169,7 +169,7 @@ public class DataManageServiceTest {
         int nsId = 0;
         int dbId = 1;
         int userId = 2;
-        int clusterId = 3;
+        long clusterId = 3;
 
         CoreUserEntity user = mockRequestUser(userId, clusterId);
 
@@ -215,7 +215,7 @@ public class DataManageServiceTest {
         int nsId = 0;
         int dbId = 1;
         int userId = 2;
-        int clusterId = 3;
+        long clusterId = 3;
 
         CoreUserEntity user = mockRequestUser(userId, clusterId);
 
@@ -247,7 +247,7 @@ public class DataManageServiceTest {
         }
     }
 
-    private ManagerDatabaseEntity mockDatabase(int dbId, int clusterId, String dbName) {
+    private ManagerDatabaseEntity mockDatabase(int dbId, long clusterId, String dbName) {
         ManagerDatabaseEntity databaseEntity = new ManagerDatabaseEntity();
         databaseEntity.setClusterId(clusterId);
         databaseEntity.setId(dbId);
@@ -256,7 +256,7 @@ public class DataManageServiceTest {
         return databaseEntity;
     }
 
-    private CoreUserEntity mockRequestUser(int userId, int clusterId) {
+    private CoreUserEntity mockRequestUser(int userId, long clusterId) {
         CoreUserEntity userEntity = new CoreUserEntity();
         userEntity.setId(userId);
         userEntity.setClusterId(clusterId);
@@ -266,7 +266,7 @@ public class DataManageServiceTest {
         return userEntity;
     }
 
-    private ClusterInfoEntity mockClusterInfo(int clusterId) {
+    private ClusterInfoEntity mockClusterInfo(long clusterId) {
         ClusterInfoEntity clusterInfo = new ClusterInfoEntity();
         clusterInfo.setId(clusterId);
         clusterInfo.setName("doris1");

@@ -42,9 +42,9 @@ public class ClusterUserMembershipEntity {
     private int userId;
 
     @Column(name = "cluster_id", nullable = false)
-    private int clusterId;
+    private long clusterId;
 
-    public ClusterUserMembershipEntity(int userId, int clusterId) {
+    public ClusterUserMembershipEntity(int userId, long clusterId) {
         this.userId = userId;
         this.clusterId = clusterId;
     }

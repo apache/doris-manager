@@ -23,9 +23,12 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @Slf4j
@@ -55,6 +58,24 @@ public class JdbcSampleClient {
         }
     }
 
+    public boolean testConnetion(String host, int port, String user,
+                                 String passwd) {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("jdbc:mysql://");
+        buffer.append(host);
+        buffer.append(":");
+        buffer.append(port);
+        String url = buffer.toString();
+        try {
+            Connection myCon = DriverManager.getConnection(url, user, passwd);
+            myCon.close();
+            return true;
+        } catch (SQLException e) {
+            log.error("Get Doris fe jdbc connection exception {}.", e.getMessage());
+            return false;
+        }
+    }
+
     public Statement getStatement(String host, int port, String user, String passwd) throws Exception {
         StringBuffer buffer = new StringBuffer();
         buffer.append("jdbc:mysql://");
@@ -63,6 +84,7 @@ public class JdbcSampleClient {
         buffer.append(port);
         String url = buffer.toString();
         try {
+            log.info("Get connection by url:{}", url);
             Connection myCon = DriverManager.getConnection(url, user, passwd);
             Statement stmt = myCon.createStatement();
             return stmt;
@@ -140,6 +162,44 @@ public class JdbcSampleClient {
             throw e;
         }
     }
+
+    public Set<String> getFeOrBeIps(Statement stmt, String feOrBeInfo) throws Exception {
+        try {
+            String sql = "SHOW PROC " + feOrBeInfo;
+
+            ResultSet result = stmt.executeQuery(sql);
+            Set<String> ips = new HashSet<>();
+            while (result.next()) {
+                boolean isAlive = result.getBoolean("Alive");
+                if (isAlive) {
+                    ips.add(result.getString("IP"));
+                }
+            }
+            return ips;
+        } catch (Exception e) {
+            log.error("get be ip by jdbc error {}.", e);
+            throw e;
+        }
+    }
+
+//    public List<String> getBeIps(Statement stmt) throws Exception {
+//        try {
+//            String sql = "SHOW PROC '/backends';";
+//
+//            ResultSet result = stmt.executeQuery(sql);
+//            List<String> ips = new ArrayList<>();
+//            while (result.next()) {
+//                boolean isAlive = result.getBoolean("Alive");
+//                if (isAlive) {
+//                    ips.add(result.getString("IP"));
+//                }
+//            }
+//            return ips;
+//        } catch (Exception e) {
+//            log.error("get be ip by jdbc error {}.", e);
+//            throw e;
+//        }
+//    }
 
     public void closeStatement(Statement stmt) {
         try {

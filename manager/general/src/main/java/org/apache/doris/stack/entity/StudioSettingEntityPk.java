@@ -30,5 +30,5 @@ public class StudioSettingEntityPk implements Serializable {
 
     private String key;
 
-    private int clusterId;
+    private long clusterId;
 }

@@ -98,9 +98,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AuthenticationService extends BaseService {
 
-    // TODO:后续需要被删除
-//    public static final String SUPER_USER_NAME_VALUE = "Admin";
-
     private static final String BUILT_IN_USERNAME = "buop@studio.com";
     public static String builtInPassword = "studio@123";
     private static StringBuffer mapString;

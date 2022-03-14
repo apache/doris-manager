@@ -70,7 +70,7 @@ public class ActivityEntity {
     private String details;
 
     @Column(name = "cluster_id")
-    private Integer clusterId = 0;
+    private Long clusterId = 0L;
 
     public ActivityEntity(String topic, String model, String details) {
         this.timestamp = new Timestamp(System.currentTimeMillis());
@@ -127,16 +127,16 @@ public class ActivityEntity {
         return resp;
     }
 
-    public Integer getClusterId() {
+    public Long getClusterId() {
         if (clusterId == null) {
-            return 0;
+            return 0L;
         }
         return clusterId;
     }
 
-    public void setClusterId(Integer clusterId) {
+    public void setClusterId(Long clusterId) {
         if (clusterId == null) {
-            this.clusterId = 0;
+            this.clusterId = 0L;
         } else {
             this.clusterId = clusterId;
         }

@@ -101,7 +101,7 @@ public class CoreUserEntity {
     private String locale;
 
     @Column(name = "cluster_id")
-    private Integer clusterId = 0;
+    private Long clusterId = 0L;
 
     @Column(name = "is_cluster_admin")
     private Boolean isClusterAdmin = false;
@@ -212,7 +212,7 @@ public class CoreUserEntity {
         userInfo.setGoogleAuth(this.googleAuth);
 
         if (this.clusterId == null) {
-            userInfo.setSpaceId(0);
+            userInfo.setSpaceId(0L);
         } else {
             userInfo.setSpaceId(this.clusterId);
         }
@@ -248,16 +248,16 @@ public class CoreUserEntity {
         this.ldapAuth = ldapAuth;
     }
 
-    public Integer getClusterId() {
+    public Long getClusterId() {
         if (clusterId == null) {
-            return 0;
+            return 0L;
         }
         return clusterId;
     }
 
-    public void setClusterId(Integer clusterId) {
+    public void setClusterId(Long clusterId) {
         if (clusterId == null) {
-            this.clusterId = 0;
+            this.clusterId = 0L;
         } else {
             this.clusterId = clusterId;
         }
@@ -290,7 +290,7 @@ public class CoreUserEntity {
 
         if (obj instanceof CoreUserEntity) {
             CoreUserEntity other = (CoreUserEntity) obj;
-            //需要比较的字段相等，则这两个对象相等
+            // If the fields to be compared are equal, the two objects are equal
             if (this.entryUUID.equals(other.entryUUID)) {
                 return true;
             }

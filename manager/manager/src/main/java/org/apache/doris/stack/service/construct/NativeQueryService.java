@@ -70,7 +70,7 @@ public class NativeQueryService extends BaseService {
         if (dbId < 1) {
             dbName = ConstantDef.MYSQL_DEFAULT_SCHEMA;
         } else {
-            ManagerDatabaseEntity databaseEntity = databuildComponent.checkClusterDatabase(dbId, (int) clusterInfo.getId());
+            ManagerDatabaseEntity databaseEntity = databuildComponent.checkClusterDatabase(dbId, clusterInfo.getId());
             dbName = databaseEntity.getName();
         }
         return paloQueryClient.executeSQL(sql, ConstantDef.DORIS_DEFAULT_NS, dbName, clusterInfo);

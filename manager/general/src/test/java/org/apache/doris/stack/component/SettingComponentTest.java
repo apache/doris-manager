@@ -173,7 +173,7 @@ public class SettingComponentTest {
         ConfigCache.adminConfigCache.clear();
 
         log.debug("Test add new admin setting.");
-        int clusterId = 1;
+        long clusterId = 1;
         String key = ConfigConstant.AUTH_TYPE_KEY;
         String value = "value";
         try {
@@ -199,7 +199,7 @@ public class SettingComponentTest {
         ConfigCache.adminConfigCache.clear();
 
         log.debug("Test read admin setting.");
-        int clusterId = 1;
+        long clusterId = 1;
         String key = ConfigConstant.QUERY_CACHING_MIN_TTL;
         String value = "value";
 
@@ -231,7 +231,7 @@ public class SettingComponentTest {
         ConfigCache.adminConfigCache.clear();
 
         log.debug("Test read admin setting or default.");
-        int clusterId = 1;
+        long clusterId = 1;
         String key = ConfigConstant.QUERY_CACHING_MIN_TTL;
         StudioSettingEntityPk entityKey = new StudioSettingEntityPk(key, clusterId);
         Optional<StudioSettingEntity> entityOp = Optional.empty();
@@ -269,7 +269,7 @@ public class SettingComponentTest {
         result = item.transAdminSettingToModel(null);
         Assert.assertEquals(null, result.getValue());
 
-        int clusterId = 1;
+        long clusterId = 1;
         value = "true";
         StudioSettingEntity studioSettingEntity = new StudioSettingEntity(key, clusterId, value);
         result = item.transAdminSettingToModel(studioSettingEntity);

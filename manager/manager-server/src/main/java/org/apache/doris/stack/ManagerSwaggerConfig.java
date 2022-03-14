@@ -45,7 +45,7 @@ public class ManagerSwaggerConfig {
                 // title
                 .title("Doris-Manager server RESTful API")
                 // Creator
-                .contact(new Contact("doris manager", " ", "doris@github.com"))
+                .contact(new Contact("doris", " ", "doris@github.com"))
                 // version
                 .version("0.2")
                 // description

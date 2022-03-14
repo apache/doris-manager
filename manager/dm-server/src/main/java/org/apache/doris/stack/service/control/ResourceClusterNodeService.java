@@ -96,6 +96,7 @@ public class ResourceClusterNodeService {
             eventEntity.setStatus(eventResult.getResultType().name());
             eventEntity.setCompleted(eventResult.isCompleted());
             eventEntity.setOperateResult(JSON.toJSONString(eventResult.getResultInfo()));
+            eventEntity.setStage(eventResult.getEventStage());
             heartBeatEventRepository.save(eventEntity);
         }
     }

@@ -73,7 +73,7 @@ public class ClusterUserComponent extends BaseService {
      * @throws Exception
      */
     public ClusterInfoEntity getUserCurrentCluster(CoreUserEntity user) throws Exception {
-        int clusterId = user.getClusterId();
+        long clusterId = user.getClusterId();
         if (clusterId < 1) {
             log.error("The user do not have current cluster");
             throw new UserNoSelectClusterException();
@@ -95,33 +95,33 @@ public class ClusterUserComponent extends BaseService {
     }
 
     // add a user for all space which doesn't have default user
-    public void addDefaultUserForSpace() throws Exception {
-        log.debug("add default user");
-        List<ClusterInfoEntity> clusterInfoEntities = clusterInfoRepository.findAll();
-        for (ClusterInfoEntity clusterInfo : clusterInfoEntities) {
-            int adminGroupUserId = clusterInfo.getAdminGroupId();
-            int allUserGroupId = clusterInfo.getAllUserGroupId();
-            int clusterId = (int) clusterInfo.getId();
-            if (membershipRepository.getByUserId(-clusterId).size() < 2) {
+//    public void addDefaultUserForSpace() throws Exception {
+//        log.debug("add default user");
+//        List<ClusterInfoEntity> clusterInfoEntities = clusterInfoRepository.findAll();
+//        for (ClusterInfoEntity clusterInfo : clusterInfoEntities) {
+//            int adminGroupUserId = clusterInfo.getAdminGroupId();
+//            int allUserGroupId = clusterInfo.getAllUserGroupId();
+//            long clusterId = clusterInfo.getId();
+//            if (membershipRepository.getByUserId(-1L * clusterId).size() < 2) {
+//
+//                addDefaultUserForSpace(clusterId, adminGroupUserId, allUserGroupId);
+//            }
+//        }
+//    }
 
-                addDefaultUserForSpace(clusterId, adminGroupUserId, allUserGroupId);
-            }
-        }
-    }
-
-    public void addDefaultUserForSpace(int clusterId, int adminGroupUserId, int allUserGroupId) throws Exception {
-        log.debug("add default user for space");
-        // add into admin group
-        PermissionsGroupMembershipEntity adminMembershipEntity = new PermissionsGroupMembershipEntity();
-        adminMembershipEntity.setUserId(-clusterId);
-        adminMembershipEntity.setGroupId(adminGroupUserId);
-        membershipRepository.save(adminMembershipEntity);
-        // add into all user group
-        PermissionsGroupMembershipEntity allUserMembershipEntity = new PermissionsGroupMembershipEntity();
-        allUserMembershipEntity.setUserId(-clusterId);
-        allUserMembershipEntity.setGroupId(allUserGroupId);
-        membershipRepository.save(allUserMembershipEntity);
-    }
+//    public void addDefaultUserForSpace(long clusterId, int adminGroupUserId, int allUserGroupId) throws Exception {
+//        log.debug("add default user for space");
+//        // add into admin group
+//        PermissionsGroupMembershipEntity adminMembershipEntity = new PermissionsGroupMembershipEntity();
+//        adminMembershipEntity.setUserId(-clusterId);
+//        adminMembershipEntity.setGroupId(adminGroupUserId);
+//        membershipRepository.save(adminMembershipEntity);
+//        // add into all user group
+//        PermissionsGroupMembershipEntity allUserMembershipEntity = new PermissionsGroupMembershipEntity();
+//        allUserMembershipEntity.setUserId(-clusterId);
+//        allUserMembershipEntity.setGroupId(allUserGroupId);
+//        membershipRepository.save(allUserMembershipEntity);
+//    }
 
     /**
      * Judge whether the user is in the space
@@ -129,7 +129,7 @@ public class ClusterUserComponent extends BaseService {
      * @return
      * @throws Exception
      */
-    public boolean checkUserBelongToCluster(int userId, int clusterId) throws Exception {
+    public boolean checkUserBelongToCluster(int userId, long clusterId) throws Exception {
         // built in user
         if (userId == BuiltInUserComponent.BUILT_USER_ID) {
             return true;
@@ -149,7 +149,7 @@ public class ClusterUserComponent extends BaseService {
      * @return
      * @throws Exception
      */
-    public boolean userBelongToCluster(int userId, int clusterId) {
+    public boolean userBelongToCluster(int userId, long clusterId) {
         List<ClusterUserMembershipEntity> clusterUserMembershipEntities =
                 clusterUserMembershipRepository.getByUserIdAndClusterId(userId, clusterId);
         if (clusterUserMembershipEntities.isEmpty()) {
@@ -182,7 +182,7 @@ public class ClusterUserComponent extends BaseService {
      */
     public void addUserToCluster(int userId, ClusterInfoEntity clusterInfo) {
         ClusterUserMembershipEntity membershipEntity =
-                new ClusterUserMembershipEntity(userId, (int) clusterInfo.getId());
+                new ClusterUserMembershipEntity(userId, clusterInfo.getId());
         clusterUserMembershipRepository.save(membershipEntity);
 
         addGroupUserMembership(userId, clusterInfo.getAllUserGroupId());
@@ -205,9 +205,9 @@ public class ClusterUserComponent extends BaseService {
      * @return
      * @throws Exception
      */
-    public int getUserCurrentClusterIdAndCheckAdmin(CoreUserEntity user) throws Exception {
+    public long getUserCurrentClusterIdAndCheckAdmin(CoreUserEntity user) throws Exception {
         ClusterInfoEntity cluster = getUserCurrentCluster(user);
-        int clusterId = (int) cluster.getId();
+        long clusterId = cluster.getId();
         if (!user.isSuperuser() && !user.getIsClusterAdmin()) {
             log.error("The user {} not cluster {} space admin", user.getId(), clusterId);
             throw new NoPermissionException();
@@ -239,7 +239,7 @@ public class ClusterUserComponent extends BaseService {
      * @return
      * @throws Exception
      */
-    public ClusterInfoEntity checkUserClusterAdminPermission(CoreUserEntity user, int clusterId) throws Exception {
+    public ClusterInfoEntity checkUserClusterAdminPermission(CoreUserEntity user, long clusterId) throws Exception {
         // The super admin user has all space administrator permissions by default and can operate directly
         if (user.isSuperuser()) {
             return clusterInfoRepository.findById((long) clusterId).get();
@@ -265,7 +265,7 @@ public class ClusterUserComponent extends BaseService {
      * @return
      * @throws Exception
      */
-    public void checkUserSpuerAdminOrClusterAdmin(CoreUserEntity user, int clusterId) throws Exception {
+    public void checkUserSpuerAdminOrClusterAdmin(CoreUserEntity user, long clusterId) throws Exception {
         // The super admin user has all space administrator permissions by default and can operate directly
         if (user.isSuperuser()) {
             return;
@@ -301,7 +301,7 @@ public class ClusterUserComponent extends BaseService {
      *
      * @return
      */
-    public int addPermissionsGroup(String name, int clusterId, UserGroupRole role) {
+    public int addPermissionsGroup(String name, long clusterId, UserGroupRole role) {
         // Create a user group and bind the relationship with the Doris cluster and user information.
         PermissionsGroupRoleEntity groupRoleEntity =
                 new PermissionsGroupRoleEntity(name, role.name(), clusterId);
@@ -316,7 +316,8 @@ public class ClusterUserComponent extends BaseService {
      *
      * @return
      */
-    public int addPermissionsGroup(String name, int clusterId, UserGroupRole role, String dorisUserName, String passwd) {
+    public int addPermissionsGroup(String name, long clusterId, UserGroupRole role, String dorisUserName,
+                                   String passwd) {
         // Create a user group and bind the relationship with the Doris cluster and user information.
         PermissionsGroupRoleEntity groupRoleEntity =
                 new PermissionsGroupRoleEntity(name, role.name(), clusterId, dorisUserName, passwd);
@@ -331,7 +332,7 @@ public class ClusterUserComponent extends BaseService {
      * @Param
      * @return
      */
-    public PermissionsGroupRoleEntity addPermissionsGroupWithPaloUser(String name, int clusterId,
+    public PermissionsGroupRoleEntity addPermissionsGroupWithPaloUser(String name, long clusterId,
                                                                       UserGroupRole role, String password,
                                                                       String userName) throws Exception {
         // Create a user group and bind the relationship with the Doris cluster and user information.
@@ -376,7 +377,7 @@ public class ClusterUserComponent extends BaseService {
         return members;
     }
 
-    // 对集群未加密密码进行加密
+    // Encrypt the cluster unencrypted password
     public void encryptClusterPassword() throws Exception {
         log.debug("encrypt password for cluster");
         List<ClusterInfoEntity> clusterInfoEntities = clusterInfoRepository.findAll();
@@ -395,7 +396,7 @@ public class ClusterUserComponent extends BaseService {
                     log.debug("password has not been encrypted");
                 }
             }
-            // 空字符串加密后还是空
+            // Empty string is still empty after encryption
             clusterInfo.setPasswd(CredsUtil.aesEncrypt(clusterInfo.getPasswd()));
             clusterInfoRepository.save(clusterInfo);
         }

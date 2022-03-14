@@ -90,7 +90,7 @@ public class DataManageService extends BaseService {
 
         try {
             int dbId = syncComponent.addDatabase(createDbInfo.getName(), JSON.toJSONString(description),
-                    nsId, (int) clusterInfo.getId());
+                    nsId, clusterInfo.getId());
             log.info("save metadata db {} success.", dbId);
             return dbId;
         } catch (Exception e) {
@@ -112,13 +112,13 @@ public class DataManageService extends BaseService {
         }
         ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
 
-        ManagerDatabaseEntity databaseEntity = databuildComponent.checkClusterDatabase(dbId, (int) clusterInfo.getId());
+        ManagerDatabaseEntity databaseEntity = databuildComponent.checkClusterDatabase(dbId, clusterInfo.getId());
         String sql = "DROP DATABASE " + databaseEntity.getName();
         log.info("Delete database sql {}.", sql);
         nativeQueryService.executeSql(nsId, dbId, sql, user, clusterInfo);
         log.info("Delete database success, delete metadata");
 
-        syncComponent.deleteDatabase((int) clusterInfo.getId(), dbId);
+        syncComponent.deleteDatabase(clusterInfo.getId(), dbId);
         log.info("Delete database {} metadata success.", dbId);
     }
 
@@ -127,7 +127,7 @@ public class DataManageService extends BaseService {
         log.debug("User {} create table {} in database {}.", user.getId(), createTableInfo.getName(), dbId);
 
         ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
-        ManagerDatabaseEntity databaseEntity = databuildComponent.checkClusterDatabase(dbId, (int) clusterInfo.getId());
+        ManagerDatabaseEntity databaseEntity = databuildComponent.checkClusterDatabase(dbId, clusterInfo.getId());
 
         String sql = driver.createTable(createTableInfo);
         log.info("Create table in db {}, execute sql {}.", databaseEntity.getName(), sql);
@@ -164,7 +164,7 @@ public class DataManageService extends BaseService {
             throw new RequestFieldNullException();
         }
         ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
-        ManagerDatabaseEntity databaseEntity = databuildComponent.checkClusterDatabase(dbId, (int) clusterInfo.getId());
+        ManagerDatabaseEntity databaseEntity = databuildComponent.checkClusterDatabase(dbId, clusterInfo.getId());
         DataDescription description = new DataDescription("create by sql.", user.getFirstName());
         log.info("User {} Create table,execute sql {}.", user.getFirstName(), sql);
         String tableName = parseCreateTableSqlGetName(sql);

@@ -238,7 +238,7 @@ public class DorisManagerUserSpaceComponent extends BaseService {
      * @return
      * @throws Exception
      */
-    public NewUserSpaceInfo update(CoreUserEntity user, int spaceId, NewUserSpaceCreateReq updateReq) throws Exception {
+    public NewUserSpaceInfo update(CoreUserEntity user, long spaceId, NewUserSpaceCreateReq updateReq) throws Exception {
         checkRequestBody(updateReq.hasEmptyFieldNoCluster());
 
         log.debug("update space {} information.", spaceId);
@@ -432,13 +432,13 @@ public class DorisManagerUserSpaceComponent extends BaseService {
 
         // delete cluster configuration
         log.debug("delete cluster {} config infos.", spaceId);
-        settingComponent.deleteAdminSetting((int) spaceId);
+        settingComponent.deleteAdminSetting(spaceId);
 
         deleteClusterPermissionInfo(clusterInfo);
 
         // delete user information
         log.debug("delete cluster {} all user membership.", spaceId);
-        clusterUserMembershipRepository.deleteByClusterId((int) spaceId);
+        clusterUserMembershipRepository.deleteByClusterId(spaceId);
 
         // TODO: In order to be compatible with the deleted content of spatial information before, it is put here.
         //  If the interface that releases both cluster and physical resources is implemented later,
@@ -447,13 +447,13 @@ public class DorisManagerUserSpaceComponent extends BaseService {
     }
 
     private void deleteClusterPermissionInfo(ClusterInfoEntity clusterInfo) throws Exception {
-        int spaceId = (int) clusterInfo.getId();
+        long spaceId = clusterInfo.getId();
         log.debug("delete cluster {} data permission.", spaceId);
         // Delete the doris jdbc agent account
         PermissionsGroupRoleEntity allUserGroup = groupRoleRepository.findById(clusterInfo.getAllUserGroupId()).get();
 
         // Get all user groups in the cluster
-        HashSet<Integer> groupIds = groupRoleRepository.getGroupIdByClusterId((int) spaceId);
+        HashSet<Integer> groupIds = groupRoleRepository.getGroupIdByClusterId(spaceId);
 
         // Delete permission user group and delete the mapping relationship between user and group
         log.debug("delete cluster {} all permission group and group user membership.", spaceId);
@@ -472,9 +472,9 @@ public class DorisManagerUserSpaceComponent extends BaseService {
         }
 
         // 删除用户所在空间后，将clusterId置0
-        List<CoreUserEntity> users = userRepository.getByClusterId((int) spaceId);
+        List<CoreUserEntity> users = userRepository.getByClusterId(spaceId);
         for (CoreUserEntity user : users) {
-            user.setClusterId(0);
+            user.setClusterId(0L);
             userRepository.save(user);
         }
     }
@@ -564,7 +564,7 @@ public class DorisManagerUserSpaceComponent extends BaseService {
      * @param clusterInfoEntity
      */
     private void initSpaceAdminPermisssion(List<Integer> userIds, ClusterInfoEntity clusterInfoEntity) {
-        int clusterId = (int) clusterInfoEntity.getId();
+        long clusterId = clusterInfoEntity.getId();
         log.debug("Init palo user cluster {} admin user {} permissions.", clusterId, userIds);
 
         // Each space needs to create two user groups, admin and all user

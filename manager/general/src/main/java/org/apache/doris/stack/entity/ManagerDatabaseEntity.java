@@ -41,7 +41,7 @@ public class ManagerDatabaseEntity {
      * ID of the engine cluster
      */
     @Column(name = "cluster_id", nullable = false)
-    private int clusterId;
+    private long clusterId;
 
     @Column(name = "created_at", nullable = false)
     private Timestamp createdAt;
@@ -57,7 +57,7 @@ public class ManagerDatabaseEntity {
 
     private String type;
 
-    public ManagerDatabaseEntity(int clusterId, String name, String description) {
+    public ManagerDatabaseEntity(long clusterId, String name, String description) {
         this.clusterId = clusterId;
         this.name = name;
         this.description = description;

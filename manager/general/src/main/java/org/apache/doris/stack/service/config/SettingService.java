@@ -403,7 +403,7 @@ public class SettingService extends BaseService {
     public List<SettingItem> getAllConfig(CoreUserEntity user) throws Exception {
         int userId = user.getId();
         log.debug("user {} get all config info.", userId);
-        int clusterId = clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
+        long clusterId = clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
 
         List<SettingItem> settingItems = getAllPublicConfig();
 
@@ -468,7 +468,7 @@ public class SettingService extends BaseService {
     public SettingItem getConfigByKey(String key, CoreUserEntity user) throws Exception {
         int userId = user.getId();
         log.debug("User {} get config by key {}.", userId, key);
-        int clusterId = clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
+        long clusterId = clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
         if (ConfigConstant.ALL_ADMIN_CONFIGS.keySet().contains(key)) {
             StudioSettingEntity entity = settingComponent.readAdminSetting(clusterId, key);
             ConfigItem item = ConfigConstant.ALL_ADMIN_CONFIGS.get(key);
@@ -492,7 +492,7 @@ public class SettingService extends BaseService {
         int userId = user.getId();
         log.debug("User {} update config by key {}.", userId, key);
         checkRequestBody(updateReq.hasEmptyField());
-        int clusterId = clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
+        long clusterId = clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
 
         if (ConfigConstant.ALL_ADMIN_CONFIGS.keySet().contains(key)) {
             ConfigItem configItem = ConfigConstant.ALL_ADMIN_CONFIGS.get(key);

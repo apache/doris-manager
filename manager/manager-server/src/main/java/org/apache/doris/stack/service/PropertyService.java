@@ -149,7 +149,7 @@ public class PropertyService {
 
         // If you are an administrator in a space, you need to read the space configuration information
         if (user.getClusterId() > 0) {
-            int clusterId = user.getClusterId();
+            long clusterId = user.getClusterId();
             // enable-query-caching
             StudioSettingEntity enableQueryCache =
                     settingComponent.readAdminSetting(clusterId, ConfigConstant.ENABLE_QUERY_CACHING);

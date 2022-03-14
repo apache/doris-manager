@@ -52,7 +52,7 @@ public interface ActivityRepository extends JpaRepository<ActivityEntity, Intege
             + "and s.userId = :userId  and s.clusterId = :clusterId group by s.userId, s.model, s.modelId order by max_id desc")
     List<List<String>> getByModelsGroupByUserIdAndModelAndModelIdAndClusterId(@Param("models") List<String> models,
                                                                               @Param("userId") int userId,
-                                                                              @Param("clusterId") int clusterId,
+                                                                              @Param("clusterId") long clusterId,
                                                                               Pageable pageable);
 
     @Modifying
@@ -61,6 +61,6 @@ public interface ActivityRepository extends JpaRepository<ActivityEntity, Intege
 
     Page<ActivityEntity> findByUserId(int userId, Pageable pageable);
 
-    Page<ActivityEntity> findByUserIdAndClusterId(int userId, int clusterId, Pageable pageable);
+    Page<ActivityEntity> findByUserIdAndClusterId(int userId, long clusterId, Pageable pageable);
 
 }

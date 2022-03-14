@@ -28,6 +28,6 @@ public interface StudioSettingRepository extends JpaRepository<StudioSettingEnti
 
     @Modifying
     @Query("delete from StudioSettingEntity s where s.clusterId = :clusterId")
-    void deleteByClusterId(@Param("clusterId") int clusterId);
+    void deleteByClusterId(@Param("clusterId") long clusterId);
 
 }

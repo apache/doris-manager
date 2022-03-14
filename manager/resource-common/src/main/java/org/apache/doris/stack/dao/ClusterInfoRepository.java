@@ -49,4 +49,7 @@ public interface ClusterInfoRepository extends JpaRepository<ClusterInfoEntity, 
 
     @Query("select c.adminGroupId from ClusterInfoEntity c")
     Set<Integer> getAdminGroupIds();
+
+    @Query("select c.id from ClusterInfoEntity c where c.deployType = :deployType")
+    List<Long> getByDeployType(@Param("deployType") String deployType);
 }

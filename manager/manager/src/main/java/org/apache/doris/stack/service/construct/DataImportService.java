@@ -128,7 +128,7 @@ public class DataImportService extends BaseService {
         ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         ManagerTableEntity tableEntity = tableRepository.findById(tableId).get();
         ManagerDatabaseEntity databaseEntity =
-                databuildComponent.checkClusterDatabase(tableEntity.getDbId(), (int) clusterInfo.getId());
+                databuildComponent.checkClusterDatabase(tableEntity.getDbId(), clusterInfo.getId());
 
         Map<String, String> otherParams = Maps.newHashMap();
         otherParams.put(PARAM_COLUMN_SEPARATOR, columnSeparator);
@@ -160,7 +160,7 @@ public class DataImportService extends BaseService {
 
         ManagerTableEntity tableEntity = tableRepository.findById(tableId).get();
         ManagerDatabaseEntity databaseEntity =
-                databuildComponent.checkClusterDatabase(tableEntity.getDbId(), (int) clusterInfo.getId());
+                databuildComponent.checkClusterDatabase(tableEntity.getDbId(), clusterInfo.getId());
 
         DataImportTaskEntity taskEntity = new DataImportTaskEntity(importInfo, tableId, databaseEntity.getId(),
                 user.getFirstName(), clusterInfo.getId());
@@ -249,7 +249,7 @@ public class DataImportService extends BaseService {
         ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         ManagerTableEntity tableEntity = tableRepository.findById(tableId).get();
         ManagerDatabaseEntity databaseEntity =
-                databuildComponent.checkClusterDatabase(tableEntity.getDbId(), (int) clusterInfo.getId());
+                databuildComponent.checkClusterDatabase(tableEntity.getDbId(), clusterInfo.getId());
 
         // get broker name
         String sql = "show broker";
@@ -325,7 +325,7 @@ public class DataImportService extends BaseService {
         ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         ManagerTableEntity tableEntity = tableRepository.findById(tableId).get();
         ManagerDatabaseEntity databaseEntity =
-                databuildComponent.checkClusterDatabase(tableEntity.getDbId(), (int) clusterInfo.getId());
+                databuildComponent.checkClusterDatabase(tableEntity.getDbId(), clusterInfo.getId());
 
         DataImportTaskEntity taskEntity = new DataImportTaskEntity(importReq, tableId, databaseEntity.getId(),
                 user.getFirstName(), clusterInfo.getId());
@@ -357,7 +357,7 @@ public class DataImportService extends BaseService {
         ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         ManagerTableEntity tableEntity = tableRepository.findById(tableId).get();
         ManagerDatabaseEntity databaseEntity =
-                databuildComponent.checkClusterDatabase(tableEntity.getDbId(), (int) clusterInfo.getId());
+                databuildComponent.checkClusterDatabase(tableEntity.getDbId(), clusterInfo.getId());
 
         DataImportTaskEntity taskEntity = new DataImportTaskEntity(importReq, tableId, databaseEntity.getId(),
                 user.getFirstName(), clusterInfo.getId());
@@ -374,7 +374,7 @@ public class DataImportService extends BaseService {
         List<DataImportTaskPageResp.DataImportTaskResp> taskRespList = Lists.newArrayList();
         ManagerTableEntity tableEntity = tableRepository.findById(tableId).get();
         ManagerDatabaseEntity databaseEntity =
-                databuildComponent.checkClusterDatabase(tableEntity.getDbId(), (int) clusterInfo.getId());
+                databuildComponent.checkClusterDatabase(tableEntity.getDbId(), clusterInfo.getId());
         String dbName = databaseEntity.getName();
 
         log.debug("Paging read data import task list.");

@@ -45,7 +45,7 @@ public class UserInfo {
 
     private Timestamp updatedAt;
 
-    // TODO:这个字段后续也会删除
+    // Todo: this field will also be deleted later
     private List<Integer> groupIds;
 
     private InitStudioReq.AuthType authType;
@@ -75,7 +75,7 @@ public class UserInfo {
     /**
      * current User's space ID
      */
-    private Integer spaceId;
+    private Long spaceId;
 
     private String spaceName;
 
@@ -250,13 +250,13 @@ public class UserInfo {
 
     @JsonProperty("space_id")
     @JSONField(name = "space_id")
-    public Integer getSpaceId() {
+    public Long getSpaceId() {
         return spaceId;
     }
 
     @JsonProperty("space_id")
     @JSONField(name = "space_id")
-    public void setSpaceId(Integer spaceId) {
+    public void setSpaceId(Long spaceId) {
         this.spaceId = spaceId;
     }
 

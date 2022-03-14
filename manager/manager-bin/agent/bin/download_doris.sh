@@ -47,9 +47,15 @@ download_func() {
     echo "start to copy fe be broker to dest dir"
     cp -r $DESC_DIR/$FILENAME/fe $DESC_DIR/
     cp -r $DESC_DIR/$FILENAME/be $DESC_DIR/
-    cp -r $DESC_DIR/$FILENAME/apache_hdfs_broker $DESC_DIR/
+    if [ ! -d $DESC_DIR/$FILENAME/apache_hdfs_broker/output ]; then
+      cp -r $DESC_DIR/$FILENAME/apache_hdfs_broker $DESC_DIR/
+    else
+      cp -r $DESC_DIR/$FILENAME/apache_hdfs_broker/output/apache_hdfs_broker $DESC_DIR/
+      echo "move broker success"
+    fi
     mv $DESC_DIR/apache_hdfs_broker broker
 
+    rm -rf $DESC_DIR/$FILENAME
     return 1
 }
 

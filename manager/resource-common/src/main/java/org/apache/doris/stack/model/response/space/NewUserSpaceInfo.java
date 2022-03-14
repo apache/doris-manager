@@ -28,7 +28,7 @@ import java.util.List;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class NewUserSpaceInfo {
-    private int id;
+    private long id;
 
     private String name;
 

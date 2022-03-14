@@ -65,7 +65,7 @@ public class PaloMonitorServiceTest {
     public void monitorTest() {
         log.debug("Get doris monitor test.");
         int userId = 1;
-        int clusterId = 2;
+        long clusterId = 2;
 
         CoreUserEntity userEntity = mockRequestUser(userId, clusterId);
 
@@ -123,7 +123,7 @@ public class PaloMonitorServiceTest {
         }
     }
 
-    private CoreUserEntity mockRequestUser(int userId, int clusterId) {
+    private CoreUserEntity mockRequestUser(int userId, long clusterId) {
         CoreUserEntity userEntity = new CoreUserEntity();
         userEntity.setId(userId);
         userEntity.setClusterId(clusterId);

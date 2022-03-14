@@ -81,7 +81,7 @@ public class ConfigCache {
     }
 
     // The data structure stored in the user space configuration item cache. The key is the space ID
-    public static Map<Integer, Map<String, String>> adminConfigCache = new HashMap<>();
+    public static Map<Long, Map<String, String>> adminConfigCache = new HashMap<>();
 
     /**
      * Add in space cache configuration item
@@ -89,7 +89,7 @@ public class ConfigCache {
      * @param key
      * @param value
      */
-    public static void writeAdminConfig(int clusterId, String key, String value) {
+    public static void writeAdminConfig(long clusterId, String key, String value) {
         log.debug("Write cache config {} value {} for cluster {}.", key, value, clusterId);
         Map<String, String> clusterConfig = adminConfigCache.get(clusterId);
         if (clusterConfig == null) {
@@ -106,7 +106,7 @@ public class ConfigCache {
      * @param key
      * @return
      */
-    public static String readAdminConfig(int clusterId, String key) {
+    public static String readAdminConfig(long clusterId, String key) {
         log.debug("Get cache config {} from cluster {}.", key, clusterId);
         Map<String, String> clusterConfig = adminConfigCache.get(clusterId);
         if (clusterConfig == null) {
@@ -121,7 +121,7 @@ public class ConfigCache {
      * @param clusterId
      * @param key
      */
-    public static void deleteAdminConfig(int clusterId, String key) {
+    public static void deleteAdminConfig(long clusterId, String key) {
         log.debug("Delete cluster {} admin config {}", clusterId, key);
         Map<String, String> clusterConfig = adminConfigCache.get(clusterId);
         if (clusterConfig == null) {
@@ -135,7 +135,7 @@ public class ConfigCache {
      * Delete all cache configuration items in the space
      * @param clusterId
      */
-    public static void deleteAdminConfig(int clusterId) {
+    public static void deleteAdminConfig(long clusterId) {
         log.debug("Delete cluster {} all admin config", clusterId);
         adminConfigCache.remove(clusterId);
     }

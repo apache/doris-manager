@@ -106,7 +106,7 @@ public class DataImportServiceTest {
         log.debug("upload local file test.");
         int tableId = 1;
         int userId = 2;
-        int clusterId = 3;
+        long clusterId = 3;
         int dbId = 4;
 
         CoreUserEntity user = mockRequestUser(userId, clusterId);
@@ -133,7 +133,7 @@ public class DataImportServiceTest {
         log.debug("submit file import test.");
         int tableId = 1;
         int userId = 2;
-        int clusterId = 3;
+        long clusterId = 3;
         int dbId = 4;
 
         CoreUserEntity user = mockRequestUser(userId, clusterId);
@@ -199,7 +199,7 @@ public class DataImportServiceTest {
         log.debug("name duplicate test.");
         int dbId = 1;
         int userId = 2;
-        int clusterId = 3;
+        long clusterId = 3;
 
         CoreUserEntity user = mockRequestUser(userId, clusterId);
 
@@ -244,7 +244,7 @@ public class DataImportServiceTest {
         int userId = 1;
         int tableId = 2;
         int dbId = 3;
-        int clusterId = 4;
+        long clusterId = 4;
 
         CoreUserEntity user = mockRequestUser(userId, clusterId);
 
@@ -314,7 +314,7 @@ public class DataImportServiceTest {
         int userId = 1;
         int tableId = 2;
         int dbId = 3;
-        int clusterId = 4;
+        long clusterId = 4;
 
         CoreUserEntity user = mockRequestUser(userId, clusterId);
         // mock request
@@ -382,7 +382,7 @@ public class DataImportServiceTest {
         int userId = 1;
         int tableId = 2;
         int dbId = 3;
-        int clusterId = 4;
+        long clusterId = 4;
 
         CoreUserEntity user = mockRequestUser(userId, clusterId);
 
@@ -419,7 +419,7 @@ public class DataImportServiceTest {
         int userId = 1;
         int tableId = 2;
         int dbId = 3;
-        int clusterId = 4;
+        long clusterId = 4;
         int curPage = 1;
         int pageSize = 100;
 
@@ -465,7 +465,7 @@ public class DataImportServiceTest {
     }
 
     // mock database
-    private ManagerDatabaseEntity mockDatabase(int dbId, int clusterId, String dbName) {
+    private ManagerDatabaseEntity mockDatabase(int dbId, long clusterId, String dbName) {
         ManagerDatabaseEntity databaseEntity = new ManagerDatabaseEntity();
         databaseEntity.setClusterId(clusterId);
         databaseEntity.setId(dbId);
@@ -475,7 +475,7 @@ public class DataImportServiceTest {
     }
 
     // mock cluster
-    private ClusterInfoEntity mockClusterInfo(int clusterId) {
+    private ClusterInfoEntity mockClusterInfo(long clusterId) {
         ClusterInfoEntity clusterInfo = new ClusterInfoEntity();
         clusterInfo.setId(clusterId);
         clusterInfo.setName("doris1");
@@ -498,7 +498,7 @@ public class DataImportServiceTest {
         return tableEntity;
     }
 
-    private CoreUserEntity mockRequestUser(int userId, int clusterId) {
+    private CoreUserEntity mockRequestUser(int userId, long clusterId) {
         CoreUserEntity userEntity = new CoreUserEntity();
         userEntity.setId(userId);
         userEntity.setClusterId(clusterId);

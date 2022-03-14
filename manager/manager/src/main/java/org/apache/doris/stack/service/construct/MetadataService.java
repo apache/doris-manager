@@ -123,7 +123,7 @@ public class MetadataService extends BaseService {
     public List<Map<String, Object>> getDatabaseListByNs(int ns, CoreUserEntity user) throws Exception {
         ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
 
-        int clusterId = (int) clusterInfo.getId();
+        long clusterId = clusterInfo.getId();
         log.debug("User {} get cluster {} all databases.", user.getId(), clusterId);
 
         List<ManagerDatabaseEntity> databaseEntities = databaseRepository.getByClusterId(clusterId);
@@ -159,7 +159,7 @@ public class MetadataService extends BaseService {
             return new DatabaseResp(ConstantDef.MYSQL_DEFAULT_SCHEMA, "palo metadata database",
                     clusterInfo.getUser(), null);
         } else {
-            ManagerDatabaseEntity database = databuildComponent.checkClusterDatabase(dbId, (int) clusterInfo.getId());
+            ManagerDatabaseEntity database = databuildComponent.checkClusterDatabase(dbId, clusterInfo.getId());
 
             DataDescription description = null;
             if (database.getDescription() == null || database.getDescription().isEmpty()) {
@@ -195,7 +195,7 @@ public class MetadataService extends BaseService {
                 result.add(tableInfo);
             }
         } else {
-            databuildComponent.checkClusterDatabase(dbId, (int) clusterInfo.getId());
+            databuildComponent.checkClusterDatabase(dbId, clusterInfo.getId());
 
             List<ManagerTableEntity> tableEntities = tableRepository.getByDbId(dbId);
             for (ManagerTableEntity table : tableEntities) {
@@ -228,7 +228,7 @@ public class MetadataService extends BaseService {
             ManagerTableEntity table = tableRepository.findById(tableId).get();
 
             ManagerDatabaseEntity database =
-                    databuildComponent.checkClusterDatabase(table.getDbId(), (int) clusterInfo.getId());
+                    databuildComponent.checkClusterDatabase(table.getDbId(), clusterInfo.getId());
 
             DataDescription description = null;
             if (table.getDescription() == null || table.getDescription().isEmpty()) {
@@ -264,7 +264,7 @@ public class MetadataService extends BaseService {
         } else {
             // permisssion check
             ManagerTableEntity tableEntity = tableRepository.findById(tableId).get();
-            databuildComponent.checkClusterDatabase(tableEntity.getDbId(), (int) clusterInfo.getId());
+            databuildComponent.checkClusterDatabase(tableEntity.getDbId(), clusterInfo.getId());
 
             List<ManagerFieldEntity> fieldEntities = fieldRepository.getByTableId(tableId);
 
@@ -296,7 +296,7 @@ public class MetadataService extends BaseService {
         } else {
             // permission check
             ManagerTableEntity tableEntity = tableRepository.findById(tableId).get();
-            databuildComponent.checkClusterDatabase(tableEntity.getDbId(), (int) clusterInfo.getId());
+            databuildComponent.checkClusterDatabase(tableEntity.getDbId(), clusterInfo.getId());
 
             // Construct response data
             TableSchemaInfo.TableSchema tableSchema = new TableSchemaInfo.TableSchema();
