@@ -1,0 +1,42 @@
+@import '~antd/lib/style/themes/default.less';
+
+.flat-btn-group {
+  display: inline-block;
+
+  .anticon-down {
+    margin-left: 5px;
+    vertical-align: middle;
+    transition: 0.5s;
+  }
+
+  &:hover {
+    .anticon-down {
+      transition: 0.5s;
+      transform: rotate(180deg);
+    }
+  }
+
+  .flat-btn-more {
+    font-size: 14px;
+    color: @primary-color;
+    cursor: pointer;
+  }
+}
+
+.flat-menu {
+  &.ant-dropdown-menu {
+    min-width: 100px;
+
+    .ant-dropdown-menu-item > a,
+    .ant-dropdown-menu-submenu-title > a {
+      color: @primary-color;
+    }
+
+    .ant-dropdown-menu-item-disabled {
+      // background-color: #ddd;
+      .flat-btn--disabled {
+        color: rgba(0, 0, 0, 0.25);
+      }
+    }
+  }
+}

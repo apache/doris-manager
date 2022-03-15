@@ -1,0 +1,47 @@
+.flat-btn {
+  display: inline-block;
+  padding-right: 7px;
+  padding-left: 7px;
+  text-decoration: none !important;
+  text-shadow: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-right: 1px dashed #c4c4c4;
+  outline: none;
+  box-shadow: none;
+  // &.flat-btn--disabled {
+  //   cursor: inherit !important;
+  //   color: gray !important;
+  // }
+  &.flat-btn--default {
+    color: #414d5f;
+    cursor: not-allowed;
+  }
+
+  &:first-child {
+    padding-left: 0;
+  }
+
+  &:last-child {
+    border-right: 0;
+  }
+
+  &.btn-danger {
+    color: red;
+
+    &:hover {
+      background-color: inherit !important;
+    }
+  }
+
+  &.btn-warning {
+    color: #f0b64b;
+  }
+
+  .glyphicon-triangle-bottom {
+    margin-left: 5px;
+    font-size: 12px;
+    color: #666;
+  }
+}

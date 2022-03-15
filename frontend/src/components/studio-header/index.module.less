@@ -1,0 +1,68 @@
+.palo-header {
+  width: 100%;
+  height: 65px;
+  background: #000;
+  color: #fff;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  justify-content: space-between;
+
+  .palo-logo{
+    width: 146px;
+    height: 60px;
+    margin-right: 8px;
+    background-image: url('../../assets/logo_nav.png');
+    img{
+      height: 100%;
+    }
+  }
+
+  .palo-search{
+    flex: 1;
+    .search-icon{
+      font-size: 16px;
+      color: #FFF;
+    }
+    &>span{
+      width: 480px;
+      height: 50px;
+      background: rgb(59, 59, 59);
+      border-radius: 6px;
+      border: none;
+      input{
+        background: transparent;
+        color: #fff;
+        font-size: 1em;
+      }
+    }
+  }
+
+  .palo-opt-box{
+    display: flex;
+    height: 50px;
+    align-items: center;
+    div{
+      margin-right: 16px;
+      padding: 10px;
+      cursor: pointer;
+      .icon{
+        font-size: 20px;
+      }
+      .icon-tip{
+        margin-left: 0.5rem;
+        vertical-align: text-bottom;
+      }
+    }
+    div:hover{
+      border-radius: 8px;
+      background: rgb(32,78,171);
+    }
+    div:last-child{
+      margin-right: 0;
+    }
+  }
+}
+
+
