@@ -18,19 +18,20 @@
 
 echo "build doris manager home path"
 
-#echo "build doris manager web start"
-#cd doris-manager
-#npm install
-#npm run build
-#echo "build doris manager web end"
-#
-#cd ../
-#echo "copy doris manager web resources to server"
-#rm -rf manager-server/src/main/resources/web-resource
-#mv doris-manager/dist manager-server/src/main/resources/web-resource
-#echo "copy doris manager web resources to server end"
+echo "build doris manager frontend start"
+cd frontend
+npm install
+npm run build
+echo "build doris manager frontend end"
+
+cd ../
+echo "copy doris manager web resources to server"
+rm -rf manager/manager-server/src/main/resources/web-resource
+mv frontend/dist manager/manager-server/src/main/resources/web-resource
+echo "copy doris manager web resources to server end"
 
 echo "build doris manager server start"
+cd manager
 set -e
 mvn clean install
 echo "build doris manager server end"
