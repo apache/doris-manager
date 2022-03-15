@@ -31,23 +31,24 @@ mv frontend/dist manager/manager-server/src/main/resources/web-resource
 echo "copy doris manager web resources to server end"
 
 echo "build doris manager server start"
+rm -rf output
+rm -rf doris-manager-1.0.0.tar.gz
+mkdir -p output
+mkdir -p output/server/lib
 cd manager
 set -e
 mvn clean install
 echo "build doris manager server end"
 
 echo "copy to output package start"
-rm -rf output
-rm -rf doris-manager-1.0.0.tar.gz
-mkdir -p output
-mkdir -p output/server/lib
-mv manager-server/target/manager-server-1.0.0.jar output/server/lib/doris-manager.jar
-cp -r conf output/server/
-cp -r manager-bin output/
+cd ../
+mv manager/manager-server/target/manager-server-1.0.0.jar output/server/lib/doris-manager.jar
+cp -r manager/conf output/server/
+cp -r manager/manager-bin output/
 mv output/manager-bin/agent output/
 mv output/manager-bin output/server/bin
 mkdir -p output/agent/lib
-mv dm-agent/target/dm-agent-1.0.0.jar output/agent/lib/dm-agent.jar
-cp -r manager-server/src/main/resources/web-resource output/server/
+mv manager/dm-agent/target/dm-agent-1.0.0.jar output/agent/lib/dm-agent.jar
+cp -r manager/manager-server/src/main/resources/web-resource output/server/
 tar -zcvf doris-manager-1.0.0.tar.gz output/
 echo "copy to output package end"

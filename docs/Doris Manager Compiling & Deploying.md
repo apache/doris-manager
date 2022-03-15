@@ -2,7 +2,7 @@
 
 ## 一、代码编译和运行
 ### 一）编译
-直接运行manager路径下的build.sh脚本，会在manager路径下生成安装运行包——output，包中包括:
+直接运行build.sh脚本，会在manager路径下生成安装运行包——output，包中包括:
 
 1、agent目录：Doris manager agent的安装包，是拷贝到部署doris服务的节点的安装包；
 

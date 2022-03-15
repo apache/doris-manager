@@ -71,7 +71,7 @@ export function Header(props: HeaderProps) {
                     Swal.fire({
                         width: '480px',
                         title: `<span style="font-size: 24px; color: #2e353b;">${t`Thanks for using`} Doris Manager!</span>`,
-                        html: `<div style="margin: 4px 0;"><p style="font-size: 16px; font-weight: bold;">${t`Current Version`}: ${VERSION}</p><p style="color:#74838f; font-size: 14px">${t`Contact`}：palo-support@baidu.com</p></div>`,
+                        html: `<div style="margin: 4px 0;"><p style="font-size: 16px; font-weight: bold;">${t`Current Version`}: ${VERSION}</p><p style="color:#74838f; font-size: 14px">${t`Contact`}：dev@doris.apache.org</p></div>`,
                         footer: `<span style="font-size: 12px; color: rgb(116, 131, 143); padding: 0 0 20px 0; font-weight: bold;">Doris，${t`Born for data analysis`}</span>`,
                         imageUrl: '/src/assets/doris.png',
                         imageHeight: 68,
