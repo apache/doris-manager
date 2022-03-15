@@ -25,7 +25,7 @@ under the License.
     <contextName>logback</contextName>
 
     <!-- The value of name is the name of the variable. The value of value is the value defined by the variable. The value defined by is inserted into the logger context. Once defined, you can make "${}" use variables. -->
-    <property name="log.path" value="./logs" />
+    <springProperty name="log.path" source="logging.path" defaultValue="./logs" />
 
     <!--0. Log format and color rendering -->
     <!-- Rendering classes dependent on color logs -->
@@ -47,6 +47,24 @@ under the License.
             <!-- Set character set -->
             <charset>UTF-8</charset>
         </encoder>
+    </appender>
+
+    <!--1.1 Output all log to file-->
+    <appender name="ALL_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.path}/studio.out</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Log archiving -->
+            <fileNamePattern>${log.path}/manager-%d{yyyy-MM-dd}.%i.out</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>500MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <!--Log document retention days-->
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
     </appender>
 
     <!--2. Output to document-->

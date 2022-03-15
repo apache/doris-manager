@@ -18,11 +18,13 @@
 package org.apache.doris.stack;
 
 import org.apache.doris.stack.constant.PropertyDefine;
-import org.apache.doris.stack.util.PropertyUtil;
+import org.apache.doris.stack.util.CommonPropertyUtil;
+import org.apache.doris.stack.util.DeployType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -30,6 +32,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import java.util.Map;
 
+@EnableCaching
 @SpringBootApplication
 @EnableScheduling
 @EnableTransactionManagement(proxyTargetClass = true)
@@ -51,10 +54,10 @@ public class DorisManager extends SpringBootServletInitializer {
     }
 
     public static SpringApplicationBuilder getBuilder() {
-        Map<String, Object> properties = PropertyUtil.getProperties();
+        Map<String, Object> properties = CommonPropertyUtil.getProperties();
 
         // Configure the service name. The default is manager
-        properties.put(PropertyDefine.DEPLOY_TYPE_PROPERTY, PropertyDefine.DEPLOY_TYPE_MANAGER);
+        properties.put(PropertyDefine.DEPLOY_TYPE_PROPERTY, DeployType.manager.getName());
 
         // Static resource allocation
         properties.put("server.servlet.context-path", "/");

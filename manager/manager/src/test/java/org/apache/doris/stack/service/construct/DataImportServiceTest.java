@@ -32,7 +32,6 @@ import org.apache.doris.stack.component.ClusterUserComponent;
 import org.apache.doris.stack.component.DatabuildComponent;
 import org.apache.doris.stack.connector.PaloFileUploadClient;
 import org.apache.doris.stack.connector.PaloQueryClient;
-import org.apache.doris.stack.dao.CoreUserRepository;
 import org.apache.doris.stack.dao.DataImportTaskRepository;
 import org.apache.doris.stack.dao.ManagerTableRepository;
 import org.apache.doris.stack.driver.DorisDataBuildDriver;
@@ -80,9 +79,6 @@ public class DataImportServiceTest {
     private ManagerTableRepository tableRepository;
 
     @Mock
-    private CoreUserRepository userRepository;
-
-    @Mock
     private PaloFileUploadClient fileUploadClient;
 
     @Mock
@@ -110,8 +106,10 @@ public class DataImportServiceTest {
         log.debug("upload local file test.");
         int tableId = 1;
         int userId = 2;
-        int clusterId = 3;
+        long clusterId = 3;
         int dbId = 4;
+
+        CoreUserEntity user = mockRequestUser(userId, clusterId);
 
         // mock cluster
         ClusterInfoEntity clusterInfo = mockClusterInfo(clusterId);
@@ -121,9 +119,9 @@ public class DataImportServiceTest {
         mockTable(tableId, dbId);
 
         try {
-            when(clusterUserComponent.getClusterByUserId(userId)).thenReturn(clusterInfo);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
             when(databuildComponent.checkClusterDatabase(dbId, clusterId)).thenReturn(databaseEntity);
-            importService.uploadLocalFile(tableId, ",", null, userId, "type");
+            importService.uploadLocalFile(tableId, ",", null, user, "type");
         } catch (Exception e) {
             log.error("create table test error.");
             e.printStackTrace();
@@ -135,36 +133,38 @@ public class DataImportServiceTest {
         log.debug("submit file import test.");
         int tableId = 1;
         int userId = 2;
-        int clusterId = 3;
+        long clusterId = 3;
         int dbId = 4;
+
+        CoreUserEntity user = mockRequestUser(userId, clusterId);
 
         // mock request
         FileImportReq importInfo = new FileImportReq();
         // request body exception
         // name exception
         try {
-            importService.submitFileImport(tableId, importInfo, userId);
+            importService.submitFileImport(tableId, importInfo, user);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
         // file uuid exception
         importInfo.setName("task1");
         try {
-            importService.submitFileImport(tableId, importInfo, userId);
+            importService.submitFileImport(tableId, importInfo, user);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
         // field is null
         importInfo.setFileUuid("uuid");
         try {
-            importService.submitFileImport(tableId, importInfo, userId);
+            importService.submitFileImport(tableId, importInfo, user);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
         // field is empty
         importInfo.setColumnNames(new ArrayList<>());
         try {
-            importService.submitFileImport(tableId, importInfo, userId);
+            importService.submitFileImport(tableId, importInfo, user);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
@@ -177,19 +177,17 @@ public class DataImportServiceTest {
         ClusterInfoEntity clusterInfo = mockClusterInfo(clusterId);
         // mock db
         ManagerDatabaseEntity databaseEntity = mockDatabase(dbId, clusterId, "db");
-        // mock user
-        mockUser(userId);
         // mock table
         ManagerTableEntity tableEntity = mockTable(tableId, dbId);
         // mock task upload result
         LocalFileSubmitResult result = new LocalFileSubmitResult();
 
         try {
-            when(clusterUserComponent.getClusterByUserId(userId)).thenReturn(clusterInfo);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
             when(databuildComponent.checkClusterDatabase(dbId, clusterId)).thenReturn(databaseEntity);
             when(fileUploadClient.submitFileImport("default_cluster", databaseEntity.getName(),
                     tableEntity.getName(), importInfo, clusterInfo)).thenReturn(result);
-            importService.submitFileImport(tableId, importInfo, userId);
+            importService.submitFileImport(tableId, importInfo, user);
         } catch (Exception e) {
             log.error("create table test error.");
             e.printStackTrace();
@@ -200,17 +198,26 @@ public class DataImportServiceTest {
     public void nameDuplicateTest() {
         log.debug("name duplicate test.");
         int dbId = 1;
+        int userId = 2;
+        long clusterId = 3;
+
+        CoreUserEntity user = mockRequestUser(userId, clusterId);
+
+        // mock cluster
+        ClusterInfoEntity clusterInfo = mockClusterInfo(clusterId);
 
         // name empty exception
         try {
-            importService.nameDuplicate(dbId, "");
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
+            importService.nameDuplicate(dbId, "", user);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
 
         // format exception
         try {
-            importService.nameDuplicate(dbId, "-df_afe_dafdsdf");
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
+            importService.nameDuplicate(dbId, "-df_afe_dafdsdf", user);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), InputFormatException.MESSAGE);
         }
@@ -224,7 +231,8 @@ public class DataImportServiceTest {
         when(taskRepository.getByDbIdAndName(dbId, taskName)).thenReturn(taskEntities);
 
         try {
-            importService.nameDuplicate(dbId, taskName);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
+            importService.nameDuplicate(dbId, taskName, user);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), NameDuplicatedException.MESSAGE);
         }
@@ -236,35 +244,37 @@ public class DataImportServiceTest {
         int userId = 1;
         int tableId = 2;
         int dbId = 3;
-        int clusterId = 4;
+        long clusterId = 4;
+
+        CoreUserEntity user = mockRequestUser(userId, clusterId);
 
         // mock request
         HdfsConnectReq info = new HdfsConnectReq();
         // request exception
         // host empty
         try {
-            importService.hdfsPreview(info, userId, tableId);
+            importService.hdfsPreview(info, user, tableId);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
         // fileUrl empty
         info.setHost("10.32.23.4");
         try {
-            importService.hdfsPreview(info, userId, tableId);
+            importService.hdfsPreview(info, user, tableId);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
         // format empty
         info.setFileUrl("/sdf/test/file");
         try {
-            importService.hdfsPreview(info, userId, tableId);
+            importService.hdfsPreview(info, user, tableId);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
         // Separator empty
         info.setFormat(HdfsConnectReq.Format.CSV);
         try {
-            importService.hdfsPreview(info, userId, tableId);
+            importService.hdfsPreview(info, user, tableId);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
@@ -286,12 +296,12 @@ public class DataImportServiceTest {
         // mock HDFS file to preview query results
         HdfsFilePreview filePreview = new HdfsFilePreview();
         try {
-            when(clusterUserComponent.getClusterByUserId(userId)).thenReturn(clusterInfo);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
             when(databuildComponent.checkClusterDatabase(dbId, clusterId)).thenReturn(databaseEntity);
             when(queryClient.executeSQL(sql, "default_cluster", databaseEntity.getName(),
                     clusterInfo)).thenReturn(queryResp);
             when(fileUploadClient.getHdfsPreview(any(), any())).thenReturn(filePreview);
-            importService.hdfsPreview(info, userId, tableId);
+            importService.hdfsPreview(info, user, tableId);
         } catch (Exception e) {
             log.error("hdfs preview test error.");
             e.printStackTrace();
@@ -304,20 +314,22 @@ public class DataImportServiceTest {
         int userId = 1;
         int tableId = 2;
         int dbId = 3;
-        int clusterId = 4;
+        long clusterId = 4;
+
+        CoreUserEntity user = mockRequestUser(userId, clusterId);
         // mock request
         HdfsImportReq importReq = new HdfsImportReq();
         // Request exception test
         // name empty
         try {
-            importService.submitHdfsImport(importReq, userId, tableId);
+            importService.submitHdfsImport(importReq, user, tableId);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
         importReq.setName("name");
         // fileInfo empty
         try {
-            importService.submitHdfsImport(importReq, userId, tableId);
+            importService.submitHdfsImport(importReq, user, tableId);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
@@ -325,21 +337,21 @@ public class DataImportServiceTest {
         importReq.setFileInfo(fileInfo);
         // connectInfo empty
         try {
-            importService.submitHdfsImport(importReq, userId, tableId);
+            importService.submitHdfsImport(importReq, user, tableId);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
         // field name empty
         importReq.setConnectInfo(new HdfsFilePreviewReq.ConnectInfo());
         try {
-            importService.submitHdfsImport(importReq, userId, tableId);
+            importService.submitHdfsImport(importReq, user, tableId);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
         // column name empty
         importReq.setColumnNames(new ArrayList<>());
         try {
-            importService.submitHdfsImport(importReq, userId, tableId);
+            importService.submitHdfsImport(importReq, user, tableId);
         } catch (Exception e) {
             Assert.assertEquals(e.getMessage(), RequestFieldNullException.MESSAGE);
         }
@@ -352,14 +364,12 @@ public class DataImportServiceTest {
 
         ManagerDatabaseEntity databaseEntity = mockDatabase(dbId, clusterId, "db");
 
-        mockUser(userId);
-
         mockTable(tableId, dbId);
 
         try {
-            when(clusterUserComponent.getClusterByUserId(userId)).thenReturn(clusterInfo);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
             when(databuildComponent.checkClusterDatabase(dbId, clusterId)).thenReturn(databaseEntity);
-            importService.submitHdfsImport(importReq, userId, tableId);
+            importService.submitHdfsImport(importReq, user, tableId);
         } catch (Exception e) {
             log.error("submit hdfs import test error.");
             e.printStackTrace();
@@ -372,7 +382,10 @@ public class DataImportServiceTest {
         int userId = 1;
         int tableId = 2;
         int dbId = 3;
-        int clusterId = 4;
+        long clusterId = 4;
+
+        CoreUserEntity user = mockRequestUser(userId, clusterId);
+
         // mock request
         HdfsImportReq importReq = new HdfsImportReq();
         importReq.setName("name");
@@ -387,14 +400,12 @@ public class DataImportServiceTest {
 
         ManagerDatabaseEntity databaseEntity = mockDatabase(dbId, clusterId, "db");
 
-        mockUser(userId);
-
         mockTable(tableId, dbId);
 
         try {
-            when(clusterUserComponent.getClusterByUserId(userId)).thenReturn(clusterInfo);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
             when(databuildComponent.checkClusterDatabase(dbId, clusterId)).thenReturn(databaseEntity);
-            importService.submitHdfsImportSql(importReq, userId, tableId);
+            importService.submitHdfsImportSql(importReq, user, tableId);
         } catch (Exception e) {
             log.error("get submit hdfs import sql test error.");
             e.printStackTrace();
@@ -408,9 +419,11 @@ public class DataImportServiceTest {
         int userId = 1;
         int tableId = 2;
         int dbId = 3;
-        int clusterId = 4;
+        long clusterId = 4;
         int curPage = 1;
         int pageSize = 100;
+
+        CoreUserEntity user = mockRequestUser(userId, clusterId);
 
         ClusterInfoEntity clusterInfo = mockClusterInfo(clusterId);
 
@@ -442,9 +455,9 @@ public class DataImportServiceTest {
         when(taskRepository.findAll(spec, pageable)).thenReturn(pageTaskList);
 
         try {
-            when(clusterUserComponent.getClusterByUserId(userId)).thenReturn(clusterInfo);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
             when(databuildComponent.checkClusterDatabase(dbId, clusterId)).thenReturn(databaseEntity);
-            importService.getTaskList(tableId, curPage, pageSize, userId);
+            importService.getTaskList(tableId, curPage, pageSize, user);
         } catch (Exception e) {
             log.error("get file import task test error.");
             e.printStackTrace();
@@ -452,7 +465,7 @@ public class DataImportServiceTest {
     }
 
     // mock database
-    private ManagerDatabaseEntity mockDatabase(int dbId, int clusterId, String dbName) {
+    private ManagerDatabaseEntity mockDatabase(int dbId, long clusterId, String dbName) {
         ManagerDatabaseEntity databaseEntity = new ManagerDatabaseEntity();
         databaseEntity.setClusterId(clusterId);
         databaseEntity.setId(dbId);
@@ -462,7 +475,7 @@ public class DataImportServiceTest {
     }
 
     // mock cluster
-    private ClusterInfoEntity mockClusterInfo(int clusterId) {
+    private ClusterInfoEntity mockClusterInfo(long clusterId) {
         ClusterInfoEntity clusterInfo = new ClusterInfoEntity();
         clusterInfo.setId(clusterId);
         clusterInfo.setName("doris1");
@@ -475,16 +488,6 @@ public class DataImportServiceTest {
         return clusterInfo;
     }
 
-    // mock user
-    private CoreUserEntity mockUser(int userId) {
-        CoreUserEntity userEntity = new CoreUserEntity();
-        userEntity.setId(userId);
-        userEntity.setFirstName("user");
-        userEntity.setSuperuser(true);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-        return userEntity;
-    }
-
     // mock table
     private ManagerTableEntity mockTable(int tableId, int dbId) {
         ManagerTableEntity tableEntity = new ManagerTableEntity();
@@ -495,4 +498,13 @@ public class DataImportServiceTest {
         return tableEntity;
     }
 
+    private CoreUserEntity mockRequestUser(int userId, long clusterId) {
+        CoreUserEntity userEntity = new CoreUserEntity();
+        userEntity.setId(userId);
+        userEntity.setClusterId(clusterId);
+        userEntity.setFirstName("user");
+        userEntity.setIsClusterAdmin(true);
+        userEntity.setSuperuser(true);
+        return userEntity;
+    }
 }

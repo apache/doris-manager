@@ -19,6 +19,7 @@ package org.apache.doris.stack.service.construct;
 
 import com.alibaba.fastjson.JSON;
 import org.apache.doris.stack.constant.ConstantDef;
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.model.palo.TableSchemaInfo;
 import org.apache.doris.stack.model.response.construct.DatabaseResp;
 import org.apache.doris.stack.model.response.construct.TableResp;
@@ -40,7 +41,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,7 +83,6 @@ public class MetadataService extends BaseService {
      *
      * Synchronize all metadata of the Doris cluster backend in the current space of the manager every two hours
      */
-    @Scheduled(cron = "0 */240 * * * ?")
     @Transactional
     public void syncMetadata() {
         log.info("Background synchronization metadata");
@@ -93,15 +92,14 @@ public class MetadataService extends BaseService {
             ManagerMetaSynchronizer synchronizer = new ManagerMetaSynchronizer(clusters, syncComponent);
             threadPool.submit(synchronizer);
         } catch (Exception e) {
-            log.error("Sync metadata exception");
-            e.printStackTrace();
+            log.error("Sync metadata exception", e);
         }
     }
 
     @Transactional
-    public void syncMetadataByUserId(int studioUserId) throws Exception {
-        log.info("synchronization metadata by userId {}.", studioUserId);
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+    public void syncMetadataByUserId(CoreUserEntity user) throws Exception {
+        log.info("synchronization metadata by userId {}.", user.getId());
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         syncMetadataByCluster(clusterInfo);
     }
 
@@ -118,15 +116,15 @@ public class MetadataService extends BaseService {
      * TODO:Currently, Doris does not support multiple ns, which is now the default value
      *
      * @param ns
-     * @param studioUserId
+     * @param user
      * @return
      */
     @Transactional
-    public List<Map<String, Object>> getDatabaseListByNs(int ns, int studioUserId) throws Exception {
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+    public List<Map<String, Object>> getDatabaseListByNs(int ns, CoreUserEntity user) throws Exception {
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
 
-        int clusterId = clusterInfo.getId();
-        log.debug("User {} get cluster {} all databases.", studioUserId, clusterId);
+        long clusterId = clusterInfo.getId();
+        log.debug("User {} get cluster {} all databases.", user.getId(), clusterId);
 
         List<ManagerDatabaseEntity> databaseEntities = databaseRepository.getByClusterId(clusterId);
         List<Map<String, Object>> result = Lists.newArrayList();
@@ -148,14 +146,14 @@ public class MetadataService extends BaseService {
      * Get database details
      *
      * @param dbId
-     * @param studioUserId
+     * @param user
      * @return
      * @throws Exception
      */
     @Transactional
-    public DatabaseResp getDatabaseInfo(int dbId, int studioUserId) throws Exception {
-        log.debug("User {} get database {} info.", studioUserId, dbId);
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+    public DatabaseResp getDatabaseInfo(int dbId, CoreUserEntity user) throws Exception {
+        log.debug("User {} get database {} info.", user.getId(), dbId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
 
         if (dbId < 0) {
             return new DatabaseResp(ConstantDef.MYSQL_DEFAULT_SCHEMA, "palo metadata database",
@@ -179,14 +177,14 @@ public class MetadataService extends BaseService {
      * Get the table list of database
      *
      * @param dbId
-     * @param studioUserId
+     * @param user
      * @return
      * @throws Exception
      */
     @Transactional
-    public List<Map<String, Object>> getTableListByDb(int dbId, int studioUserId) throws Exception {
-        log.debug("User {} get table list for database {}.", studioUserId, dbId);
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+    public List<Map<String, Object>> getTableListByDb(int dbId, CoreUserEntity user) throws Exception {
+        log.debug("User {} get table list for database {}.", user.getId(), dbId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
 
         List<Map<String, Object>> result = Lists.newArrayList();
         if (dbId < 0) {
@@ -215,14 +213,14 @@ public class MetadataService extends BaseService {
      * Get table details
      *
      * @param tableId
-     * @param studioUserId
+     * @param user
      * @return
      * @throws Exception
      */
     @Transactional
-    public TableResp getTableInfo(int tableId, int studioUserId) throws Exception {
-        log.debug("User {} get table {} info.", studioUserId, tableId);
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+    public TableResp getTableInfo(int tableId, CoreUserEntity user) throws Exception {
+        log.debug("User {} get table {} info.", user.getId(), tableId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         if (tableId < 0) {
             return new TableResp(ConstantDef.MYSQL_METADATA_TABLE.get(tableId), "palo metadata table", "root",
                     null, null, ConstantDef.MYSQL_SCHEMA_DB_ID, ConstantDef.MYSQL_DEFAULT_SCHEMA);
@@ -249,14 +247,14 @@ public class MetadataService extends BaseService {
      * Gets the list of fields in the table
      *
      * @param tableId
-     * @param studioUserId
+     * @param user
      * @return
      * @throws Exception
      */
     @Transactional
-    public List<String> getFieldListByTable(int tableId, int studioUserId) throws Exception {
-        log.debug("User {} get table {} field list.", studioUserId, tableId);
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+    public List<String> getFieldListByTable(int tableId, CoreUserEntity user) throws Exception {
+        log.debug("User {} get table {} field list.", user.getId(), tableId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         if (tableId < 0) {
             String dbName = ConstantDef.MYSQL_DEFAULT_SCHEMA;
             String tableName = ConstantDef.MYSQL_METADATA_TABLE.get(tableId);
@@ -282,14 +280,14 @@ public class MetadataService extends BaseService {
      * Get schema information of the table
      *
      * @param tableId
-     * @param studioUserId
+     * @param user
      * @return
      * @throws Exception
      */
     @Transactional
-    public TableSchemaInfo.TableSchema getTableSchema(int tableId, int studioUserId) throws Exception {
-        log.debug("User {} get table {} Schema info.", studioUserId, tableId);
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+    public TableSchemaInfo.TableSchema getTableSchema(int tableId, CoreUserEntity user) throws Exception {
+        log.debug("User {} get table {} Schema info.", user, tableId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         if (tableId < 0) {
             String dbName = ConstantDef.MYSQL_DEFAULT_SCHEMA;
             String tableName = ConstantDef.MYSQL_METADATA_TABLE.get(tableId);
@@ -308,7 +306,9 @@ public class MetadataService extends BaseService {
             List<TableSchemaInfo.Schema> schema = new ArrayList<>();
             List<ManagerFieldEntity> fieldEntities = fieldRepository.getByTableId(tableId);
             for (ManagerFieldEntity fieldEntity : fieldEntities) {
-                schema.add(fieldEntity.transToModel());
+                TableSchemaInfo.Schema newSchema = new TableSchemaInfo.Schema();
+                newSchema.transFromEntity(fieldEntity);
+                schema.add(newSchema);
             }
             tableSchema.setSchema(schema);
 

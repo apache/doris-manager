@@ -20,6 +20,7 @@ package org.apache.doris.stack.model.request.user;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import org.springframework.util.StringUtils;
 
 @Data
 public class PasswordUpdateReq {
@@ -32,7 +33,7 @@ public class PasswordUpdateReq {
      * @return boolean
      */
     public boolean hasEmptyField() {
-        if (password == null || oldPassword == null) {
+        if (StringUtils.isEmpty(password)) {
             return true;
         }
 

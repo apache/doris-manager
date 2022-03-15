@@ -17,6 +17,7 @@
 
 package org.apache.doris.stack.controller.construct;
 
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.model.request.construct.DbCreateReq;
 import org.apache.doris.stack.model.request.construct.TableCreateReq;
 import org.apache.doris.stack.controller.BaseController;
@@ -57,9 +58,8 @@ public class DataManageController extends BaseController {
             HttpServletRequest request, HttpServletResponse response,
             @RequestBody DbCreateReq dbInfo) throws Exception {
         log.debug("create database by object.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        return ResponseEntityBuilder.ok(manageService.createDatabse(nsId, dbInfo, studioUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(manageService.createDatabse(nsId, dbInfo, user));
     }
 
     @ApiOperation(value = "delete Database")
@@ -70,9 +70,8 @@ public class DataManageController extends BaseController {
             @PathVariable(value = DB_KEY) int dbId,
             HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("delete database by id.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        manageService.deleteDatabse(nsId, dbId, studioUserId);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        manageService.deleteDatabse(nsId, dbId, user);
         return ResponseEntityBuilder.ok();
     }
 
@@ -86,9 +85,8 @@ public class DataManageController extends BaseController {
             HttpServletRequest request, HttpServletResponse response,
             @RequestBody String createTableSql) throws Exception {
         log.debug("create database by sql.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        return ResponseEntityBuilder.ok(manageService.crateTableBySql(nsId, dbId, createTableSql, studioUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(manageService.crateTableBySql(nsId, dbId, createTableSql, user));
     }
 
     @ApiOperation(value = "Create a table using Wizard mode")
@@ -100,10 +98,9 @@ public class DataManageController extends BaseController {
             HttpServletRequest request, HttpServletResponse response,
             @RequestBody TableCreateReq createInfo) throws Exception {
         log.debug("create table by object.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
         return ResponseEntityBuilder.ok(manageService.createTable(nsId, dbId, createInfo,
-                studioUserId));
+                user));
     }
 
     @ApiOperation(value = "Use wizard mode to create a table and view SQL statements")
@@ -115,8 +112,7 @@ public class DataManageController extends BaseController {
             HttpServletRequest request, HttpServletResponse response,
             @RequestBody TableCreateReq createInfo) throws Exception {
         log.debug("get sql of create table by object.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        return ResponseEntityBuilder.ok(manageService.createTableSql(nsId, dbId, createInfo));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(manageService.createTableSql(nsId, dbId, createInfo, user));
     }
 }

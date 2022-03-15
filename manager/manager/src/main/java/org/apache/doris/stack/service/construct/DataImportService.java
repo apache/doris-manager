@@ -33,7 +33,6 @@ import org.apache.doris.stack.component.ClusterUserComponent;
 import org.apache.doris.stack.component.DatabuildComponent;
 import org.apache.doris.stack.connector.PaloFileUploadClient;
 import org.apache.doris.stack.connector.PaloQueryClient;
-import org.apache.doris.stack.dao.CoreUserRepository;
 import org.apache.doris.stack.dao.DataImportTaskRepository;
 import org.apache.doris.stack.dao.ManagerTableRepository;
 import org.apache.doris.stack.driver.DorisDataBuildDriver;
@@ -54,7 +53,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -86,8 +84,6 @@ public class DataImportService extends BaseService {
 
     private ManagerTableRepository tableRepository;
 
-    private CoreUserRepository userRepository;
-
     private PaloFileUploadClient fileUploadClient;
 
     private PaloQueryClient queryClient;
@@ -102,7 +98,6 @@ public class DataImportService extends BaseService {
     public DataImportService(DataImportTaskRepository taskRepository,
                              ManagerTableRepository tableRepository,
                              PaloFileUploadClient fileUploadClient,
-                             CoreUserRepository userRepository,
                              PaloQueryClient queryClient,
                              DorisDataBuildDriver driver,
                              ClusterUserComponent clusterUserComponent,
@@ -110,7 +105,6 @@ public class DataImportService extends BaseService {
         this.taskRepository = taskRepository;
         this.tableRepository = tableRepository;
         this.fileUploadClient = fileUploadClient;
-        this.userRepository = userRepository;
         this.queryClient = queryClient;
         this.driver = driver;
         this.clusterUserComponent = clusterUserComponent;
@@ -123,15 +117,15 @@ public class DataImportService extends BaseService {
      * @param tableId
      * @param columnSeparator
      * @param file
-     * @param userId
+     * @param user
      * @param contentType
      * @return
      * @throws Exception
      */
     public LocalFileInfo uploadLocalFile(int tableId, String columnSeparator, MultipartFile file,
-                                         int userId, String contentType) throws Exception {
+                                         CoreUserEntity user, String contentType) throws Exception {
         log.debug("upload local file for table {}", tableId);
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(userId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         ManagerTableEntity tableEntity = tableRepository.findById(tableId).get();
         ManagerDatabaseEntity databaseEntity =
                 databuildComponent.checkClusterDatabase(tableEntity.getDbId(), clusterInfo.getId());
@@ -150,27 +144,26 @@ public class DataImportService extends BaseService {
      *
      * @param tableId
      * @param importInfo
-     * @param studioUserId
+     * @param user
      * @return
      * @throws Exception
      */
     @Transactional
-    public LocalFileSubmitResult submitFileImport(int tableId, FileImportReq importInfo, int studioUserId) throws Exception {
+    public LocalFileSubmitResult submitFileImport(int tableId, FileImportReq importInfo, CoreUserEntity user) throws Exception {
         if (StringUtils.isEmpty(importInfo.getName()) || StringUtils.isEmpty(importInfo.getFileUuid())
                 || importInfo.getColumnNames() == null || importInfo.getColumnNames().isEmpty()) {
             log.error("File import task name,fileuuid or column names is null");
             throw new RequestFieldNullException();
         }
 
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
+
         ManagerTableEntity tableEntity = tableRepository.findById(tableId).get();
         ManagerDatabaseEntity databaseEntity =
                 databuildComponent.checkClusterDatabase(tableEntity.getDbId(), clusterInfo.getId());
 
-        CoreUserEntity userEntity = userRepository.findById(studioUserId).get();
-
         DataImportTaskEntity taskEntity = new DataImportTaskEntity(importInfo, tableId, databaseEntity.getId(),
-                userEntity.getFirstName(), clusterInfo.getId());
+                user.getFirstName(), clusterInfo.getId());
         taskEntity.setImportType(FILE_IMPORT_TYPE);
 
         try {
@@ -200,7 +193,8 @@ public class DataImportService extends BaseService {
      * @return
      * @throws Exception
      */
-    public void nameDuplicate(int dbId, String taskName) throws Exception {
+    public void nameDuplicate(int dbId, String taskName, CoreUserEntity user) throws Exception {
+        clusterUserComponent.getUserCurrentClusterIdAndCheckAdmin(user);
         if (StringUtils.isEmpty(taskName)) {
             log.error("The task name is empty.");
             throw new RequestFieldNullException();
@@ -223,7 +217,6 @@ public class DataImportService extends BaseService {
      * At present, the import tasks stored in the Doris cluster are those in the last three days,
      * so those in three days should be deleted
      */
-    @Scheduled(cron = "0 0 * * * ?")
     @Transactional
     public void deleteExpireTask() {
         try {
@@ -240,20 +233,20 @@ public class DataImportService extends BaseService {
      * Test the connectivity of HDFS files and return preview information
      *
      * @param info
-     * @param studioUserId
+     * @param user
      * @param tableId
      * @return
      * @throws Exception
      */
-    public HdfsPreviewResp hdfsPreview(HdfsConnectReq info, int studioUserId, int tableId) throws Exception {
-        log.debug("User {} get hdfs file preview.", studioUserId);
+    public HdfsPreviewResp hdfsPreview(HdfsConnectReq info, CoreUserEntity user, int tableId) throws Exception {
+        log.debug("User {} get hdfs file preview.", user.getId());
         if (StringUtils.isEmpty(info.getHost()) || StringUtils.isEmpty(info.getFileUrl()) || info.getFormat() == null
                 || info.getColumnSeparator() == null) {
             log.error("Hdfs import host,file url, file format or file column separator is null");
             throw new RequestFieldNullException();
         }
 
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         ManagerTableEntity tableEntity = tableRepository.findById(tableId).get();
         ManagerDatabaseEntity databaseEntity =
                 databuildComponent.checkClusterDatabase(tableEntity.getDbId(), clusterInfo.getId());
@@ -318,25 +311,24 @@ public class DataImportService extends BaseService {
      * Submit a request to import an HDFS file into a data table
      *
      * @param importReq
-     * @param studioUserId
+     * @param user
      * @param tableId
      * @return
      * @throws Exception
      */
     @Transactional
-    public Map<String, Object> submitHdfsImport(HdfsImportReq importReq, int studioUserId, int tableId) throws Exception {
-        log.debug("User {} submit hdfs inport for table {}.", studioUserId, tableId);
+    public Map<String, Object> submitHdfsImport(HdfsImportReq importReq, CoreUserEntity user, int tableId) throws Exception {
+        log.debug("User {} submit hdfs inport for table {}.", user.getId(), tableId);
         // request check
         checkRequestBody(importReq.hasEmptyField());
 
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         ManagerTableEntity tableEntity = tableRepository.findById(tableId).get();
         ManagerDatabaseEntity databaseEntity =
                 databuildComponent.checkClusterDatabase(tableEntity.getDbId(), clusterInfo.getId());
-        CoreUserEntity userEntity = userRepository.findById(studioUserId).get();
 
         DataImportTaskEntity taskEntity = new DataImportTaskEntity(importReq, tableId, databaseEntity.getId(),
-                userEntity.getFirstName(), clusterInfo.getId());
+                user.getFirstName(), clusterInfo.getId());
         taskEntity.setImportType(HDFS_IMPORT_TYPE);
 
         String importSql = driver.importHdfsFile(databaseEntity.getName(), tableEntity.getName(), importReq);
@@ -358,18 +350,17 @@ public class DataImportService extends BaseService {
         return result;
     }
 
-    public String submitHdfsImportSql(HdfsImportReq importReq, int studioUserId,
+    public String submitHdfsImportSql(HdfsImportReq importReq, CoreUserEntity user,
                                       int tableId) throws Exception {
         checkRequestBody(importReq.hasEmptyField());
 
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         ManagerTableEntity tableEntity = tableRepository.findById(tableId).get();
         ManagerDatabaseEntity databaseEntity =
                 databuildComponent.checkClusterDatabase(tableEntity.getDbId(), clusterInfo.getId());
-        CoreUserEntity userEntity = userRepository.findById(studioUserId).get();
 
         DataImportTaskEntity taskEntity = new DataImportTaskEntity(importReq, tableId, databaseEntity.getId(),
-                userEntity.getFirstName(), clusterInfo.getId());
+                user.getFirstName(), clusterInfo.getId());
         taskEntity.setImportType(HDFS_IMPORT_TYPE);
 
         String importSql = driver.importHdfsFile(databaseEntity.getName(), tableEntity.getName(), importReq);
@@ -377,9 +368,9 @@ public class DataImportService extends BaseService {
     }
 
     public DataImportTaskPageResp getTaskList(int tableId, int curPage, int pageSize,
-                                              int studioUserId) throws Exception {
-        log.debug("User {} get table {} file import task by page.", studioUserId, tableId);
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+                                              CoreUserEntity user) throws Exception {
+        log.debug("User {} get table {} file import task by page.", user.getId(), tableId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         List<DataImportTaskPageResp.DataImportTaskResp> taskRespList = Lists.newArrayList();
         ManagerTableEntity tableEntity = tableRepository.findById(tableId).get();
         ManagerDatabaseEntity databaseEntity =

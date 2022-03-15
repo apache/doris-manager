@@ -102,4 +102,16 @@ public class LdapSettingReq {
 
         return false;
     }
+
+    public void removeBlankSpace() {
+       ldapHost = ldapHost.trim();
+       ldapBindDn = ldapBindDn.trim();
+       ldapAttributeEmail = ldapAttributeEmail.trim();
+       ldapAttributeFirstName = ldapAttributeFirstName.trim();
+       ldapAttributeLastName = ldapAttributeLastName.trim();
+       ldapUserFilter = ldapUserFilter.trim();
+        for (int i = 0; i < ldapUserBase.size(); i++) {
+            ldapUserBase.set(i, ldapUserBase.get(i).trim());
+        }
+    }
 }

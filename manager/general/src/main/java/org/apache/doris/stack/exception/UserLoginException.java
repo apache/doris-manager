@@ -19,7 +19,7 @@ package org.apache.doris.stack.exception;
 
 public class UserLoginException extends Exception {
 
-    public static final String MESSAGE = "用户名或者密码错误，请重新输入";
+    public static final String MESSAGE = "UsernameOrPasswordError";
 
     public UserLoginException() {
         super(MESSAGE);

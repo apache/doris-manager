@@ -31,6 +31,10 @@ public class SessionSettingResp {
 
     private String authType;
 
+    private int initStep;
+
+    private int completed = 0;
+
     // Normal configuration
     private String humanizationStrategy = "advanced";
 

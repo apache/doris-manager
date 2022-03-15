@@ -66,8 +66,11 @@ public class ActivityEntity {
     @Column(name = "custom_id", length = 48)
     private String customId;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String details;
+
+    @Column(name = "cluster_id")
+    private Long clusterId = 0L;
 
     public ActivityEntity(String topic, String model, String details) {
         this.timestamp = new Timestamp(System.currentTimeMillis());
@@ -122,6 +125,21 @@ public class ActivityEntity {
         resp.setUserId(this.userId);
         resp.setMaxTs(this.timestamp);
         return resp;
+    }
+
+    public Long getClusterId() {
+        if (clusterId == null) {
+            return 0L;
+        }
+        return clusterId;
+    }
+
+    public void setClusterId(Long clusterId) {
+        if (clusterId == null) {
+            this.clusterId = 0L;
+        } else {
+            this.clusterId = clusterId;
+        }
     }
 
     @Data

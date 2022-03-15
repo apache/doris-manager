@@ -36,6 +36,18 @@ public class PropertyDefine {
     // Application port configuration item
     public static final String SERVER_PORT_PROPERTY = "server.port";
 
+    // spring tomcat waiting queue length, default 100
+    public static final String SERVER_ACCEPT_COUNT_PROPERTY = "server.tomcat.accept-count";
+
+    // The maximum number of worker threads is 200 by default. (generally audit * 200)
+    public static final String SERVER_MAX_THREADS_PROPERTY = "server.tomcat.max-threads";
+
+    // The minimum number of idle working threads is 10 by default.
+    public static final String SERVER_MIN_SPARE_THREADS_PROPERTY = "server.tomcat.min-spare-threads";
+
+    // Maximum number of connections that the server will accept and process at any given time.
+    public static final String SERVER_MAX_CONNECTIONS_PROPERTY = "server.tomcat.max-connections";
+
     // Application nginx service port configuration item
     public static final String NGINX_PORT_PROPERTY = "nginx.port";
 
@@ -51,6 +63,10 @@ public class PropertyDefine {
     // Connection port configuration item of PostgreSQL engine
     public static final String POSTGRESQL_PORT_PROPERTY = "postgresql.port";
 
+    public static final String MAX_POOL_SIZE_PROPERTY = "spring.datasource.maximum-pool-size";
+
+    public static final String MIN_IDLE_PROPERTY = "spring.datasource.minimum-idle";
+
     public static final String MAX_SESSION_AGE_PROPERTY = "max.session.age";
 
     public static final String SUPER_USER_PASS_RESET_PROPERTY = "super.user.password.reset";
@@ -63,13 +79,6 @@ public class PropertyDefine {
 
     public static final String MAX_LOGIN_TIMES_PROPERTY = "max.login.times";
 
-    // Definition of special configuration item value
-    // Application name configuration item value, studio application name
-    public static final String DEPLOY_TYPE_STUDIO = "studio";
-
-    // Application name, configuration item value, manager application name
-    public static final String DEPLOY_TYPE_MANAGER = "manager";
-
     // The application background uses the storage database type configuration item value, MySQL database
     public static final String JPA_DATABASE_MYSQL = "mysql";
 
@@ -78,5 +87,11 @@ public class PropertyDefine {
 
     // The application background uses the storage database type configuration item value, and PostgreSQL database
     public static final String JPA_DATABASE_POSTGRESQL = "postgresql";
+
+    public static final String PROMETHEUS_HOME_PROPERTY = "prometheus.home";
+
+    public static final String PROMETHEUS_HOST_PROPERTY = "prometheus.host";
+
+    public static final String PROMETHEUS_PORT_PROPERTY = "prometheus.port";
 
 }

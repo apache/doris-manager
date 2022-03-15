@@ -17,6 +17,7 @@
 
 package org.apache.doris.stack.controller.config;
 
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.model.request.config.LdapSettingReq;
 import org.apache.doris.stack.rest.ResponseEntityBuilder;
 import org.apache.doris.stack.service.config.LdapService;
@@ -53,7 +54,9 @@ public class LdapController {
                           HttpServletResponse response) throws Exception {
 
         log.debug("Admin User update LDAP service info.");
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // check is super admin user
+        authenticationService.checkUserIsAdmin(user);
         ldapService.update(ldapSettingReq);
         return ResponseEntityBuilder.ok();
     }
@@ -64,7 +67,9 @@ public class LdapController {
                           HttpServletResponse response) throws Exception {
 
         log.debug("Admin User update LDAP service info.");
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        // check is super admin user
+        authenticationService.checkUserIsAdmin(user);
         return ResponseEntityBuilder.ok(ldapService.setting());
     }
 }

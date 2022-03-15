@@ -96,7 +96,7 @@ public class ManagerMetaSyncComponentTest {
     @Test
     public void syncPaloClusterMetadataTestAddDb() {
         ClusterInfoEntity clusterInfo = mockClusterInfo();
-        int clusterId = clusterInfo.getId();
+        long clusterId = clusterInfo.getId();
 
         try {
             // Engine latest database list
@@ -136,7 +136,7 @@ public class ManagerMetaSyncComponentTest {
     @Test
     public void syncPaloClusterMetadataTestReduceDb() {
         ClusterInfoEntity clusterInfo = mockClusterInfo();
-        int clusterId = clusterInfo.getId();
+        long clusterId = clusterInfo.getId();
 
         try {
             // Engine latest database list
@@ -175,7 +175,7 @@ public class ManagerMetaSyncComponentTest {
     @Test
     public void syncPaloClusterMetadataTestUpdateDb() {
         ClusterInfoEntity clusterInfo = mockClusterInfo();
-        int clusterId = clusterInfo.getId();
+        long clusterId = clusterInfo.getId();
 
         try {
             // Engine latest database list
@@ -249,7 +249,7 @@ public class ManagerMetaSyncComponentTest {
     @Test
     public void addDatabaseTest() {
         int nsId = 0;
-        int clusterId = 1;
+        long clusterId = 1;
         String db = "db1";
         String description = "desc";
         int dbId = 2;
@@ -348,7 +348,7 @@ public class ManagerMetaSyncComponentTest {
     @Test
     public void deleteDatabaseTest() {
         int dbId = 1;
-        int clusterId = 1;
+        long clusterId = 1;
         String dbName = "db";
 
         // construction database
@@ -405,7 +405,8 @@ public class ManagerMetaSyncComponentTest {
         tableSchema.setSchema(schemas);
         when(metaInfoClient.getTableBaseSchema(ConstantDef.DORIS_DEFAULT_NS, dbName, tableAddName, clusterInfo)).thenReturn(tableSchema);
 
-        ManagerTableEntity tableEntity = new ManagerTableEntity(dbId, tableAddName, "", tableSchema);
+        ManagerTableEntity tableEntity = new ManagerTableEntity(dbId, tableAddName, "",
+                tableSchema.isBaseIndex(), tableSchema.getKeyType());
         tableEntity.setId(1);
         when(tableRepository.save(any())).thenReturn(tableEntity);
 

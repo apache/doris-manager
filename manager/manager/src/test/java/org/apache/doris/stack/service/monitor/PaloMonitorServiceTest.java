@@ -20,6 +20,7 @@ package org.apache.doris.stack.service.monitor;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.model.request.monitor.ClusterMonitorReq;
 import org.apache.doris.stack.component.ClusterUserComponent;
 import org.apache.doris.stack.connector.PaloMonitorClient;
@@ -64,7 +65,10 @@ public class PaloMonitorServiceTest {
     public void monitorTest() {
         log.debug("Get doris monitor test.");
         int userId = 1;
-        int clusterId = 2;
+        long clusterId = 2;
+
+        CoreUserEntity userEntity = mockRequestUser(userId, clusterId);
+
          // mock cluster
         ClusterInfoEntity clusterInfo = new ClusterInfoEntity();
         clusterInfo.setId(clusterId);
@@ -78,8 +82,8 @@ public class PaloMonitorServiceTest {
 
         // Testing interfaces that do not require requesting content
         try {
-            when(authenticationService.checkUserAuthWithCookie(any(), any())).thenReturn(userId);
-            when(clusterUserComponent.getClusterByUserId(userId)).thenReturn(clusterInfo);
+            when(authenticationService.checkNewUserAuthWithCookie(any(), any())).thenReturn(userEntity);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(userEntity)).thenReturn(clusterInfo);
             monitorService.nodeNum(null, null, null);
             monitorService.disksCapacity(null, null, null);
             monitorService.feList(null, null, null);
@@ -101,8 +105,8 @@ public class PaloMonitorServiceTest {
 
         // Testing interfaces that do not require requesting content
         try {
-            when(authenticationService.checkUserAuthWithCookie(any(), any())).thenReturn(userId);
-            when(clusterUserComponent.getClusterByUserId(userId)).thenReturn(clusterInfo);
+            when(authenticationService.checkNewUserAuthWithCookie(any(), any())).thenReturn(userEntity);
+            when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(userEntity)).thenReturn(clusterInfo);
             monitorService.qps(monitorReq, null, null);
             monitorService.queryLatency(monitorReq, null, null);
             monitorService.queryErrRate(monitorReq, null, null);
@@ -117,5 +121,15 @@ public class PaloMonitorServiceTest {
             log.debug("Get doris monitor test error.");
             e.printStackTrace();
         }
+    }
+
+    private CoreUserEntity mockRequestUser(int userId, long clusterId) {
+        CoreUserEntity userEntity = new CoreUserEntity();
+        userEntity.setId(userId);
+        userEntity.setClusterId(clusterId);
+        userEntity.setFirstName("user");
+        userEntity.setIsClusterAdmin(true);
+        userEntity.setSuperuser(true);
+        return userEntity;
     }
 }

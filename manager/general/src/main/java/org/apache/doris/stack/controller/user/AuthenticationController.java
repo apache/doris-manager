@@ -49,7 +49,7 @@ public class AuthenticationController {
     @Autowired
     private AuthenticationService authService;
 
-    @ApiOperation(value = "User login (super administrator / all users)")
+    @ApiOperation(value = "User login (all users)")
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public Object login(@RequestBody UserLoginReq loginReq,
                         HttpServletRequest request,

@@ -51,6 +51,6 @@ public class UtilController {
             HttpServletRequest request, HttpServletResponse response,
             @RequestBody String passwd) throws Exception {
         log.debug("password check.");
-        return ResponseEntityBuilder.ok(utilService.passwordCheck(passwd));
+        return ResponseEntityBuilder.ok(utilService.newPasswordCheck(passwd));
     }
 }

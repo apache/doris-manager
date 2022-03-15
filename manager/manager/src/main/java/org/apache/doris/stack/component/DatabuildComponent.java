@@ -38,7 +38,7 @@ public class DatabuildComponent {
      * @param clusterId
      * @throws Exception
      */
-    public ManagerDatabaseEntity checkClusterDatabase(int dbId, int clusterId) throws Exception {
+    public ManagerDatabaseEntity checkClusterDatabase(int dbId, long clusterId) throws Exception {
         ManagerDatabaseEntity database = databaseRepository.findById(dbId).get();
         log.debug("Check database {} belong to cluster {}.", dbId, clusterId);
         if (database.getClusterId() != clusterId) {

@@ -17,17 +17,18 @@
 
 package org.apache.doris.stack.controller.user;
 
-import org.apache.doris.stack.model.request.user.PasswordUpdateReq;
-import org.apache.doris.stack.model.request.user.UserAddReq;
-import org.apache.doris.stack.model.request.user.UserSpaceReq;
-import org.apache.doris.stack.model.request.user.UserUpdateReq;
-import org.apache.doris.stack.controller.BaseController;
-import org.apache.doris.stack.rest.ResponseEntityBuilder;
-import org.apache.doris.stack.service.user.AuthenticationService;
-import org.apache.doris.stack.service.user.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.doris.stack.controller.BaseController;
+import org.apache.doris.stack.entity.CoreUserEntity;
+import org.apache.doris.stack.model.request.user.AdminUpdateReq;
+import org.apache.doris.stack.model.request.user.NewUserAddReq;
+import org.apache.doris.stack.model.request.user.PasswordUpdateReq;
+import org.apache.doris.stack.model.request.user.UserUpdateReq;
+import org.apache.doris.stack.rest.ResponseEntityBuilder;
+import org.apache.doris.stack.service.user.AuthenticationService;
+import org.apache.doris.stack.service.user.NewUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -43,19 +44,13 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-/**
- * @Description：TODO：At present, a user can only be in one space, and a subsequent user may be in multiple spaces.
- * TODO：At present, the user management in the space is implemented here,
- * TODO：and the subsequent users must be modified uniformly
- */
-@Api(tags = "User management in space API")
+@Api(tags = "User Management")
 @RestController
 @RequestMapping(value = "/api/user/")
 @Slf4j
 public class UserController extends BaseController {
-
     @Autowired
-    private UserService userService;
+    private NewUserService userService;
 
     @Autowired
     private AuthenticationService authenticationService;
@@ -71,101 +66,167 @@ public class UserController extends BaseController {
      * @return
      * @throws Exception
      */
-    @ApiOperation(value = "The space administrator obtains the list of all users in the space")
+    @ApiOperation(value = "The user obtains the list of all users (platform level or space level API, platform level "
+            + "obtains the list of all users, and views all users in the space)"
+            + "(include_deactivated indicates whether to include deactivated users, the default is false, "
+            + "which means not included. q indicates the search field, the default is empty, "
+            + "which means to obtain all users)")
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public Object getUser(@RequestParam(value = "include_deactivated", defaultValue = "false") boolean includeDeactivated,
+                          @RequestParam(value = "q", required = false, defaultValue = "") String q,
                           HttpServletRequest request,
                           HttpServletResponse response) throws Exception {
-        int userId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(userId);
-        log.debug("Admin user {} get user list.", userId);
-
-        return ResponseEntityBuilder.ok(userService.getAllUser(includeDeactivated, userId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        log.debug("Admin user {} get all user list.", user.getId());
+        return ResponseEntityBuilder.ok(userService.getAllUser(user, includeDeactivated, q));
     }
 
-    @ApiOperation(value = "Get the current logged in user information (space administrator/all users)")
-    @GetMapping(value = "current", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Object getCurrentUser(HttpServletRequest request,
-                                 HttpServletResponse response) throws Exception {
-        int userId = authenticationService.checkAllUserAuthWithCookie(request, response);
-        if (userId < 1) {
-            return ResponseEntityBuilder.ok(authenticationService.getSuperUserInfo());
-        } else {
-            return ResponseEntityBuilder.ok(userService.getCurrentUser(userId));
-        }
-    }
-
-    @ApiOperation(value = "Get user information according to ID")
+    @ApiOperation(value = "Get user details according to user ID (all users, platform level or space level API). "
+            + "Users can view their own information, or admin users can view other users, or space administrator role "
+            + "users can view other users")
     @GetMapping(value = "{" + USER_KEY + "}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Object getUserById(@PathVariable(value = USER_KEY) int userId,
                               HttpServletRequest request,
                               HttpServletResponse response) throws Exception {
-        int requestUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        return ResponseEntityBuilder.ok(userService.getUserById(userId, requestUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(userService.getUserById(userId, user));
     }
 
-    @ApiOperation(value = "Add new user")
+    @ApiOperation(value = "Get the current user information after logging in (all users, "
+            + "platform level or space level API)")
+    @GetMapping(value = "current", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object getCurrentUser(HttpServletRequest request,
+                                 HttpServletResponse response) throws Exception {
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(userService.getCurrentUser(user));
+    }
+
+    @ApiOperation(value = "User modifies the space ID being used (all users, platform level API)")
+    @PostMapping(value = "current", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object updateUserCurrentCluster(@RequestParam(value = "cluster_id") long clusterId,
+                                           HttpServletRequest request,
+                                           HttpServletResponse response) throws Exception {
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(userService.updateUserCurrentCluster(user, clusterId));
+    }
+
+    @ApiOperation(value = "Add a new user (admin user, platform level API)")
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Object addUser(@RequestBody UserAddReq userAddReq,
+    public Object addUser(@RequestBody NewUserAddReq userAddReq,
                           HttpServletRequest request,
                           HttpServletResponse response) throws Exception {
-        int requestUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(requestUserId);
-        return ResponseEntityBuilder.ok(userService.addUser(userAddReq, requestUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        authenticationService.checkUserIsAdmin(user);
+        return ResponseEntityBuilder.ok(userService.addUser(userAddReq, user));
     }
 
-    @ApiOperation(value = "update user information")
+    @ApiOperation(value = "Change the user name or mailbox information (all users, all users can modify their "
+            + "own information, admin user can modify the information of other users, platform level API)")
     @PutMapping(value = "{" + USER_KEY + "}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Object updateUser(@RequestBody UserUpdateReq userUpdateReq,
                              @PathVariable(value = USER_KEY) int userId,
                              HttpServletRequest request,
                              HttpServletResponse response) throws Exception {
-        int requestId = authenticationService.checkUserAuthWithCookie(request, response);
-        return ResponseEntityBuilder.ok(userService.updateUser(userUpdateReq, requestId, userId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(userService.updateUser(userUpdateReq, user, userId));
     }
 
-    @ApiOperation(value = "Reactivate user")
+    @ApiOperation(value = "Reactivate a deactivated user (admin user, platform level API)")
     @PutMapping(value = "{" + USER_KEY + "}" + "/reactivate", produces = MediaType.APPLICATION_JSON_VALUE)
     public Object reactivateUser(@PathVariable(value = USER_KEY) int userId,
                                  HttpServletRequest request,
                                  HttpServletResponse response) throws Exception {
-        int requestUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(requestUserId);
-        return ResponseEntityBuilder.ok(userService.reactivateUser(userId, requestUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        authenticationService.checkUserIsAdmin(user);
+        return ResponseEntityBuilder.ok(userService.reactivateUser(userId, user));
     }
 
-    @ApiOperation(value = "Modify user password")
+    @ApiOperation(value = "Deactivate a user (admin user, platform level API)")
+    @DeleteMapping(value = "{" + USER_KEY + "}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object stopUser(@PathVariable(value = USER_KEY) int userId,
+                           HttpServletRequest request,
+                           HttpServletResponse response) throws Exception {
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        authenticationService.checkUserIsAdmin(user);
+        return ResponseEntityBuilder.ok(userService.stopUser(userId, user));
+    }
+
+    @ApiOperation(value = "Modify user password (all users can modify their own passwords, and admin users can "
+            + "also directly reset the passwords of other users, platform level or space level APIs)")
     @PutMapping(value = "{" + USER_KEY + "}" + "/password", produces = MediaType.APPLICATION_JSON_VALUE)
     public Object updatePassword(@PathVariable(value = USER_KEY) int userId,
                                  @RequestBody PasswordUpdateReq updateReq,
                                  HttpServletRequest request,
                                  HttpServletResponse response) throws Exception {
-        int requestId = authenticationService.checkAllUserAuthWithCookie(request, response);
-        if (requestId < 1) {
-            return ResponseEntityBuilder.ok(authenticationService.updateSuperUserPassword(updateReq));
-        } else {
-            return ResponseEntityBuilder.ok(userService.updatePassword(updateReq, userId, requestId));
-        }
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(userService.updatePassword(updateReq, userId, user));
     }
 
-    @ApiOperation(value = "Deactivating a user does not delete it, but deactivates it")
-    @DeleteMapping(value = "{" + USER_KEY + "}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Object stopUser(@PathVariable(value = USER_KEY) int userId,
-                           HttpServletRequest request,
-                           HttpServletResponse response) throws Exception {
-        int requestUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(requestUserId);
-        return ResponseEntityBuilder.ok(userService.stopUser(userId, requestUserId));
+    @ApiOperation(value = "Modify the user's admin attribute (admin user, but you can't modify your "
+            + "own admin attribute, platform level API)")
+    @PutMapping(value = "{" + USER_KEY + "}" + "/admin", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object updateUserAdmin(@PathVariable(value = USER_KEY) int userId,
+                                  @RequestBody AdminUpdateReq updateReq,
+                                  HttpServletRequest request,
+                                  HttpServletResponse response) throws Exception {
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        authenticationService.checkUserIsAdmin(user);
+        return ResponseEntityBuilder.ok(userService.updateUserAdmin(updateReq, userId, user));
     }
 
-    @ApiOperation(value = "User moves out of space")
+    @ApiOperation(value = "Resend the invitation email (admin user, but can't send email to himself, "
+            + "platform level API)")
+    @PostMapping(value = "{" + USER_KEY + "}" +  "/send_invite", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object sendInvite(@PathVariable(value = USER_KEY) int userId,
+                             HttpServletRequest request,
+                             HttpServletResponse response) throws Exception {
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        authenticationService.checkUserIsAdmin(user);
+        return ResponseEntityBuilder.ok(userService.sendInvite(user, userId));
+    }
+
+    @ApiOperation(value = "Delete a user (admin user, but cannot delete itself, platform level API)")
+    @DeleteMapping(value = "delete/{" + USER_KEY + "}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object deleteUser(@PathVariable(value = USER_KEY) int userId,
+                             HttpServletRequest request,
+                             HttpServletResponse response) throws Exception {
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        authenticationService.checkUserIsAdmin(user);
+        userService.deleteUser(user, userId);
+        return ResponseEntityBuilder.ok();
+    }
+
+    @ApiOperation(value = "Get all users in the space (all users with the role of space administrator, space level API) "
+            + "(q represents the search field, which is empty by default, which means get all)")
+    @GetMapping(value = "space", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object getUserSpace(@RequestParam(value = "q", required = false, defaultValue = "") String q,
+                               HttpServletRequest request,
+                               HttpServletResponse response) throws Exception {
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        log.debug("User {} get space list.", user.getId());
+        return ResponseEntityBuilder.ok(userService.getSpaceUserList(user, q));
+    }
+
+    @ApiOperation(value = "Add a new user into the space (all users with the role of "
+            + "space administrator, space level API)")
+    @PostMapping(value = "/add/{" + USER_KEY + "}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object addUserToSpace(@PathVariable(value = USER_KEY) int userId,
+                                 HttpServletRequest request,
+                                 HttpServletResponse response) throws Exception {
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        userService.addUserToSpace(user, userId);
+        return ResponseEntityBuilder.ok();
+    }
+
+    @ApiOperation(value = "Delete a user in the space (all users with the role of "
+            + "space administrator, space level API)")
     @DeleteMapping(value = "/move/{" + USER_KEY + "}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Object moveUser(@PathVariable(value = USER_KEY) int userId,
                            HttpServletRequest request,
                            HttpServletResponse response) throws Exception {
-        int requestUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(requestUserId);
-        return ResponseEntityBuilder.ok(userService.moveUser(userId, requestUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        userService.moveUser(userId, user);
+        return ResponseEntityBuilder.ok();
     }
 
     @ApiOperation(value = "update user qbnewb")
@@ -173,46 +234,7 @@ public class UserController extends BaseController {
     public Object setQpnewb(@PathVariable(value = USER_KEY) int userId,
                             HttpServletRequest request,
                             HttpServletResponse response) throws Exception {
-        int requestId = authenticationService.checkUserAuthWithCookie(request, response);
-        return ResponseEntityBuilder.ok(userService.setQbnewb(requestId, userId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(userService.setQbnewb(user, userId));
     }
-
-    @ApiOperation(value = "Resend invitation message")
-    @PostMapping(value = "{" + USER_KEY + "}" +  "/send_invite", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Object sendInvite(@PathVariable(value = USER_KEY) int userId,
-                             HttpServletRequest request,
-                             HttpServletResponse response) throws Exception {
-        int requestUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(requestUserId);
-        return ResponseEntityBuilder.ok(userService.sendInvite(requestUserId, userId));
-    }
-
-    @ApiOperation(value = "delete user")
-    @DeleteMapping(value = "delete/{" + USER_KEY + "}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Object deleteUser(@PathVariable(value = USER_KEY) int userId,
-                             HttpServletRequest request,
-                             HttpServletResponse response) throws Exception {
-        authenticationService.checkSuperAdminUserAuthWithCookie(request, response);
-        userService.deleteUser(userId);
-        return ResponseEntityBuilder.ok();
-    }
-
-    @ApiOperation(value = "Get the list of all spaces where the user is located. Todo: not implemented yet")
-    @GetMapping(value = "spaces", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Object getUserSpaces(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        int userId = authenticationService.checkUserAuthWithCookie(request, response);
-        log.debug("User {} get space list.", userId);
-        return ResponseEntityBuilder.ok();
-    }
-
-    @ApiOperation(value = "User switches the current space in use. Todo: not implemented yet")
-    @PutMapping(value = "space", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Object updateUserSpace(@RequestBody UserSpaceReq userSpaceReq,
-                                  HttpServletRequest request,
-                                  HttpServletResponse response) throws Exception {
-        int userId = authenticationService.checkUserAuthWithCookie(request, response);
-        log.debug("User {} get space list.", userId);
-        return ResponseEntityBuilder.ok();
-    }
-
 }

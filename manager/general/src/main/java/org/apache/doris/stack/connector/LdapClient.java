@@ -31,6 +31,7 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.ldap.sdk.SimpleBindRequest;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 
 @Component
@@ -40,7 +41,7 @@ public class LdapClient {
     /**
      * ldap Attributes
      */
-    private static final String FIRST_NAME = "givenname";
+    private static final String FIRST_NAME = "uid";
 
     private static final String LAST_NAME = "sn";
 

@@ -79,7 +79,6 @@ public class ConfigUpdateReq {
 
     /**
      * check empty field
-     * TODO：暂时只检查了value
      *
      * @return boolean
      */

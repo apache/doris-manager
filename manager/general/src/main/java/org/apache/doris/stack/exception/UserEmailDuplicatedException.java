@@ -19,7 +19,7 @@ package org.apache.doris.stack.exception;
 
 public class UserEmailDuplicatedException extends Exception {
 
-    public static final String MESSAGE = "账号已被使用，请修改后重试";
+    public static final String MESSAGE = "账号邮箱已被使用，请修改后重试";
 
     public UserEmailDuplicatedException() {
         super(MESSAGE);

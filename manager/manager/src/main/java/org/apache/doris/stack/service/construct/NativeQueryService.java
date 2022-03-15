@@ -18,6 +18,7 @@
 package org.apache.doris.stack.service.construct;
 
 import org.apache.doris.stack.constant.ConstantDef;
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.model.response.construct.NativeQueryResp;
 import org.apache.doris.stack.component.ClusterUserComponent;
 import org.apache.doris.stack.component.DatabuildComponent;
@@ -53,14 +54,19 @@ public class NativeQueryService extends BaseService {
      * @param nsId
      * @param dbId
      * @param sql
-     * @param studioUserId
+     * @param user
      * @return
      * @throws Exception
      */
-    public NativeQueryResp executeSql(int nsId, int dbId, String sql, int studioUserId) throws Exception {
-        log.debug("user {} execute sql {} in db {}", studioUserId, sql, dbId);
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
-       String dbName = null;
+    public NativeQueryResp executeSql(int nsId, int dbId, String sql, CoreUserEntity user) throws Exception {
+        log.debug("user {} execute sql {} in db {}", user.getId(), sql, dbId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
+        return executeSql(nsId, dbId, sql, user, clusterInfo);
+    }
+
+    public NativeQueryResp executeSql(int nsId, int dbId, String sql, CoreUserEntity user,
+                                      ClusterInfoEntity clusterInfo) throws Exception {
+        String dbName = null;
         if (dbId < 1) {
             dbName = ConstantDef.MYSQL_DEFAULT_SCHEMA;
         } else {
@@ -74,12 +80,17 @@ public class NativeQueryService extends BaseService {
      * Execute SQL statement
      * @param sql
      * @param dbName
-     * @param studioUserId
+     * @param user
      * @return
      * @throws Exception
      */
-    public NativeQueryResp executeSql(String sql, String dbName, int studioUserId) throws Exception {
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+    public NativeQueryResp executeSql(String sql, String dbName, CoreUserEntity user) throws Exception {
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
+        return executeSql(sql, dbName, user, clusterInfo);
+    }
+
+    public NativeQueryResp executeSql(String sql, String dbName, CoreUserEntity user,
+                                      ClusterInfoEntity clusterInfo) throws Exception {
         return paloQueryClient.executeSQL(sql, ConstantDef.DORIS_DEFAULT_NS, dbName, clusterInfo);
     }
 }

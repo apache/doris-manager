@@ -45,4 +45,6 @@ public class BaseController {
 
     protected static final String SPACE_KEY = "spaceId";
 
+    protected static final String GROUP_KEY = "groupId";
+
 }

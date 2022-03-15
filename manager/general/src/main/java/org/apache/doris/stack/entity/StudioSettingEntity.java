@@ -41,7 +41,7 @@ public class StudioSettingEntity {
 
     @Id
     @Column(name = "cluster_id", nullable = false)
-    private int clusterId;
+    private long clusterId;
 
     @Column(name = "value", columnDefinition = "TEXT")
     private String value;

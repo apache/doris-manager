@@ -45,6 +45,7 @@ public class UserInfo {
 
     private Timestamp updatedAt;
 
+    // Todo: this field will also be deleted later
     private List<Integer> groupIds;
 
     private InitStudioReq.AuthType authType;
@@ -52,9 +53,14 @@ public class UserInfo {
     /**
      * Is it a space administrator
      */
-    private boolean isAdmin;
+    private Boolean isAdmin;
 
+    /**
+     * Is it a super admin
+     */
     private boolean isSuperAdmin;
+
+    private Boolean isSpaceUser;
 
     private String loginAttributes;
 
@@ -67,20 +73,20 @@ public class UserInfo {
     private boolean googleAuth;
 
     /**
-     * User's space ID
-     * TODO：Later, it will be changed to a list, because a user can correspond to multiple spaces
+     * current User's space ID
      */
-    private Integer spaceId;
+    private Long spaceId;
 
     private String spaceName;
 
     private Integer collectionId;
 
     /**
+     * TODO:This field is unnecessary and will be deleted later
      * Whether the user's spatial information is complete (i.e. whether the Doris cluster information is complete.
      * If it is incomplete, it needs to be improved, otherwise the cluster is unavailable)
      */
-    private Boolean spaceComplete;
+    private Boolean spaceComplete = true;
 
     private String deployType;
 
@@ -160,14 +166,26 @@ public class UserInfo {
 
     @JsonProperty("is_admin")
     @JSONField(name = "is_admin")
-    public boolean isAdmin() {
+    public Boolean isAdmin() {
         return isAdmin;
     }
 
     @JsonProperty("is_admin")
     @JSONField(name = "is_admin")
-    public void setAdmin(boolean admin) {
+    public void setAdmin(Boolean admin) {
         isAdmin = admin;
+    }
+
+    @JsonProperty("is_space_user")
+    @JSONField(name = "is_space_user")
+    public Boolean getSpaceUser() {
+        return isSpaceUser;
+    }
+
+    @JsonProperty("is_space_user")
+    @JSONField(name = "is_space_user")
+    public void setSpaceUser(Boolean spaceUser) {
+        isSpaceUser = spaceUser;
     }
 
     @JsonProperty("is_super_admin")
@@ -232,13 +250,13 @@ public class UserInfo {
 
     @JsonProperty("space_id")
     @JSONField(name = "space_id")
-    public Integer getSpaceId() {
+    public Long getSpaceId() {
         return spaceId;
     }
 
     @JsonProperty("space_id")
     @JSONField(name = "space_id")
-    public void setSpaceId(Integer spaceId) {
+    public void setSpaceId(Long spaceId) {
         this.spaceId = spaceId;
     }
 

@@ -17,12 +17,23 @@
 
 package org.apache.doris.stack.controller.manager;
 
-import org.apache.doris.stack.controller.BaseController;
-import org.apache.doris.stack.service.manager.PaloManagerService;
-import com.google.common.base.Strings;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.doris.stack.component.SettingComponent;
+import org.apache.doris.stack.controller.BaseController;
+import org.apache.doris.stack.entity.ClusterInfoEntity;
+import org.apache.doris.stack.model.request.monitor.MonitorRequestBody;
+import org.apache.doris.stack.rest.ResponseEntityBuilder;
+import org.apache.doris.stack.service.config.ConfigConstant;
+import org.apache.doris.stack.service.manager.MonitoringQueryService;
+import org.apache.doris.stack.service.manager.PaloManagerService;
+
+import com.alibaba.fastjson.JSON;
+import com.google.common.base.Strings;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -89,27 +100,46 @@ public class PaloManagerController extends BaseController {
     @Autowired
     private PaloManagerService paloManagerService;
 
+    @Autowired
+    private MonitoringQueryService monitorService;
+
+    @Autowired
+    private SettingComponent settingComponent;
+
     @ApiOperation(value = "Doris connection infomation")
     @GetMapping(value = CONN_INFO)
     public Object ConnectionInfo(HttpServletRequest request, HttpServletResponse response) throws Exception {
         return paloManagerService.get(request, response, CONN_INFO);
     }
 
-    @ApiOperation(value = "Monitoring chart value type")
+    @ApiOperation(value = "Monitoring chart scalar type")
     @GetMapping(value = MONITOR_VALUE + "{type}")
-    public Object nodeNum(HttpServletRequest request, HttpServletResponse response,
-                          @PathVariable("type") String type) throws Exception {
-        return paloManagerService.get(request, response, MONITOR_VALUE + type);
+    public Object scalarMonitor(HttpServletRequest request, HttpServletResponse response,
+                                @PathVariable("type") String type) throws Exception {
+        ClusterInfoEntity clusterInfoEntity = monitorService.checkAndHandleCluster(request, response);
+        if (settingComponent.readAdminSetting(clusterInfoEntity.getId(), ConfigConstant.MONITOR_SOURCE).getValue()
+                .equals(ConfigConstant.MONITOR_SRC_PALO)) {
+            return paloManagerService.get(request, response, MONITOR_VALUE + type);
+        } else {
+            return ResponseEntityBuilder.ok(monitorService.handleScalarMonitor(request, response, type));
+        }
     }
 
     @ApiOperation(value = "Monitoring time series diagram")
     @PostMapping(value = MONITOR_TIMESERIAL + "{type}")
-    public Object qps(HttpServletRequest request, HttpServletResponse response,
-                      @PathVariable("type") String type,
-                      @RequestParam(value = START_TIMESTAMP) long start,
-                      @RequestParam(value = END_TIMESTAMP) long end,
-                      @RequestBody(required = false) String requestBody) throws Exception {
-        return paloManagerService.post(request, response, requestPath(type, start, end), requestBody);
+    public Object timeSeriesMonitor(HttpServletRequest request, HttpServletResponse response,
+                                    @PathVariable("type") String type,
+                                    @RequestParam(value = START_TIMESTAMP) long start,
+                                    @RequestParam(value = END_TIMESTAMP) long end,
+                                    @RequestBody(required = false) MonitorRequestBody requestBody) throws Exception {
+        ClusterInfoEntity clusterInfoEntity = monitorService.checkAndHandleCluster(request, response);
+        if (settingComponent.readAdminSetting(clusterInfoEntity.getId(), ConfigConstant.MONITOR_SOURCE).getValue()
+                .equals(ConfigConstant.MONITOR_SRC_PALO)) {
+            return paloManagerService.post(request, response, requestPath(type, start, end), JSON.toJSONString(requestBody, SerializerFeature.DisableCircularReferenceDetect));
+        } else {
+            return ResponseEntityBuilder.ok(monitorService.handleTimeSerialMonitor(request, response, start, end,
+                    requestBody, type));
+        }
     }
 
     private String requestPath(String type, long start, long end) {

@@ -18,6 +18,7 @@
 package org.apache.doris.stack.controller.construct;
 
 import org.apache.doris.stack.controller.BaseController;
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.rest.ResponseEntityBuilder;
 import org.apache.doris.stack.service.user.AuthenticationService;
 import org.apache.doris.stack.service.construct.NativeQueryService;
@@ -54,8 +55,7 @@ public class NativeQueryController extends BaseController {
             @PathVariable(value = DB_KEY) int dbId,
             HttpServletRequest request, HttpServletResponse response,
             @RequestBody String stmtBody) throws Exception {
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-        return ResponseEntityBuilder.ok(nativeQueryService.executeSql(nsId, dbId, stmtBody, studioUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(nativeQueryService.executeSql(nsId, dbId, stmtBody, user));
     }
 }

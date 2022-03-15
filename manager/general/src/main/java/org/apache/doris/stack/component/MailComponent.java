@@ -76,7 +76,7 @@ public class MailComponent {
             message.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(emailDest));
 
             // TODO:The name is temporarily in Chinese
-            message.setSubject(MimeUtility.encodeText("[Doris Studio] 密码重置请求", "utf-8", null));
+            message.setSubject(MimeUtility.encodeText("[Palo Studio] 密码重置请求", "utf-8", null));
 
             MustacheFactory mf = new DefaultMustacheFactory();
             Mustache m = mf.compile("mail/password_reset.mustache");
@@ -98,8 +98,7 @@ public class MailComponent {
             // Send mail asynchronously
             sendEmail(message);
         } catch (Exception e) {
-            log.error("Send reset password error {}.", e.getMessage());
-            e.printStackTrace();
+            log.error("Send reset password error.", e);
         }
     }
 
@@ -127,7 +126,7 @@ public class MailComponent {
             message.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(emailDest));
 
             // TODO:The name is temporarily in Chinese
-            message.setSubject(MimeUtility.encodeText("[Doris Studio] 新用户邀请", "utf-8", null));
+            message.setSubject(MimeUtility.encodeText("[Palo Studio] 新用户邀请", "utf-8", null));
 
             MustacheFactory mf = new DefaultMustacheFactory();
             Mustache m = mf.compile("mail/new_user_invite.mustache");
@@ -151,8 +150,7 @@ public class MailComponent {
 
             sendEmail(message);
         } catch (Exception e) {
-            log.error("Send reset password error {}.", e.getMessage());
-            e.printStackTrace();
+            log.error("Send reset password error.", e);
         }
     }
 
@@ -186,7 +184,7 @@ public class MailComponent {
                 message.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(adminUser.getEmail()));
 
                 // TODO:The name is temporarily in Chinese
-                message.setSubject(MimeUtility.encodeText("[Doris Studio] 用户加入通知", "utf-8", null));
+                message.setSubject(MimeUtility.encodeText("[Palo Studio] 用户加入通知", "utf-8", null));
                 message.setSentDate(new Date());
 
                 MustacheFactory mf = new DefaultMustacheFactory();
@@ -209,8 +207,7 @@ public class MailComponent {
                 sendEmail(message);
             }
         } catch (Exception e) {
-            log.error("Send user join notification error {}.", e.getMessage());
-            e.printStackTrace();
+            log.error("Send user join notification error.", e);
         }
     }
 
@@ -226,7 +223,6 @@ public class MailComponent {
             log.error("send reset password fail,get session error.");
             throw new EmailSendException();
         }
-
         Message message = new MimeMessage(mailSession);
         if (emailInfo.getFromAddress() == null) {
             message.setFrom(new InternetAddress());
@@ -236,9 +232,9 @@ public class MailComponent {
         message.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(userMail));
 
         // TODO:The name is temporarily in Chinese
-        message.setSubject(MimeUtility.encodeText("[Doris Studio] 测试邮件", "utf-8", null));
+        message.setSubject(MimeUtility.encodeText("[Palo Studio] 测试邮件", "utf-8", null));
 
-        String testContent = "Your Doris Studio emails are working — hooray!";
+        String testContent = "Your Palo Studio emails are working — hooray!";
         // Text content of the message
         message.setContent(testContent, "text/html;charset=UTF-8");
 
@@ -361,7 +357,8 @@ public class MailComponent {
 
             Session session = null;
             if (smtpSecurity == EmailInfo.SmtpSecurity.none) {
-                session = Session.getDefaultInstance(props);
+                // getDefaultInstance is singleton mode
+                session = Session.getInstance(props);
             } else {
                 Authenticator auth = new Authenticator() {
                     public PasswordAuthentication getPasswordAuthentication() {
@@ -372,8 +369,7 @@ public class MailComponent {
             }
             return session;
         } catch (Exception e) {
-            log.error("Get Email session exception {}", e.getMessage());
-            e.printStackTrace();
+            log.error("Get Email session exception", e);
             return null;
         }
     }
@@ -383,7 +379,7 @@ public class MailComponent {
     @AllArgsConstructor
     private static class Application {
 
-        private String applicationName = "Doris Studio";
+        private String applicationName = "Palo Studio";
 
         private String applicationLogoUrl = LOG_URL;
     }
@@ -452,8 +448,7 @@ public class MailComponent {
                 Transport.send(message);
                 log.debug("send mail success.");
             } catch (MessagingException e) {
-                log.error("Send message exception {}", e.getMessage());
-                e.printStackTrace();
+                log.error("Send message exception", e);
             }
         }
     }

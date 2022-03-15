@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -43,6 +44,9 @@ public interface PermissionsGroupMembershipRepository extends
     @Query("select p.userId from PermissionsGroupMembershipEntity p where p.groupId = :groupId")
     List<Integer> getUserIdsByGroupId(@Param("groupId") int groupId);
 
+    @Query("select p.userId from PermissionsGroupMembershipEntity p where p.groupId = :groupId and p.userId > 0")
+    List<Integer> getFilterUserIdsByGroupId(@Param("groupId") int groupId);
+
     @Query("select p from PermissionsGroupMembershipEntity p where p.groupId = :groupId")
     List<PermissionsGroupMembershipEntity> getByGroupId(@Param("groupId") int groupId);
 
@@ -60,5 +64,10 @@ public interface PermissionsGroupMembershipRepository extends
     @Modifying
     @Query("delete from PermissionsGroupMembershipEntity p where p.groupId = :groupId and p.userId = :userId")
     void deleteByUserIdAndGroupId(@Param("groupId") int groupId, @Param("userId") int userId);
+
+    @Transactional
+    @Modifying
+    @Query("delete from PermissionsGroupMembershipEntity p")
+    void deleteAllGroupMembers();
 
 }

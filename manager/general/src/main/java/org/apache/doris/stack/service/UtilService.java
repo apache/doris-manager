@@ -17,9 +17,13 @@
 
 package org.apache.doris.stack.service;
 
+import static org.apache.doris.stack.constant.ConstantDef.EMAIL_REGEX;
 import static org.apache.doris.stack.service.user.AuthenticationService.failedLoginMap;
 
+import com.google.common.collect.Lists;
 import org.apache.doris.stack.constant.ConstantDef;
+import org.apache.doris.stack.exception.InputLengthException;
+import org.apache.doris.stack.exception.PasswordWeakException;
 import org.apache.doris.stack.util.CredsUtil;
 import org.apache.doris.stack.util.UuidUtil;
 import org.apache.doris.stack.entity.CoreUserEntity;
@@ -40,58 +44,110 @@ import java.util.List;
 @Slf4j
 public class UtilService extends BaseService {
 
-    private static final String EMAIL_REGEX = "[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@"
-            + "(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?";
+    private static final String NUMBERS_REGEX = "[0-9]";
+
+    private static final String UPPERCASE_LETTER_REGEX = "[A-Z]";
+
+    private static final String LOWERCASE_LETTER_REGEX = "[a-z]";
+
+    private static final String UNDERLINE_REGEX = "_";
 
     @Autowired
     public UtilService() {
     }
 
-    /**
-     * Password strength check: the password can be composed of letters (case), numbers and special characters
-     * Weak password strength: only the minimum password length of 6 is met, and there is only one character (letter)
-     * General password strength: it meets the minimum password length of 6 and has two lengths (characters and numbers)
-     * Strong password strength: the minimum length of the password is 8, and it is composed of at least one lowercase,
-     * uppercase, number and special characters
-     * @param passwd
-     * TODO:At present, only the length of the password and whether it contains numbers are checked.
-     * In the future, the password strength check needs to be increased
-     * @return 是否合格
-     */
-    public boolean passwordCheck(String passwd) throws Exception {
+    public boolean newPasswordCheck(String passwd) throws Exception {
         log.debug("Check password format.");
         if (passwd == null || passwd.isEmpty()) {
             log.error("The password is empty.");
             throw new RequestFieldNullException();
         }
-        int lenght = passwd.length();
+
+        int length = passwd.length();
         // Check whether the password meets the minimum count requirements for each character class
-        if (passwd.length() < 6) {
-            log.error("Password length is less than 6.");
+        if (length < 6) {
+            log.error("Password length is less than 6 or more than 12.");
+            throw new PasswordWeakException();
+        }
+
+        if (length > 12) {
+            log.error("Password length is more than 12.");
             throw new PasswordFormatException();
         }
 
-        // Check that the password contains only one character
-        // Contains only numbers
-        if (passwd.length() - passwd.replaceAll("[0-9]", "").length() == lenght) {
-            log.error("The password contains only numbers.");
-            throw new PasswordFormatException();
+        int letterTypes = isNotOnlyContainLetter(passwd, NUMBERS_REGEX)
+                + isNotOnlyContainLetter(passwd, UPPERCASE_LETTER_REGEX)
+                + isNotOnlyContainLetter(passwd, LOWERCASE_LETTER_REGEX)
+                + isNotOnlyContainLetter(passwd, UNDERLINE_REGEX);
+
+        // Check that the password contains only one or two character
+        if (letterTypes < 3) {
+            log.error("The password contains only one or two type letters.");
+            throw new PasswordWeakException();
         }
 
-        // Contains only uppercase letters
-        if (passwd.length() - passwd.replaceAll("[A-Z]", "").length() == lenght) {
-            log.error("The password contains only uppercase letters.");
-            throw new PasswordFormatException();
-        }
-
-        // Contains only lowercase letters
-        if (passwd.length() - passwd.replaceAll("[a-z]", "").length() == lenght) {
-            log.error("The password contains only lowercase letters.");
+        if (!isOnlyContainLetters(passwd, Lists.newArrayList(NUMBERS_REGEX, UPPERCASE_LETTER_REGEX,
+                LOWERCASE_LETTER_REGEX, UNDERLINE_REGEX))) {
+            log.error("The password contains unsupported characters.");
             throw new PasswordFormatException();
         }
 
         log.debug("The password is qualified.");
         return true;
+    }
+
+    public boolean userNameCheck(String name) throws Exception {
+        log.debug("Check user name format.");
+        if (name == null || name.isEmpty()) {
+            log.error("The use name is empty.");
+            throw new RequestFieldNullException();
+        }
+
+        int length = name.length();
+
+        if (length >= 20) {
+            log.error("The user name length {} too long.", length);
+            throw new InputLengthException();
+        }
+
+        if (!isOnlyContainLetters(name, Lists.newArrayList(NUMBERS_REGEX, UPPERCASE_LETTER_REGEX,
+                LOWERCASE_LETTER_REGEX))) {
+            log.error("The user name contains unsupported characters.");
+            throw new InputFormatException();
+        }
+
+        log.debug("The user name is qualified.");
+        return true;
+    }
+
+    /**
+     * Judge whether the string contains some characters, but not only such characters
+     * @param str, original string
+     * @param regex, regular expression of some letter
+     * @return 1 is returned if the condition is met, and 0 is returned if the condition is not met
+     */
+    private int isNotOnlyContainLetter(String str, String regex) {
+        int length = str.length();
+        int noLetterReplaceLen = str.replaceAll(regex, "").length();
+
+        if (noLetterReplaceLen > 0 && noLetterReplaceLen < length) {
+            return 1;
+        }
+        return 0;
+    }
+
+    /**
+     * Judge whether the string contains only certain characters and cannot contain other characters
+     * @param str
+     * @param regexs
+     * @return, true is returned if the condition is met, and false is returned if the condition is not met
+     */
+    private boolean isOnlyContainLetters(String str, List<String> regexs) {
+        String result = str;
+        for (String regex : regexs) {
+            result = result.replaceAll(regex, "");
+        }
+        return result.isEmpty();
     }
 
     /**
@@ -153,6 +209,18 @@ public class UtilService extends BaseService {
         log.debug("The mail format is qualified.");
 
         return true;
+    }
+
+    // check role name
+    public void roleNameCheck(String name) throws Exception {
+        if (name.length() > 20 || name.equals("空间管理员") || name.equals("空间成员")) {
+            throw new InputFormatException();
+        }
+        for (char ch : name.toCharArray()) {
+            if (!Character.isLetter(ch) && !Character.isDigit(ch) && ch != '_' && !(ch >= 19968 && ch <= 171941)) {
+                throw new InputFormatException();
+            }
+        }
     }
 
     /**

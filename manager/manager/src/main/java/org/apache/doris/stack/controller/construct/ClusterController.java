@@ -18,6 +18,7 @@
 package org.apache.doris.stack.controller.construct;
 
 import org.apache.doris.stack.controller.BaseController;
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.rest.ResponseEntityBuilder;
 import org.apache.doris.stack.service.user.AuthenticationService;
 import org.apache.doris.stack.service.construct.ClusterService;
@@ -51,9 +52,7 @@ public class ClusterController extends BaseController {
     public Object getClusterOpInfo(
             HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.debug("Get Doris cluster op info.");
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-
-        return ResponseEntityBuilder.ok(clusterService.getClusterOpInfo(studioUserId));
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(clusterService.getClusterOpInfo(user));
     }
 }

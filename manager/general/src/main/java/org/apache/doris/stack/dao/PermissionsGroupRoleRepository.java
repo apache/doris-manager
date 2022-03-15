@@ -30,17 +30,17 @@ public interface PermissionsGroupRoleRepository extends
         JpaRepository<PermissionsGroupRoleEntity, Integer> {
 
     @Query("select s from PermissionsGroupRoleEntity s where s.clusterId = :clusterId")
-    List<PermissionsGroupRoleEntity> getByClusterId(@Param("clusterId") int clusterId);
+    List<PermissionsGroupRoleEntity> getByClusterId(@Param("clusterId") long clusterId);
 
     @Query("select s from PermissionsGroupRoleEntity s where s.clusterId = :clusterId and s.groupName = :groupName")
     List<PermissionsGroupRoleEntity> getByGroupNameAndClusterId(@Param("groupName") String groupName,
-                                                                @Param("clusterId") int clusterId);
+                                                                @Param("clusterId") long clusterId);
 
     @Query("select s.groupId from PermissionsGroupRoleEntity s where s.clusterId = :clusterId")
-    HashSet<Integer> getGroupIdByClusterId(@Param("clusterId") int clusterId);
+    HashSet<Integer> getGroupIdByClusterId(@Param("clusterId") long clusterId);
 
     @Query("select s from PermissionsGroupRoleEntity s where s.clusterId = :clusterId and s.role = :role")
-    List<PermissionsGroupRoleEntity> getByClusterIdAndRole(@Param("clusterId") int clusterId,
+    List<PermissionsGroupRoleEntity> getByClusterIdAndRole(@Param("clusterId") long clusterId,
                                                            @Param("role") String role);
 
     @Query("select s from PermissionsGroupRoleEntity s where s.groupName = :groupName")
@@ -48,9 +48,25 @@ public interface PermissionsGroupRoleRepository extends
 
     @Modifying
     @Query("delete from PermissionsGroupRoleEntity s where s.clusterId = :clusterId")
-    void deleteByClusterId(@Param("clusterId") int clusterId);
+    void deleteByClusterId(@Param("clusterId") long clusterId);
 
     @Modifying
     @Query("delete from PermissionsGroupRoleEntity s where s.groupName = :groupName")
     void deleteByGroupName(@Param("groupName") String groupName);
+
+    @Query("select s from PermissionsGroupRoleEntity s where s.groupName like 'All User_%' and s.paloUserName like "
+            + "'Analyzer%' and s.password = '123456'")
+    List<PermissionsGroupRoleEntity> getByGroupName();
+
+    @Query("select s from PermissionsGroupRoleEntity s where s.password is not null")
+    List<PermissionsGroupRoleEntity> getByPassword();
+
+    @Query("select s from PermissionsGroupRoleEntity s where s.role is not null and s.password "
+            + "is null and s.paloUserName is null and s.groupName not like 'Administrators%' and s.groupName not like"
+            + " 'All Users%'")
+    List<PermissionsGroupRoleEntity> getByUserNameAndPassword();
+
+    @Query("select s from PermissionsGroupRoleEntity s where s.clusterId = :clusterId and s.groupName not like "
+            + "'Administrators%'")
+    List<PermissionsGroupRoleEntity> getAllGroup(@Param("clusterId") long clusterId);
 }

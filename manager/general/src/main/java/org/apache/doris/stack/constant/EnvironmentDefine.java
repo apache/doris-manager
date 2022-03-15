@@ -33,6 +33,8 @@ public class EnvironmentDefine {
     }
 
     // Environment variable name definition
+    public static final String LOG_PATH_ENV = "LOG_PATH";
+
     // Data storage engine type environment variable
     public static final String DB_TYPE_ENV = "MB_DB_TYPE";
 
@@ -51,8 +53,26 @@ public class EnvironmentDefine {
     // Data storage connection port environment variable
     public static final String DB_HOST_ENV = "MB_DB_HOST";
 
+    public static final String H2_FILE_PATH_ENV = "H2_FILE_PATH";
+
+    public static final String DB_MAX_POOL_SIZE_ENV = "DB_MAX_POOL_SIZE";
+
+    public static final String DB_MIN_IDLE_ENV = "DB_MIN_IDLE";
+
     // Data storage connection port environment variable
     public static final String STUDIO_PORT_ENV = "STUDIO_PORT";
+
+    // spring tomcat waiting queue length
+    public static final String WEB_ACCEPT_COUNT_ENV = "WEB_ACCEPT_COUNT";
+
+    // The spring tomcat maximum number of worker threads
+    public static final String WEB_MAX_THREADS_ENV = "WEB_MAX_THREADS";
+
+    // The spring tomcat minimum number of idle working threads
+    public static final String WEB_MIN_SPARE_THREADS_ENV = "WEB_MIN_SPARE_THREADS";
+
+    // The spring tomcat minimum number of idle working threads
+    public static final String WEB_MAX_CONNECTIONS_ENV = "WEB_MAX_CONNECTIONS";
 
     // Data storage connection port environment variable
     public static final String NGINX_PORT_ENV = "NGINX_PORT";
@@ -96,5 +116,13 @@ public class EnvironmentDefine {
     public static final String CUSTOM_FORMATTING_KEY_ENV = "CUSTOM_FORMATTING";
 
     public static final String SAMPLE_DATA_ENABLE_KEY_ENV = "SAMPLE_DATA_ENABLE";
+
+    public static final String PROMETHEUS_HOME_ENV = "PROMETHEUS_HOME";
+
+    public static final String PROMETHEUS_HOST_ENV = "PROMETHEUS_HOST";
+
+    public static final String PROMETHEUS_PORT_ENV = "PROMETHEUS_PORT";
+
+    public static final String DEPLOY_TYPE_ENV = "DEPLOY_TYPE";
 
 }

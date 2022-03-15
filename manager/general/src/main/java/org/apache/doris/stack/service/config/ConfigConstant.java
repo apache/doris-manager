@@ -77,7 +77,7 @@ public class ConfigConstant {
         PUBLIC_CONFIGS.put(ADMIN_EMAIL_KEY, new ConfigItem(ADMIN_EMAIL_KEY, ConfigItem.Type.STRING,
                 mailDesc, false, ConfigItem.Visibility.PUBLIC, EnvironmentDefine.ADMIN_EMAIL_ENV));
 
-        String trackingDesc = "启用匿名使用数据的收集，以帮助改进Doris Studio.";
+        String trackingDesc = "启用匿名使用数据的收集，以帮助改进Palo Studio.";
         PUBLIC_CONFIGS.put(ANON_TRACKING_ENABLED_KEY, new ConfigItem(ANON_TRACKING_ENABLED_KEY, ConfigItem.Type.BOOLEAN,
                 trackingDesc, false, ConfigItem.Visibility.PUBLIC, EnvironmentDefine.ANON_TRACKING_ENABLED_ENV,
                 "false"));
@@ -87,26 +87,26 @@ public class ConfigConstant {
                 httpsDesc, false, ConfigItem.Visibility.PUBLIC, EnvironmentDefine.REDIRECT_HTTPS_ENV,
                 "false"));
 
-        String localeDesc = "Doris Stack服务的默认语言.";
+        String localeDesc = "Palo Stack服务的默认语言.";
         PUBLIC_CONFIGS.put(SITE_LOCALE_KEY, new ConfigItem(SITE_LOCALE_KEY, ConfigItem.Type.STRING,
                 localeDesc, false, ConfigItem.Visibility.PUBLIC, EnvironmentDefine.SITE_LOCALE_ENV,
                 "zh"));
 
-        String siteNameDesc = "Doris Stack服务实例的名称.";
+        String siteNameDesc = "Palo Stack服务实例的名称.";
         PUBLIC_CONFIGS.put(SITE_NAME_KEY, new ConfigItem(SITE_NAME_KEY, ConfigItem.Type.STRING,
                 siteNameDesc, false, ConfigItem.Visibility.PUBLIC, EnvironmentDefine.SITE_NAME_ENV));
 
-        String siteUrlDesc = "Doris Stack服务实例的访问地址.";
+        String siteUrlDesc = "Palo Stack服务实例的访问地址.";
         PUBLIC_CONFIGS.put(SITE_URL_KEY, new ConfigItem(SITE_URL_KEY, ConfigItem.Type.STRING,
                 siteUrlDesc, false, ConfigItem.Visibility.PUBLIC, EnvironmentDefine.SITE_URL_ENV));
 
-        String versionDesc = "Doris Stack服务的版本信息.";
+        String versionDesc = "Palo Stack服务的版本信息.";
         VersionInfo versionInfo = new VersionInfo("v1.0.0", "2021-08-20", "for test");
         PUBLIC_CONFIGS.put(VERSION_INFO_KEY, new ConfigItem(VERSION_INFO_KEY, ConfigItem.Type.JSON,
                 versionDesc, false, ConfigItem.Visibility.PUBLIC, EnvironmentDefine.VERSION_INFO_ENV,
                 JSON.toJSONString(versionInfo)));
 
-        String defaultGroupDesc = "Doris Stack 默认用户池分组";
+        String defaultGroupDesc = "Palo Stack 默认用户池分组";
         PUBLIC_CONFIGS.put(DEFAULT_GROUP_KEY, new ConfigItem(DEFAULT_GROUP_KEY, ConfigItem.Type.INTEGER,
                 defaultGroupDesc, false, ConfigItem.Visibility.PUBLIC, EnvironmentDefine.DEFAULT_GROUP_ID_ENV));
 
@@ -129,6 +129,7 @@ public class ConfigConstant {
         PUBLIC_CONFIGS.put(DATABASE_TYPE_KEY, new ConfigItem(DATABASE_TYPE_KEY, ConfigItem.Type.STRING,
                 databaseTypeDesc, false, ConfigItem.Visibility.PUBLIC,
                 EnvironmentDefine.DB_TYPE_ENV, PropertyDefine.JPA_DATABASE_MYSQL));
+
     }
 
     // Public configuration item
@@ -158,11 +159,11 @@ public class ConfigConstant {
         EMAIL_CONFIGS.put(EMAIL_CONFIGURED_KEY, new ConfigItem(EMAIL_CONFIGURED_KEY, ConfigItem.Type.BOOLEAN,
                 configuredDesc, false, ConfigItem.Visibility.ADMIN));
 
-        String addressDesc = "Doris Studio SMTP邮箱服务的邮件地址.";
+        String addressDesc = "Palo Studio SMTP邮箱服务的邮件地址.";
         EMAIL_CONFIGS.put(EMAIL_ADDRESS_KEY, new ConfigItem(EMAIL_ADDRESS_KEY, ConfigItem.Type.STRING,
                 addressDesc, false, ConfigItem.Visibility.ADMIN));
 
-        String hostDesc = "Doris Studio SMTP服务器地址.";
+        String hostDesc = "Palo Studio SMTP服务器地址.";
         EMAIL_CONFIGS.put(EMAIL_HOST_KEY, new ConfigItem(EMAIL_HOST_KEY, ConfigItem.Type.STRING,
                 hostDesc, false, ConfigItem.Visibility.ADMIN));
 
@@ -298,6 +299,8 @@ public class ConfigConstant {
     // Other configurations cannot be written through environment variables, but can only be configured by users
     public static final String AUTH_TYPE_KEY = "auth_type";
 
+    public static final String INIT_STEP_KEY = "init_step";
+
     public static final String DEPLOY_TYPE = "deploy-type";
 
     public static final Map<String, ConfigItem> CLUSTER_CONFIGS;
@@ -305,9 +308,13 @@ public class ConfigConstant {
     static {
         CLUSTER_CONFIGS = new HashMap<>();
 
-        String authTypeDesc = "Doris Studio服务认证方式";
+        String authTypeDesc = "Palo Studio服务认证方式";
         CLUSTER_CONFIGS.put(AUTH_TYPE_KEY, new ConfigItem(AUTH_TYPE_KEY, ConfigItem.Type.STRING,
                 authTypeDesc, false, ConfigItem.Visibility.ADMIN));
+
+        String authStepDesc = "Palo Studio服务部署步骤";
+        CLUSTER_CONFIGS.put(INIT_STEP_KEY, new ConfigItem(INIT_STEP_KEY, ConfigItem.Type.STRING,
+                authStepDesc, false, ConfigItem.Visibility.ADMIN));
 
         String deployNameDesc = "服务部署名称";
         CLUSTER_CONFIGS.put(DEPLOY_TYPE, new ConfigItem(DEPLOY_TYPE, ConfigItem.Type.STRING,
@@ -370,10 +377,20 @@ public class ConfigConstant {
     // All user space configuration items
     public static final Map<String, ConfigItem> ALL_ADMIN_CONFIGS;
 
+    public static final String MONITOR_SOURCE = "monitor-source";
+
+    public static final String MONITOR_SRC_PROMETHEUS = "prometheus";
+
+    public static final String MONITOR_SRC_PALO = "palo";
+
     static {
         ALL_ADMIN_CONFIGS = new HashMap<>();
 
         ALL_ADMIN_CONFIGS.putAll(CHCHE_CONFIGS);
+
+        String monitorSourceDesc = "Doris Manger的监控数据源";
+        ALL_ADMIN_CONFIGS.put(MONITOR_SOURCE, new ConfigItem(MONITOR_SOURCE, ConfigItem.Type.STRING,
+                monitorSourceDesc, false, ConfigItem.Visibility.ADMIN, null, MONITOR_SRC_PALO));
     }
 
 }

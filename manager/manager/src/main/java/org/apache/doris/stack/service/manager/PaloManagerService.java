@@ -20,6 +20,7 @@ package org.apache.doris.stack.service.manager;
 import org.apache.doris.stack.component.ClusterUserComponent;
 import org.apache.doris.stack.connector.PaloForwardManagerClient;
 import org.apache.doris.stack.entity.ClusterInfoEntity;
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.service.BaseService;
 import org.apache.doris.stack.service.user.AuthenticationService;
 import lombok.extern.slf4j.Slf4j;
@@ -44,10 +45,8 @@ public class PaloManagerService extends BaseService {
     private ClusterUserComponent clusterUserComponent;
 
     private ClusterInfoEntity checkAndHandleCluster(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
-
-        return clusterUserComponent.getClusterByUserId(studioUserId);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
     }
 
     public Object get(HttpServletRequest request, HttpServletResponse response, String requestPath) throws Exception {

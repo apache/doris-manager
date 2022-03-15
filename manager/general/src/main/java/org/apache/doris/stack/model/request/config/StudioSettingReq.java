@@ -22,7 +22,7 @@ import lombok.Data;
 @Data
 public class StudioSettingReq {
 
-    private int clusterId;
+    private long clusterId;
 
     private String key;
 

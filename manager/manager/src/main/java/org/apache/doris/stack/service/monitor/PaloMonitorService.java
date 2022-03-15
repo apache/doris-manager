@@ -17,6 +17,7 @@
 
 package org.apache.doris.stack.service.monitor;
 
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.model.palo.ClusterMonitorInfo;
 import org.apache.doris.stack.model.request.monitor.ClusterMonitorReq;
 import org.apache.doris.stack.component.ClusterUserComponent;
@@ -46,11 +47,10 @@ public class PaloMonitorService extends BaseService {
     private ClusterUserComponent clusterUserComponent;
 
     private ClusterMonitorInfo checkAndHandleCluster(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        int studioUserId = authenticationService.checkUserAuthWithCookie(request, response);
-        authenticationService.checkUserIsAdmin(studioUserId);
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
         ClusterMonitorInfo info = new ClusterMonitorInfo();
 
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(studioUserId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         info.setHost(clusterInfo.getAddress());
         info.setHttpPort(clusterInfo.getHttpPort());
 

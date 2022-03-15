@@ -18,6 +18,7 @@
 package org.apache.doris.stack.model.palo;
 
 import lombok.Data;
+import org.apache.doris.stack.entity.ManagerFieldEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,5 +84,15 @@ public class TableSchemaInfo {
         private String aggrType;
 
         private String comment;
+
+        public void transFromEntity(ManagerFieldEntity fieldEntity) {
+            this.setKey(fieldEntity.getKey());
+            this.setAggrType(fieldEntity.getAggrType());
+            this.setComment(fieldEntity.getDescription());
+            this.setField(fieldEntity.getName());
+            this.setIsNull(fieldEntity.getIsNull());
+            this.setType(fieldEntity.getDatabaseType());
+            this.setDefaultVal(fieldEntity.getDefaultVal());
+        }
     }
 }

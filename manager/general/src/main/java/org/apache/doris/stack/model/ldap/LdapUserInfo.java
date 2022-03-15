@@ -37,4 +37,9 @@ public class LdapUserInfo {
     private String groups;
 
     private String password;
+
+    private String entryUUID;
+
+    private int id;
+
 }

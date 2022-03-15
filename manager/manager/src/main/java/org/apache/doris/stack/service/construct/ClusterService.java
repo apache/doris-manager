@@ -17,6 +17,7 @@
 
 package org.apache.doris.stack.service.construct;
 
+import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.model.palo.ClusterOverviewInfo;
 import org.apache.doris.stack.model.response.construct.ClusterOverviewResp;
 import org.apache.doris.stack.component.ClusterUserComponent;
@@ -46,9 +47,9 @@ public class ClusterService extends BaseService {
      * Obtain the operation and maintenance information of the user's Doris cluster
      * @return
      */
-    public ClusterOverviewResp getClusterOpInfo(int userId) throws Exception {
+    public ClusterOverviewResp getClusterOpInfo(CoreUserEntity user) throws Exception {
 
-        ClusterInfoEntity clusterInfo = clusterUserComponent.getClusterByUserId(userId);
+        ClusterInfoEntity clusterInfo = clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user);
         ClusterOverviewInfo result = statisticClient.getClusterInfo(clusterInfo);
 
         ClusterOverviewResp resp = new ClusterOverviewResp(result);

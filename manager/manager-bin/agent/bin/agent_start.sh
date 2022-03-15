@@ -49,7 +49,7 @@ if [ x"$SERVER" == x"" ]; then
 fi
 
 if [ x"$AGENT" == x"" ]; then
-    echo "--agent ip can not empty!"
+    echo "--agent node id can not empty!"
     exit 1
 fi
 export AGENT_HOME=`cd "$curdir/.."; pwd`
@@ -60,7 +60,7 @@ export AGENT_HOME=`cd "$curdir/.."; pwd`
 # LOG_DIR
 # PID_DIR
 export JAVA_OPTS="-Xmx1024m"
-export SERVER_PARAMS="--agentServer=$SERVER --agentIp=$AGENT"
+export SERVER_PARAMS="--manager.server.endpoint=$SERVER --agent.node.id=$AGENT"
 export LOG_DIR="$AGENT_HOME/log"
 export PID_DIR=`cd "$curdir"; pwd`
 

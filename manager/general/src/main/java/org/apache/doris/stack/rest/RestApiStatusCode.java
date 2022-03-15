@@ -26,6 +26,7 @@ public enum RestApiStatusCode {
     UNAUTHORIZED(401),
     BAD_REQUEST(403),
     NOT_FOUND(404),
+    NOT_SPACE(405),
     INTERNAL_SERVER_ERROR(500);
 
     public int code;
