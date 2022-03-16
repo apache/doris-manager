@@ -18,10 +18,11 @@
 import { InitializeAPI } from '@src/routes/initialize/initialize.api';
 import { isSuccess } from '@src/utils/http';
 import { useEffect, useState } from 'react';
-import { useHistory } from 'react-router';
+import { useHistory, useLocation } from 'react-router';
 
 export function useAuth() {
     const [initialized, setInitialized] = useState(false);
+    const { pathname } = useLocation();
     const history = useHistory();
     const [initStep, setInitStep] = useState(0);
     const [authType, setAuthType] = useState();
@@ -40,7 +41,9 @@ export function useAuth() {
             } else {
                 localStorage.setItem('initialized', 'false');
                 setInitialized(false);
-                history.push('/initialize');
+                if (!pathname.includes('/initialize')) {
+                    history.push('/initialize');
+                }
             }
         }
     }
@@ -49,5 +52,5 @@ export function useAuth() {
         initStep,
         authType,
         getInitProperties,
-    }
+    };
 }
