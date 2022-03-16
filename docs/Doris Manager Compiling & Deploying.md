@@ -1,5 +1,16 @@
 # Doris Manager 编译部署文档
 
+## Requirements
+<a href="https://github.com/apache/incubator-doris-manager">
+    <img src="https://img.shields.io/badge/Node-%3E14.17.6-blue" alt="node version required" />
+</a>
+<a href="https://github.com/apache/incubator-doris-manager">
+    <img src="https://img.shields.io/badge/Java-%3E%3D1.8.0-blue" alt="java version required" />
+</a>
+<a href="https://github.com/apache/incubator-doris-manager">
+    <img src="https://img.shields.io/badge/Maven-%3E%3D3.0.0-blue" alt="maven version required" />
+</a>
+
 ## 一、代码编译和运行
 ### 一）编译
 直接运行build.sh脚本，会在manager路径下生成安装运行包——output，包中包括:
