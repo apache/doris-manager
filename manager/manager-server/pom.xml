@@ -55,9 +55,10 @@ under the License.
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
-                <excludes>
-                    <exclude>*</exclude>
-                </excludes>
+                <includes>
+                    <include>logback-spring.xml</include>
+                    <include>application.properties</include>
+                </includes>
             </resource>
             <resource>
                 <directory>src/main/resources</directory>
