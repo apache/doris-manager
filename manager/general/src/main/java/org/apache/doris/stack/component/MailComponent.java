@@ -53,7 +53,7 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class MailComponent {
 
-    protected static final String LOG_URL = "/src/assets/doris.png";
+    protected static final String LOG_URL = "http://127.0.0.1/src/assets/doris.png";
 
     @Autowired
     protected SettingComponent settingComponent;
