@@ -28,7 +28,7 @@ import styles from './initialize.less';
 export function Initialize(props: any) {
     const match = useRouteMatch();
     const history = useHistory();
-    const {initStep, authType: currentAuthType, initialized} = useAuth();
+    const { initStep, authType: currentAuthType, initialized } = useAuth();
 
     useEffect(() => {
         if (currentAuthType && initStep) {
@@ -36,7 +36,7 @@ export function Initialize(props: any) {
             let stepPage = '';
             if (currentAuthType === AuthTypeEnum.STUDIO) {
                 stepPage = StudioStepsEnum[feStep];
-            } else if (currentAuthType === AuthTypeEnum.LDAP){
+            } else if (currentAuthType === AuthTypeEnum.LDAP) {
                 stepPage = LDAPStepsEnum[feStep];
             }
             if (initialized) {
@@ -45,7 +45,7 @@ export function Initialize(props: any) {
                     if (feStep === 1) {
                         history.push('/space');
                     }
-                } else if (currentAuthType === AuthTypeEnum.LDAP){
+                } else if (currentAuthType === AuthTypeEnum.LDAP) {
                     stepPage = LDAPStepsEnum[feStep];
                     if (feStep === 2) {
                         history.push('/space');
@@ -55,11 +55,11 @@ export function Initialize(props: any) {
                 history.push(`${match.path}/auth/${currentAuthType}/${stepPage}`);
             }
         }
-    }, [currentAuthType, initialized]);
+    }, [currentAuthType, initialized, initStep]);
     return (
         <div>
             <Sidebar mode="initialize" />
-            <div style={{marginLeft: 80}}>
+            <div style={{ marginLeft: 80 }}>
                 <div className={styles['initialize-container']}>
                     <Switch>
                         <Route exact path={`${match.path}/`} component={InitializePage} />
