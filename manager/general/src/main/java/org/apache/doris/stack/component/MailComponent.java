@@ -53,7 +53,7 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class MailComponent {
 
-    protected static final String LOG_URL = "http://static.metabase.com/logo.png";
+    protected static final String LOG_URL = "/src/assets/doris.png";
 
     @Autowired
     protected SettingComponent settingComponent;

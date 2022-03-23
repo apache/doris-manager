@@ -118,7 +118,7 @@ public class DataManageServiceTest {
             when(driver.createDb(createReq.getName())).thenReturn(sql);
             DataDescription description = new DataDescription(createReq.getDescribe(), user.getFirstName());
             when(syncComponent.addDatabase(createReq.getName(), JSON.toJSONString(description),
-                    nsId, clusterId)).thenThrow(new Exception("save metabase error"));
+                    nsId, clusterId)).thenThrow(new Exception("save doris error"));
             manageService.createDatabse(nsId, createReq, user);
         } catch (Exception e) {
             log.debug("create database test error {}.", e.getMessage());

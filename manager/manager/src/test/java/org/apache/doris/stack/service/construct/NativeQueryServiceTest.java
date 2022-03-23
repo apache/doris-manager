@@ -70,7 +70,7 @@ public class NativeQueryServiceTest {
 
         // mock cluster
         ClusterInfoEntity clusterInfo = mockClusterInfo(clusterId);
-        // Execute the query of metabase, dbid is less than 1
+        // Execute the query of doris, dbid is less than 1
         try {
             String sql = "select * from collations";
             when(clusterUserComponent.getUserCurrentClusterAndCheckAdmin(user)).thenReturn(clusterInfo);
