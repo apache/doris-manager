@@ -301,7 +301,7 @@ public class DorisClusterService {
         } else if (moduleName.equals(ServerAndAgentConstant.FE_NAME)) {
             for (String key : ConfigDefault.FE_CONFIG_DEDAULT.keySet()) {
                 DeployConfigItem configItem = new DeployConfigItem();
-                String value = ConfigDefault.BE_CONFIG_DEDAULT.get(key);
+                String value = ConfigDefault.FE_CONFIG_DEDAULT.get(key);
                 if (key.equals(ConfigDefault.FE_LOG_CONFIG_NAME) || key.equals(ConfigDefault.FE_META_CONFIG_NAME)) {
                     value = installInfo + "/" + ServerAndAgentConstant.FE_NAME + value;
                 }
@@ -313,7 +313,7 @@ public class DorisClusterService {
         } else {
             for (String key : ConfigDefault.BROKER_CONFIG_DEDAULT.keySet()) {
                 DeployConfigItem configItem = new DeployConfigItem();
-                String value = ConfigDefault.BE_CONFIG_DEDAULT.get(key);
+                String value = ConfigDefault.BROKER_CONFIG_DEDAULT.get(key);
                 configItem.setKey(key);
                 configItem.setValue(value);
 

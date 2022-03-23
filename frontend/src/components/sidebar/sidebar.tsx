@@ -25,14 +25,14 @@ import {
     TableOutlined,
     AppstoreOutlined,
 } from '@ant-design/icons';
-import { Link, useHistory } from 'react-router-dom';
-import React, { useState, useEffect, useContext } from 'react';
+import { Link, useHistory, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 
 import { useTranslation } from 'react-i18next';
 import styles from './sidebar.less';
 import { UserInfoContext } from '@src/common/common.context';
 
-const GLOBAL_PATHS = ['/settings', '/space'];
+const GLOBAL_PATHS = ['/settings', '/space', '/user-setting'];
 
 export function Sidebar(props: any) {
     const { t } = useTranslation();
@@ -42,9 +42,14 @@ export function Sidebar(props: any) {
     const user = useContext(UserInfoContext);
 
     const history = useHistory();
+    const { pathname } = useLocation();
     const isSuperAdmin = user?.is_super_admin;
     const isSpaceAdmin = user?.is_admin;
     const isInSpace = !GLOBAL_PATHS.includes(selectedKeys);
+    const logoRoute = useMemo(
+        () => (GLOBAL_PATHS.some(path => pathname.startsWith(path)) ? '/space' : '/cluster'),
+        [pathname],
+    );
     useEffect(() => {
         if (history.location.pathname.includes('configuration')) {
             setSelectedKeys('/configuration');
@@ -130,10 +135,9 @@ export function Sidebar(props: any) {
                             alignItems: 'center',
                         }}
                         key="/logo"
+                        onClick={() => history.push(logoRoute)}
                     >
-                        <div
-                            className={collapsed ? styles['logo-collapsed'] : styles['logo']}
-                        />
+                        <div className={collapsed ? styles['logo-collapsed'] : styles['logo']} />
                     </Menu.Item>
                     {isInSpace && (
                         <>

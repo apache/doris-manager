@@ -16,7 +16,7 @@
 // under the License.
 
 import { EditableProTable, ProColumns } from '@ant-design/pro-table';
-import { Row, Button, Input, message, Modal } from 'antd';
+import { Row, Button, Input, message, Modal, InputRef } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
 import React, { useEffect, useRef, useState } from 'react';
 type DataSourceType = {
@@ -47,7 +47,9 @@ export function NodeList(props: { value?: any; onChange?: any }) {
         {
             title: 'IP地址',
             dataIndex: 'ip',
-            renderFormItem: (dom, rowData, index) => <IpInput value={rowData.ip} />,
+            renderFormItem: (dom, rowData, index) => {
+                return <IpInput value={rowData.record?.ip} id={rowData.record?.id as string} />;
+            },
             render: (dom, rowData, index) => {
                 return <span className="customRender">{`${rowData.ip}`}</span>;
             },
@@ -78,13 +80,14 @@ export function NodeList(props: { value?: any; onChange?: any }) {
     ];
 
     const IpInput: React.FC<{
+        id: string;
         value?: string;
         onChange?: (value: string) => void;
-    }> = ({ value, onChange }) => {
-        const ref = useRef<Input | null>(null);
+    }> = ({ value, id, onChange }) => {
+        const ref = useRef<InputRef | null>(null);
         const handleInputConfirm = (val: string) => {
             if (reg.test(val)) {
-                if (dataSource.filter(item => item.ip === val).length) {
+                if (dataSource.filter(item => item.ip === val && item.id !== id).length) {
                     message.error('此ip已存在!');
                 } else {
                     onChange?.(val);
@@ -106,7 +109,21 @@ export function NodeList(props: { value?: any; onChange?: any }) {
 
     useEffect(() => {
         props?.onChange(dataSource.map(item => item.ip));
-    }, [dataSource.length]);
+    }, [dataSource]);
+
+    useEffect(() => {
+        if (props.value && dataSource.length === 0) {
+            const dataSource = props.value.map((item: string, index: number) => ({
+                id: index.toString(),
+                order: index + 1,
+                index,
+                ip: item,
+            }));
+            if (dataSource.length) {
+                setDataSource(dataSource);
+            }
+        }
+    }, [props.value]);
 
     function handleOk() {
         let baseLength = dataSource.length || 0;

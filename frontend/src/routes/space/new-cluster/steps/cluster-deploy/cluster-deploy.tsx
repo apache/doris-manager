@@ -85,14 +85,16 @@ export function ClusterDeploy(props: any) {
                 if (isSuccess(res)) {
                     const data: any[] = res.data;
                     setInstances(data);
-                    if (data.some(item => ERROR_STATUS.includes(item.operateStatus))) {
+                    const failedInstance = data.find(item => ERROR_STATUS.includes(item.operateStatus));
+                    if (failedInstance) {
+                        message.error(failedInstance.operateResult);
                         getClusterInstances.cancel();
                     }
                     if (
                         data.every(item => item.operateStatus === OperateStatusEnum.SUCCESS && item.operateStage === 3)
                     ) {
                         getClusterInstances.cancel();
-                        getJDBCReady.run(reqInfo.cluster_id)
+                        getJDBCReady.run(reqInfo.cluster_id);
                     }
                 }
             },
