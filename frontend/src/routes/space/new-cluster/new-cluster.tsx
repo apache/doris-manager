@@ -38,6 +38,7 @@ import { NodeVerify } from '../components/node-verify/node-verify';
 import { SpaceAPI } from '../space.api';
 import { isSuccess } from '@src/utils/http';
 import { requestInfoState, stepDisabledState } from '../access-cluster/access-cluster.recoil';
+import { checkParam } from '../space.utils';
 const { Step } = Steps;
 
 const PREV_DISABLED_STEPS = [NewClusterStepsEnum[3], NewClusterStepsEnum[6], NewClusterStepsEnum[7]];
@@ -52,6 +53,7 @@ export function NewCluster(props: any) {
     const [curProcessId, setProcessId] = useRecoilState(processId);
     const [requestInfo, setRequestInfo] = useRecoilState(requestInfoState);
     const [loading, setLoading] = useState(false);
+    const [form] = useForm();
 
     useEffect(() => {
         if (history.location.pathname === '/space/list') {
@@ -69,9 +71,7 @@ export function NewCluster(props: any) {
         if (match.params.requestId && +match.params.requestId !== 0) {
             getRequestInfo();
         }
-    }, [history.location.pathname, step]);
-
-    const [form] = useForm();
+    }, [history.location.pathname]);
 
     async function getRequestInfo() {
         const requestId = match.params.requestId;
@@ -84,7 +84,7 @@ export function NewCluster(props: any) {
     async function nextStep() {
         const value = form.getFieldsValue();
         const newStep = step + 1;
-        setLoading(true);
+        let isParamsValid = true;
         const params = {
             ...requestInfo.reqInfo,
             cluster_id: requestInfo.clusterId,
@@ -97,26 +97,45 @@ export function NewCluster(props: any) {
                 name: value.name,
                 spaceAdminUsers: value.spaceAdminUsers,
             };
+            isParamsValid =
+                checkParam(params.spaceInfo.name, '请填写空间名称') &&
+                checkParam(params.spaceInfo.spaceAdminUsers, '请填写管理员姓名');
         }
         if (value && step === NewClusterStepsEnum['add-node']) {
             params.authInfo = {
                 sshKey: value.sshKey,
-                sshPort: parseInt(value.sshPort),
+                sshPort: value.sshPort ? parseInt(value.sshPort) : value.sshPort,
                 sshUser: value.sshUser,
             };
             params.hosts = value.hosts;
+            isParamsValid =
+                checkParam(params.authInfo.sshUser, '请填写SSH用户') &&
+                checkParam(params.authInfo.sshPort, '请填写SSH端口') &&
+                checkParam(params.authInfo.sshKey, '请填写SSH私钥') &&
+                checkParam(params.hosts, '请填写节点列表');
         }
         if (value && step === NewClusterStepsEnum['install-options']) {
             params.installInfo = value.installDir;
             params.packageInfo = value.packageUrl;
+            isParamsValid =
+                checkParam(params.installInfo, '请填写代码包路径') && checkParam(params.packageInfo, '请填写安装路径');
         }
         if (value && step === NewClusterStepsEnum['cluster-plan']) {
             params.nodeConfig = value.nodeConfig;
+            isParamsValid =
+                checkParam(params.nodeConfig?.[0]?.nodeIds, '请分配FE节点') &&
+                checkParam(params.nodeConfig?.[1]?.nodeIds, '请分配BE节点');
         }
         if (value && step === NewClusterStepsEnum['node-config']) {
             params.deployConfigs = value.deployConfigs;
+            isParamsValid = params.deployConfigs.every((node: any) => {
+                return node.configs.every((config: any) => {
+                    return checkParam(config.value, `请完整配置${node.moduleName.toUpperCase()}节点参数`);
+                });
+            });
         }
-        console.log(params);
+        if (!isParamsValid) return;
+        setLoading(true);
         const res = await SpaceAPI.createCluster(params);
         setLoading(false);
         if (isSuccess(res)) {
@@ -138,7 +157,6 @@ export function NewCluster(props: any) {
 
     async function finish() {
         const value = form.getFieldsValue();
-        setLoading(true);
         const params = {
             ...requestInfo.reqInfo,
             cluster_id: requestInfo.clusterId,
@@ -146,7 +164,9 @@ export function NewCluster(props: any) {
             event_type: (step + 1).toString(),
         };
         params.clusterPassword = value.clusterPassword;
-        console.log(params);
+        const isFinishParamValid = checkParam(params.clusterPassword, '请设定集群root密码');
+        if (!isFinishParamValid) return;
+        setLoading(true);
         const res = await SpaceAPI.createCluster(params);
         setLoading(false);
         if (isSuccess(res)) {

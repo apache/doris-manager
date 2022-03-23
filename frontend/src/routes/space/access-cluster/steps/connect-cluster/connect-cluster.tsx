@@ -23,22 +23,25 @@ import { SpaceAPI } from '@src/routes/space/space.api';
 import styles from '../../../space.less';
 import { stepDisabledState } from '../../access-cluster.recoil';
 import { useRecoilState } from 'recoil';
+import { useLocation } from 'react-router';
+import { AccessClusterStepsEnum } from '../../access-cluster.data';
 
 const tip = {
     default: '请进行链接测试',
-    fault: '链接测试未通过'
-}
+    fault: '链接测试未通过',
+};
 
 export function ConnectCluster(props: any) {
-    const { form, reqInfo, step } = useContext(NewSpaceInfoContext);
+    const { form, reqInfo } = useContext(NewSpaceInfoContext);
     const [testFlag, setTestFlag] = useState<any>('none');
     const [stepDisabled, setStepDisabled] = useRecoilState(stepDisabledState);
-
+    const { pathname } = useLocation();
     useEffect(() => {
-        form.setFieldsValue({...reqInfo.clusterAccessInfo});
-        setStepDisabled({...stepDisabled, next: true});
-    }, [reqInfo.cluster_id, step]);
-
+        if (pathname.includes(AccessClusterStepsEnum[1])) {
+            form.setFieldsValue({ ...reqInfo.clusterAccessInfo });
+            setStepDisabled({ ...stepDisabled, next: true });
+        }
+    }, [reqInfo.cluster_id, pathname]);
 
     const handleLinkTest = () => {
         const values = form.getFieldsValue();
@@ -52,21 +55,21 @@ export function ConnectCluster(props: any) {
             const { msg, data, code } = res;
             if (code === 0) {
                 Modal.success({
-                    title: "集群连接成功",
+                    title: '集群连接成功',
                     content: msg,
                 });
-                setStepDisabled({...stepDisabled, next: false});
-                setTestFlag('success')
+                setStepDisabled({ ...stepDisabled, next: false });
+                setTestFlag('success');
             } else {
                 Modal.error({
-                    title: "集群连接失败",
+                    title: '集群连接失败',
                     content: msg,
                 });
-                setStepDisabled({...stepDisabled, next: true});
+                setStepDisabled({ ...stepDisabled, next: true });
                 setTestFlag('failed');
             }
         });
-    }
+    };
 
     return (
         <PageContainer
@@ -93,10 +96,10 @@ export function ConnectCluster(props: any) {
                     httpPort: reqInfo.clusterAccessInfo?.httpPort,
                     queryPort: reqInfo.clusterAccessInfo?.queryPort,
                     user: reqInfo.clusterAccessInfo?.user,
-                    passwd: reqInfo.clusterAccessInfo?.passwd
+                    passwd: reqInfo.clusterAccessInfo?.passwd,
                 }}
             >
-                <Form.Item name="address" label="集群地址" required >
+                <Form.Item name="address" label="集群地址" required>
                     <Input placeholder="please input cluster address" />
                 </Form.Item>
                 <Form.Item name="httpPort" label="HTTP端口" required>
@@ -110,21 +113,20 @@ export function ConnectCluster(props: any) {
                 </Form.Item>
                 <Form.Item name="passwd" label="集群密码">
                     <Form.Item name="passwd" noStyle>
-                        <Input.Password  placeholder="please input cluster user password"/>
+                        <Input.Password placeholder="please input cluster user password" />
                     </Form.Item>
                 </Form.Item>
             </Form>
-            <Space style={{marginTop: 20, marginLeft: 82}}>
+            <Space style={{ marginTop: 20, marginLeft: 82 }}>
                 <Button onClick={() => handleLinkTest()}>链接测试</Button>
-                    &nbsp;  
-                {
-                    (testFlag !== 'success') && <Space>
+                &nbsp;
+                {testFlag !== 'success' && (
+                    <Space>
                         <div className={styles['light']}></div>
-                        <div className={styles['light-tip']}>{testFlag === 'failed' ? tip.fault: tip.default}</div> 
+                        <div className={styles['light-tip']}>{testFlag === 'failed' ? tip.fault : tip.default}</div>
                     </Space>
-                }
+                )}
             </Space>
         </PageContainer>
     );
 }
-
