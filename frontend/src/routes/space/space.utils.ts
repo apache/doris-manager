@@ -14,28 +14,19 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-.tabs {
-  transform: translate(35em, 0);
+
+import { message } from 'antd';
+
+export function isVoid<T extends any>(val: T) {
+    if (val == null || val === '') return true;
+    if (Array.isArray(val)) return val.length === 0;
+    return false;
 }
 
-.input-gird {
-  margin: 0 auto;
-  width: 420px;
-  // padding: 32px;
- 
-  line-height: 24px;
-  background-color: #fff;
-  border-radius: 6px;
-  transition: all 0.2s linear 0s;
-
-  input {
-    width: 100%;
-    padding: 0.75em;
-    background: '#e8f0fe';
-    border-radius: 4px;
-  }
-}
-
-.input-pass {
-  background: '#e8f0fe';
+export function checkParam<T extends any>(param: T, errorMessage: string) {
+    const isValid = !isVoid(param);
+    if (!isValid) {
+        message.error(errorMessage);
+    }
+    return isValid;
 }

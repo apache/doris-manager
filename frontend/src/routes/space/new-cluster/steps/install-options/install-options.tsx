@@ -36,14 +36,6 @@ export function InstallOptions(props: any) {
                 name="basic"
                 labelCol={{ span: 2 }}
                 wrapperCol={{ span: 10 }}
-                initialValues={{
-                    remember: true,
-                    user: 'root',
-                    sshPort: 8022,
-                    sshKey: '',
-                    installDir: '/usr/local/doris',
-                    packageUrl: 'http://10.193.215.27:8091/download/PALO-0.15.1-rc09-binary.tar.gz',
-                }}
                 autoComplete="off"
             >
                 <Form.Item label="代码包路径" name="packageUrl" rules={[{ required: true, message: '请输入安装路径' }]}>
@@ -59,9 +51,6 @@ export function InstallOptions(props: any) {
                 name="basic"
                 labelCol={{ span: 2 }}
                 wrapperCol={{ span: 10 }}
-                initialValues={{
-                    installDir: '/usr/local/doris',
-                }}
                 autoComplete="off"
             >
                 <Form.Item label="安装路径" name="installDir" rules={[{ required: true, message: '请输入安装路径' }]}>
