@@ -105,6 +105,7 @@ export function Header(props: HeaderProps) {
                 } */}
                  <Button
                     type="link"
+                    style={{marginTop: 2}}
                     onClick={() => {
                         i18n.changeLanguage(i18n.language === 'zh' ? 'en' : 'zh');
                     }}
