@@ -5,12 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3f07d030-e8d9-41a2-94e6-36eacfa5bccc" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/config/webpack.dev.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/config/webpack.dev.config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/manager/dm-agent/src/main/java/org/apache/doris/manager/agent/util/Request.java" beforeDir="false" afterPath="$PROJECT_DIR$/manager/dm-agent/src/main/java/org/apache/doris/manager/agent/util/Request.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/manager/dm-server/src/main/java/org/apache/doris/stack/util/TelnetUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/manager/dm-server/src/main/java/org/apache/doris/stack/util/TelnetUtil.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/manager/general/src/test/java/org/apache/doris/stack/service/user/AuthenticationServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/manager/general/src/test/java/org/apache/doris/stack/service/user/AuthenticationServiceTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/manager/manager-server/src/main/java/org/apache/doris/stack/ManagerSwaggerConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/manager/manager-server/src/main/java/org/apache/doris/stack/ManagerSwaggerConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/checkstyle-idea.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dbnavigator.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/incubator-doris-manager.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
