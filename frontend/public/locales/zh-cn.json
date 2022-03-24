@@ -1,8 +1,11 @@
 {
     "username": "用户名",
     "password": "密码",
+    "Username or Mail": "用户名或邮箱",
     "OldPassword":"旧密码",
     "PleaseEnterTheOldPassword":"请输入旧密码",
+    "Please input the username or email": "请输入用户名或邮箱",
+    "Please input the password": "请输入密码",
     "NewPassword":"新密码",
     "ContainAtLeast2Types":"至少包含英文大写、英文小写、数字和特殊符号中的2种",
     "PleaseEnterTheNewPassword":"请输入新密码",

@@ -60,7 +60,7 @@ export function Container(props: any) {
                                     <Route path="/configuration/be" component={BEConfiguration} />
                                     <Route path="/configuration" component={Configuration} />
                                     <Route path="/node-dashboard" component={NodeDashboard} />
-                                    <Route path="/query" component={Query} />
+                                    {/* <Route path="/query" component={Query} /> */}
                                     <Route path="/details/:queryId" component={QueryDetails} />
                                     <Route path="/user-setting" component={UserSetting} />
                                     <Route path="/visual-query" component={VisualQuery} />

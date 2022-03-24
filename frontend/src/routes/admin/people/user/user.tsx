@@ -107,11 +107,11 @@ export function User() {
 
     return (
         <>
-            <Row justify="end" style={{ marginBottom: 20 }}>
+            {/* <Row justify="end" style={{ marginBottom: 20 }}>
                 <Button type="primary" onClick={() => setModalVisible(true)}>
                     {t`addMembers`}
                 </Button>
-            </Row>
+            </Row> */}
             <Table
                 pagination={false}
                 dataSource={spaceMembers}
