@@ -306,9 +306,13 @@ public class DorisInstanceOperator {
 
     private void executePkgShellScriptWithBash(String scriptName, String runningDir,
                                        String moduleName, Map<String, String> environment) throws Exception {
-        String scripts = Paths.get(runningDir, moduleName, "bin", scriptName).toFile().getAbsolutePath();
-        final String shellCmd = "sh " + scripts;
-        log.info("begin to execute: `" + shellCmd + "`");
+        String mouduleRootDir = runningDir + File.separator + moduleName;
+        String script = "bin" + File.separator + scriptName;
+
+        String cmdFormat = "cd %s && sh %s";
+        final String shellCmd = String.format(cmdFormat, mouduleRootDir, script);
+
+        log.info("begin to execute with bash: `" + shellCmd + "`");
         ShellUtil.cmdExecute(shellCmd);
     }
 
