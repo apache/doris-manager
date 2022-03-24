@@ -18,12 +18,16 @@
 package org.apache.doris.stack.dao;
 
 import org.apache.doris.stack.entity.ResourceNodeEntity;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ResourceNodeRepository extends JpaRepository<ResourceNodeEntity, Long> {
     @Query("select c.host from ResourceNodeEntity c where c.resourceClusterId = :resourceClusterId")
@@ -34,6 +38,23 @@ public interface ResourceNodeRepository extends JpaRepository<ResourceNodeEntity
 
     @Modifying
     @Query("delete from ResourceNodeEntity c where c.resourceClusterId = :resourceClusterId and c.host = :host")
+    @CacheEvict(value = "node_agent", allEntries = true)
     void deleteByResourceClusterIdAndHost(@Param("resourceClusterId") long resourceClusterId,
                                           @Param("host") String host);
+
+    @Override
+    @CachePut(value = "node_agent", key = "#result.id")
+    ResourceNodeEntity save(ResourceNodeEntity entity);
+
+    @Override
+    @Cacheable(value = "node_agent", key = "#p0")
+    Optional<ResourceNodeEntity> findById(Long id);
+
+    @Override
+    @CacheEvict(value = "node_agent", key = "#p0")
+    void deleteById(Long id);
+
+    @Override
+    @CacheEvict(value = "node_agent", key = "#entity.id")
+    void delete(ResourceNodeEntity entity);
 }

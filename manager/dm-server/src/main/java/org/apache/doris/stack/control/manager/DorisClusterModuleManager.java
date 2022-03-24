@@ -149,6 +149,7 @@ public class DorisClusterModuleManager {
             serviceCreateOperation(moduleEntity, serviceNamePorts, accessInfo);
         }
 
+        clusterModuleRepository.save(moduleEntity);
     }
 
     private void serviceCreateOperation(ClusterModuleEntity module, Map<String, Integer> serviceNamePorts,
@@ -252,6 +253,9 @@ public class DorisClusterModuleManager {
 
         // delete service
         serviceRepository.deleteByModuleId(module.getId());
+
+        // delete module
+        clusterModuleRepository.deleteById(module.getId());
     }
 
 }

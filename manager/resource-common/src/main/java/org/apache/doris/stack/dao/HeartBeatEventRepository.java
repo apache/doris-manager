@@ -21,8 +21,12 @@ import org.apache.doris.stack.entity.HeartBeatEventEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CachePut;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface HeartBeatEventRepository extends JpaRepository<HeartBeatEventEntity, Long> {
@@ -33,4 +37,20 @@ public interface HeartBeatEventRepository extends JpaRepository<HeartBeatEventEn
 
     @Query("select c.status from HeartBeatEventEntity c where c.requestId = :requestId")
     Set<String> getStatusByRequestId(@Param("requestId") long requestId);
+
+    @Override
+    @CachePut(value = "heart_beat", key = "#result.id")
+    HeartBeatEventEntity save(HeartBeatEventEntity entity);
+
+    @Override
+    @Cacheable(value = "heart_beat", key = "#p0")
+    Optional<HeartBeatEventEntity> findById(Long id);
+
+    @Override
+    @CacheEvict(value = "heart_beat", key = "#p0")
+    void deleteById(Long id);
+
+    @Override
+    @CacheEvict(value = "heat_beat", key = "#entity.id")
+    void delete(HeartBeatEventEntity entity);
 }

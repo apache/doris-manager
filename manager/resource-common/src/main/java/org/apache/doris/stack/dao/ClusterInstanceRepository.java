@@ -18,6 +18,8 @@
 package org.apache.doris.stack.dao;
 
 import org.apache.doris.stack.entity.ClusterInstanceEntity;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,6 +28,7 @@ import java.util.List;
 
 public interface ClusterInstanceRepository extends JpaRepository<ClusterInstanceEntity, Long> {
     @Query("select c from ClusterInstanceEntity c where c.nodeId = :nodeId")
+    @Cacheable(value = "cluster_instance", key = "#p0")
     List<ClusterInstanceEntity> getByNodeId(@Param("nodeId") long nodeId);
 
     @Query("select c from ClusterInstanceEntity c where c.moduleId = :moduleId")
@@ -34,4 +37,15 @@ public interface ClusterInstanceRepository extends JpaRepository<ClusterInstance
     @Query("select c.nodeId from ClusterInstanceEntity c where c.moduleId = :moduleId")
     List<Long> getNodeIdsByModuleId(@Param("moduleId") long moduleId);
 
+    @Override
+    @CacheEvict(value = "cluster_instance", key = "#result.nodeId")
+    ClusterInstanceEntity save(ClusterInstanceEntity entity);
+
+    @Override
+    @CacheEvict(value = "cluster_instance", allEntries = true)
+    void deleteById(Long id);
+
+    @Override
+    @CacheEvict(value = "cluster_instance", key = "#entity.nodeId")
+    void delete(ClusterInstanceEntity entity);
 }
