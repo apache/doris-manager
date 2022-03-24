@@ -6,4 +6,29 @@
            timeToLiveSeconds="3600"
            overflowToDisk="false"
     />
+
+    <!-- ResourceNodeRepository cache -->
+    <cache name="node_agent"
+           maxElementsInMemory="1000"
+           eternal="false"
+           timeToIdleSeconds="1800"
+           timeToLiveSeconds="3600"
+           overflowToDisk="false"
+    />
+    <!-- HeartBeatEventRepository -->
+    <cache name="heart_beat"
+           maxElementsInMemory="1000"
+           eternal="false"
+           timeToIdleSeconds="1800"
+           timeToLiveSeconds="3600"
+           overflowToDisk="false"
+    />
+    <!-- ClusterInstanceRepository cache -->
+    <cache name="cluster_instance"
+           maxElementsInMemory="1000"
+           eternal="false"
+           timeToIdleSeconds="1800"
+           timeToLiveSeconds="3600"
+           overflowToDisk="false"
+    />
 </ehcache>
