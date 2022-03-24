@@ -32,9 +32,14 @@ import java.util.stream.Collectors;
 public abstract class BaseCommand {
 
     protected String[] resultCommand;
+    protected String stdoutResponse;
     protected String errorResponse;
 
     protected abstract void buildCommand();
+
+    public String getStdoutResponse() {
+        return this.stdoutResponse;
+    }
 
     public String getErrorResponse() {
         return this.errorResponse;
@@ -45,11 +50,15 @@ public abstract class BaseCommand {
         log.info("run command: {}", StringUtils.join(resultCommand, " "));
         ProcessBuilder pb = new ProcessBuilder(resultCommand);
         Process process = null;
-        BufferedReader bufferedReader = null;
+        BufferedReader stdoutBufferedReader = null;
+        BufferedReader errorBufferedReader = null;
         try {
             process = pb.start();
-            bufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            errorResponse = bufferedReader.lines().parallel().collect(Collectors.joining(System.lineSeparator()));
+            stdoutBufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            errorBufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
+            stdoutResponse = stdoutBufferedReader.lines().parallel().collect(Collectors.joining(System.lineSeparator()));
+            errorResponse = errorBufferedReader.lines().parallel().collect(Collectors.joining(System.lineSeparator()));
             final int exitCode = process.waitFor();
             if (exitCode == 0) {
                 return true;
@@ -65,8 +74,11 @@ public abstract class BaseCommand {
                 process.destroy();
             }
             try {
-                if (bufferedReader != null) {
-                    bufferedReader.close();
+                if (stdoutBufferedReader != null) {
+                    stdoutBufferedReader.close();
+                }
+                if (errorBufferedReader != null) {
+                    errorBufferedReader.close();
                 }
             } catch (IOException e) {
                 log.error("close buffered reader fail");
