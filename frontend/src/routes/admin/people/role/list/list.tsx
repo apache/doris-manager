@@ -116,7 +116,7 @@ export function RoleList(props: any) {
                 <span style={{ color: '#aaa' }}>
                     {t`roleTopMessage`}
                 </span>
-                <Button
+                {/* <Button
                     key="1"
                     type="primary"
                     onClick={() => {
@@ -125,7 +125,7 @@ export function RoleList(props: any) {
                     }}
                 >
                     {t`create`}
-                </Button>
+                </Button> */}
             </Row>
 
             <Table

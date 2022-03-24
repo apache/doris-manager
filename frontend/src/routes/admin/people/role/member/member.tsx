@@ -125,7 +125,7 @@ export function RoleMembers(props: any) {
         <>
             <Row justify="space-between" style={{ marginBottom: 20 }}>
                 <span style={{ fontWeight: 700, fontSize: 20 }}>{showName(members?.name)}</span>
-                <Button
+                {/* <Button
                     key="1"
                     type="primary"
                     onClick={() => {
@@ -133,7 +133,7 @@ export function RoleMembers(props: any) {
                     }}
                 >
                     {t`addMembers`}
-                </Button>
+                </Button> */}
             </Row>
             <Table
                 pagination={false}
