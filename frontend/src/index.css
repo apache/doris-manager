@@ -60,3 +60,33 @@ h1,h2,h3,h4,h5,h6 {
 .ant-layout-sider {
   position: fixed !important;
 }
+
+.ant-layout-sider-collapsed {
+  width: 64px !important;
+  min-width: 64px !important;
+  flex: 0 0 64px !important;
+}
+
+.ant-layout-sider-collapsed .ant-layout-sider-trigger {
+  width: 64px !important;
+}
+
+.ant-menu-item {
+  height: 48px !important;
+}
+
+.ant-layout-sider-collapsed .ant-menu-item {
+  height: 48px !important;
+  margin: 8px !important;
+  border-radius: 2px;
+}
+.ant-layout-sider-collapsed .ant-menu-item:first-child {
+  width: 100% !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+.ant-layout-sider-collapsed .ant-menu-item-icon {
+  line-height: 48px !important;
+  margin-left: -6.5px !important;
+  margin-top: 2px !important;
+}
