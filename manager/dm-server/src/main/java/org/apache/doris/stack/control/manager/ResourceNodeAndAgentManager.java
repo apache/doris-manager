@@ -46,6 +46,7 @@ import java.net.UnknownHostException;
 @Component
 public class ResourceNodeAndAgentManager {
     private static final String AGENT_START_SCRIPT = Constants.KEY_DORIS_AGENT_START_SCRIPT;
+    private static final String AGENT_CONFIG_PATH = Constants.KEY_DORIS_AGENT_CONFIG_PATH;
 
     @Autowired
     private ResourceNodeRepository nodeRepository;
@@ -184,6 +185,58 @@ public class ResourceNodeAndAgentManager {
         // agent start
         // AGENT_START stage
         String agentInstallHome = configInfo.getInstallDir() + File.separator + "agent";
+
+        // 1 port check, eg: server.port=8008
+        // grep = application.properties | grep  -w server.port  | awk -F '=' '{print $2}'
+        String confFile = agentInstallHome + File.separator + AGENT_CONFIG_PATH;
+        String portGetFormat = "grep = %s | grep  -w server.port  | awk -F '=' '{print $2}'";
+        String portGetCmd = String.format(portGetFormat, confFile);
+
+        SSH portGetSSH = new SSH(configInfo.getSshUser(), configInfo.getSshPort(),
+                sshKeyFile.getAbsolutePath(), configInfo.getHost(), portGetCmd);
+
+        int agentPort = -1;
+        if (portGetSSH.run()) {
+            String portStr = portGetSSH.getStdoutResponse();
+            log.info("agent {} port get return output: {}", configInfo.getAgentNodeId(), portStr);
+
+            if (portStr == null || portStr.isEmpty()) {
+                log.warn("agent {} server.port is not set", configInfo.getAgentNodeId());
+            } else {
+                try {
+                    agentPort = Integer.parseInt(portStr.trim());
+                } catch (NumberFormatException e) {
+                    log.warn("agent port format is not Integer");
+                }
+            }
+
+        } else {
+            log.warn("run agent port get cmd failed:{}, skip the check and use default port",
+                    portGetSSH.getErrorResponse());
+        }
+
+        if (agentPort > 0) {
+            log.info("agent start port is {}", agentPort);
+            // only check listen port
+            String checkPortCmd = String.format("netstat -tunlp | grep  -w %s", agentPort);
+            SSH checkPortSSH = new SSH(configInfo.getSshUser(), configInfo.getSshPort(),
+                    sshKeyFile.getAbsolutePath(), configInfo.getHost(), checkPortCmd);
+            if (checkPortSSH.run()) {
+                String netInfo = checkPortSSH.getStdoutResponse();
+                log.info("agent {} port check return output: {}", configInfo.getAgentNodeId(), netInfo);
+
+                if (netInfo != null && !netInfo.trim().isEmpty()) {
+                    log.error("port {} already in use, {}", agentPort, netInfo);
+                    updateFailResult("port already in use",
+                            AgentInstallEventStage.AGENT_START.getStage(), agentInstallAgentEntity);
+                    return;
+                }
+            } else {
+                log.warn("run check port cmd failed");
+            }
+        }
+
+        // 2 run start shell
         String command = "cd %s && sh %s  --server %s --agent %s";
         String cmd = String.format(command, agentInstallHome, AGENT_START_SCRIPT, getServerAddr(), configInfo.getAgentNodeId());
         SSH startSsh = new SSH(configInfo.getSshUser(), configInfo.getSshPort(),

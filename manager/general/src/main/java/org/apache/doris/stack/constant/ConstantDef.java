@@ -34,15 +34,15 @@ public class ConstantDef {
     //Default namespace for Doris engine
     public static final String DORIS_DEFAULT_NS = "default_cluster";
 
-    // MySQL (Doris is the same as MySQL) has its own default metabase name
+    // MySQL (Doris is the same as MySQL) has its own default doris name
     public static final String MYSQL_DEFAULT_SCHEMA = "information_schema";
 
     public static final String PALO_ANALYZER_USER_NAME = "Analyzer";
 
     public static final String PALO_ANALYZER_USER_PASSWORD = "paloUser543232";
 
-    // MySQL (Doris is consistent with MySQL) has its own default metabase ID,
-    // which does not really exist in the metabase
+    // MySQL (Doris is consistent with MySQL) has its own default doris ID,
+    // which does not really exist in the doris
     public static final int MYSQL_SCHEMA_DB_ID = -1;
 
     // Metadata information table of MySQL (Doris is consistent with MySQL)

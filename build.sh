@@ -50,6 +50,10 @@ mv output/manager-bin/agent output/
 mv output/manager-bin output/server/bin
 mkdir -p output/agent/lib
 mv manager/dm-agent/target/dm-agent-1.0.0.jar output/agent/lib/dm-agent.jar
+
+mkdir -p output/agent/config
+cp manager/dm-agent/src/main/resources/application.properties output/agent/config
+
 cp -r manager/manager-server/src/main/resources/web-resource output/server/
 tar -zcvf doris-manager-1.0.0.tar.gz output/
 echo "copy to output package end"

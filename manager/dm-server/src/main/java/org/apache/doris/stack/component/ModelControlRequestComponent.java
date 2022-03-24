@@ -51,7 +51,6 @@ public class ModelControlRequestComponent {
         requestEntity.setCurrentEventType(eventType);
         requestEntity.setModelId(modelId);
         requestEntity.setRequestInfo(requestInfo);
-        requestRepository.save(requestEntity);
         return requestRepository.save(requestEntity);
     }
 

@@ -17,6 +17,7 @@
 
 package org.apache.doris.stack.component;
 
+import org.apache.doris.stack.constant.EnvironmentDefine;
 import org.apache.doris.stack.model.request.config.EmailInfo;
 import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.entity.SettingEntity;
@@ -52,8 +53,16 @@ import java.util.concurrent.Executors;
 @Component
 @Slf4j
 public class MailComponent {
+    protected static String studioPort = "8080";
 
-    protected static final String LOG_URL = "http://static.metabase.com/logo.png";
+    static {
+        String port = System.getenv(EnvironmentDefine.STUDIO_PORT_ENV);
+        if (port != null && !port.isEmpty()) {
+            studioPort = port;
+        }
+    }
+
+    protected static final String LOG_URL = String.format("http://127.0.0.1:%s/src/assets/doris.png", studioPort);
 
     @Autowired
     protected SettingComponent settingComponent;
