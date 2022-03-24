@@ -147,9 +147,9 @@ export function Sidebar(props: any) {
                             <Menu.Item key="/meta" icon={<TableOutlined />}>
                                 <Link to={`/meta`}>{t`data`}</Link>
                             </Menu.Item>
-                            <Menu.Item key="/query" icon={<ConsoleSqlOutlined />}>
+                            {/* <Menu.Item key="/query" icon={<ConsoleSqlOutlined />}>
                                 <Link to={`/query`}>{t`Query`}</Link>
-                            </Menu.Item>
+                            </Menu.Item> */}
                             {(isSuperAdmin || isSpaceAdmin) && (
                                 <Menu.Item key="/admin" icon={<AppstoreOutlined />}>
                                     <Link to={`/admin`}>{t`Space Manager`}</Link>

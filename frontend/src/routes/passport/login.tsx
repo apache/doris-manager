@@ -51,12 +51,12 @@ export function Login(props: any) {
                     onFinish={handleLogin}
                 >
                     <h2 style={{ textAlign: 'center' }}>{ t`login`}</h2>
-                    <Form.Item label={ t`Mail`} required name="username">
-                        <Input placeholder="请输入用户名" />
+                    <Form.Item label={ t`Username or Mail`} required name="username">
+                        <Input placeholder={t`Please input the username or email`} />
                     </Form.Item>
                     <Form.Item label={t`password`} required name="password">
                         <Input.Password
-                            placeholder="请输入密码"
+                            placeholder={t`Please input the password`}
                             style={{ width: '100%', borderRadius: 4, padding: '0.75em' }}
                         />
                     </Form.Item>

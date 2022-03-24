@@ -121,11 +121,6 @@ export const SpaceList = () => {
             render: (createTime: string) => <span>{moment(new Date(createTime)).format('YYYY-MM-DD HH:mm:ss')}</span>,
         },
         {
-            title: t`Status`,
-            dataIndex: 'status',
-            key: 'status',
-        },
-        {
             title: t`Actions`,
             dataIndex: 'status',
             key: 'status',
@@ -134,7 +129,6 @@ export const SpaceList = () => {
                 <FlatBtnGroup showNum={4}>
                     <FlatBtn onClick={() => enterSpace(record)}>{t`Enter Space`}</FlatBtn>
                     <FlatBtn onClick={() => deleteSpace(record)}>{t`Delete`}</FlatBtn>
-                    <FlatBtn to={`/space/detail/${record.id}`}>{t`Edit`}</FlatBtn>
                 </FlatBtnGroup>
             ),
         },

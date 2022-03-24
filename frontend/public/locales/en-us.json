@@ -1,8 +1,11 @@
 {
     "username": "Username",
     "password": "Password",
+    "Username or Mail": "Username or Mail",
     "OldPassword":"Old Password",
     "PleaseEnterTheOldPassword":"Please enter the old password",
+    "Please input the username or email": "Please input the username or email",
+    "Please input the password": "Please input the password",
     "NewPassword":"New Password",
     "ContainAtLeast2Types":"Contain at least 2 types of English uppercase, lowercase English, numbers and special symbols",
     "PleaseEnterTheNewPassword":"Please enter the new password",

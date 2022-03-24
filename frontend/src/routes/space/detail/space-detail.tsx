@@ -27,6 +27,8 @@ import { modal } from '@src/components/doris-modal/doris-modal';
 import { useRecoilValue } from 'recoil';
 import { usersQuery } from '../space.recoil';
 import { useUserInfo } from '@src/hooks/use-userinfo.hooks';
+import { useAsync } from '@src/hooks/use-async';
+import { isSuccess } from '@src/utils/http';
 
 export function SpaceDetail() {
     const { t } = useTranslation();
@@ -37,7 +39,7 @@ export function SpaceDetail() {
     const [saveButtonDisable, setSaveButtonDisable] = useState(true);
     const [initForm, setInitForm] = useState<any>({});
     const history = useHistory();
-    const allUsers = useRecoilValue(usersQuery);
+    const { data: allUsers, loading, run: runGetAllUsers } = useAsync<any[]>({ data: [], loading: true });
     function getSpaceInfo() {
         SpaceAPI.spaceGet(params.spaceId).then(res => {
             const { msg, data, code } = res;
@@ -57,9 +59,20 @@ export function SpaceDetail() {
             }
         });
     }
+
     useEffect(() => {
+        runGetAllUsers(
+            SpaceAPI.getUsers({ include_deactivated: true }).then(res => {
+                if (isSuccess(res)) return res.data;
+                return Promise.reject(res);
+            }),
+        );
+    }, [runGetAllUsers]);
+
+    useEffect(() => {
+        if (loading) return;
         getSpaceInfo();
-    }, []);
+    }, [loading]);
 
     function handleDelete() {
         const spaceId = params.spaceId;
@@ -89,7 +102,7 @@ export function SpaceDetail() {
                 console.log(res);
                 if (res.code === 0) {
                     message.success(res.msg);
-                    setSaveButtonDisable(true)
+                    setSaveButtonDisable(true);
                     // history.push('/')
                 } else {
                     message.error(res.msg);
@@ -162,7 +175,7 @@ export function SpaceDetail() {
                                 placeholder={t`pleaseSelectUsers`}
                                 optionFilterProp="title"
                                 optionLabelProp="label"
-                                disabled={!userInfo?.is_super_admin}
+                                disabled={!userInfo?.is_super_admin && !userInfo.is_admin}
                                 filterOption={(input, option) => {
                                     return (option?.title as string).toLowerCase().indexOf(input.toLowerCase()) >= 0;
                                 }}
