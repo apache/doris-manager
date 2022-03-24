@@ -14,28 +14,21 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-.tabs {
-  transform: translate(35em, 0);
-}
 
-.input-gird {
-  margin: 0 auto;
-  width: 420px;
-  // padding: 32px;
- 
-  line-height: 24px;
-  background-color: #fff;
-  border-radius: 6px;
-  transition: all 0.2s linear 0s;
+import { useEffect } from 'react';
 
-  input {
-    width: 100%;
-    padding: 0.75em;
-    background: '#e8f0fe';
-    border-radius: 4px;
-  }
-}
-
-.input-pass {
-  background: '#e8f0fe';
+export function useClickOutside(domRef: React.MutableRefObject<HTMLElement | null>, callback: () => void) {
+    useEffect(() => {
+        const dom = domRef.current;
+        const handler = (e: MouseEvent) => {
+            if (dom && dom.contains(e.target as HTMLElement)) {
+                return;
+            }
+            callback();
+        };
+        document.addEventListener('click', handler);
+        return () => {
+            document.removeEventListener('click', handler);
+        };
+    }, []);
 }

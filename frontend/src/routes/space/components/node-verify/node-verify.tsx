@@ -27,16 +27,19 @@ import { IResult } from '@src/interfaces/http.interface';
 import { OperateStatusEnum } from '../../space.data';
 import { useRecoilState } from 'recoil';
 import { stepDisabledState } from '../../access-cluster/access-cluster.recoil';
+import { LoadingOutlined } from '@ant-design/icons';
 const Step = Steps.Step;
 
+const ERROR_STATUS = [OperateStatusEnum.FAIL, OperateStatusEnum.CANCEL];
+
 export function NodeVerify(props: any) {
-    const {reqInfo} = useContext(NewSpaceInfoContext);
+    const { reqInfo } = useContext(NewSpaceInfoContext);
     const [nodes, setNodes] = useState<any[]>([]);
     const [stepDisabled, setStepDisabled] = useRecoilState(stepDisabledState);
 
     const getClusterNodes = useRequest<IResult<any>, any>(
         (clusterId: string) => {
-            return SpaceAPI.getClusterNodes<any>({clusterId});
+            return SpaceAPI.getClusterNodes<any>({ clusterId });
         },
         {
             manual: true,
@@ -45,13 +48,17 @@ export function NodeVerify(props: any) {
                 if (isSuccess(res)) {
                     const data: any[] = res.data;
                     setNodes(data);
+                    const failedNode = data.find(item => ERROR_STATUS.includes(item.operateStatus));
+                    if (failedNode) {
+                        message.error(failedNode.operateResult);
+                    }
                     if (data.filter(item => item.operateStatus === OperateStatusEnum.PROCESSING).length === 0) {
                         getClusterNodes.cancel();
                     }
                     if (data.filter(item => item.operateStatus !== OperateStatusEnum.SUCCESS).length > 0) {
-                        setStepDisabled({...stepDisabled, next: true});
+                        setStepDisabled({ ...stepDisabled, next: true });
                     } else {
-                        setStepDisabled({...stepDisabled, next: false});
+                        setStepDisabled({ ...stepDisabled, next: false });
                     }
                 }
             },
@@ -62,7 +69,6 @@ export function NodeVerify(props: any) {
             },
         },
     );
-
 
     useLayoutEffect(() => {
         if (reqInfo.cluster_id) {
@@ -86,17 +92,41 @@ export function NodeVerify(props: any) {
             key: 'operateStage',
             render: (record: any) => {
                 return (
-                    <Steps progressDot status={OperateStatusEnum.getStepStatus(record.operateStatus)} percent={70} current={record.operateStage - 1} size="small" style={{marginLeft: -50}}>
-                        <Step style={{width: 80}} title={NodeVerifyStepEnum.getTitle(NodeVerifyStepEnum.ACCESS_AUTH)} />
-                        <Step style={{width: 80}} title={NodeVerifyStepEnum.getTitle(NodeVerifyStepEnum.INSTALL_DIR_CHECK)} />
-                        <Step style={{width: 80}} title={NodeVerifyStepEnum.getTitle(NodeVerifyStepEnum.JDK_CHECK)} />
-                        <Step style={{width: 80}} title={NodeVerifyStepEnum.getTitle(NodeVerifyStepEnum.AGENT_DEPLOY)} />
-                        <Step style={{width: 80}} title={NodeVerifyStepEnum.getTitle(NodeVerifyStepEnum.AGENT_START)} />
-                        <Step style={{width: 80}} title={NodeVerifyStepEnum.getTitle(NodeVerifyStepEnum.AGENT_REGISTER)} />
+                    <Steps
+                        progressDot={(iconDot, { status }) => {
+                            if (status === 'process') return <LoadingOutlined style={{ color: '#1890ff' }} />;
+                            return iconDot;
+                        }}
+                        status={OperateStatusEnum.getStepStatus(record.operateStatus)}
+                        current={record.operateStage - 1}
+                        size="small"
+                        style={{ marginLeft: -50 }}
+                    >
+                        <Step
+                            style={{ width: 80 }}
+                            title={NodeVerifyStepEnum.getTitle(NodeVerifyStepEnum.ACCESS_AUTH)}
+                        />
+                        <Step
+                            style={{ width: 80 }}
+                            title={NodeVerifyStepEnum.getTitle(NodeVerifyStepEnum.INSTALL_DIR_CHECK)}
+                        />
+                        <Step style={{ width: 80 }} title={NodeVerifyStepEnum.getTitle(NodeVerifyStepEnum.JDK_CHECK)} />
+                        <Step
+                            style={{ width: 80 }}
+                            title={NodeVerifyStepEnum.getTitle(NodeVerifyStepEnum.AGENT_DEPLOY)}
+                        />
+                        <Step
+                            style={{ width: 80 }}
+                            title={NodeVerifyStepEnum.getTitle(NodeVerifyStepEnum.AGENT_START)}
+                        />
+                        <Step
+                            style={{ width: 80 }}
+                            title={NodeVerifyStepEnum.getTitle(NodeVerifyStepEnum.AGENT_REGISTER)}
+                        />
                     </Steps>
-                )
-            }
-        }
+                );
+            },
+        },
     ];
     return (
         <PageContainer

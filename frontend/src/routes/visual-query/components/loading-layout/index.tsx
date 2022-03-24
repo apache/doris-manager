@@ -14,28 +14,15 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-.tabs {
-  transform: translate(35em, 0);
+
+import React, { PropsWithChildren } from 'react';
+import ScreenLoading from './screen-loading';
+
+interface LoadingLayoutProps {
+    loading: boolean;
 }
 
-.input-gird {
-  margin: 0 auto;
-  width: 420px;
-  // padding: 32px;
- 
-  line-height: 24px;
-  background-color: #fff;
-  border-radius: 6px;
-  transition: all 0.2s linear 0s;
-
-  input {
-    width: 100%;
-    padding: 0.75em;
-    background: '#e8f0fe';
-    border-radius: 4px;
-  }
-}
-
-.input-pass {
-  background: '#e8f0fe';
+export default function LoadingLayout(props: PropsWithChildren<LoadingLayoutProps>) {
+    const { loading, children } = props;
+    return <>{loading ? <ScreenLoading /> : children}</>;
 }

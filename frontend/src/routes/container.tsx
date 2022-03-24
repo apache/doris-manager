@@ -37,6 +37,7 @@ import { QueryDetails } from './query/query-details';
 import { Cluster } from './cluster/cluster';
 import { UserSetting } from './user-setting';
 import { useUserInfo } from '@src/hooks/use-userinfo.hooks';
+import VisualQuery from './visual-query/visual-query';
 export function Container(props: any) {
     const [userInfo] = useUserInfo();
     const history = useHistory();
@@ -62,6 +63,7 @@ export function Container(props: any) {
                                     <Route path="/query" component={Query} />
                                     <Route path="/details/:queryId" component={QueryDetails} />
                                     <Route path="/user-setting" component={UserSetting} />
+                                    <Route path="/visual-query" component={VisualQuery} />
                                     <Redirect to="/cluster" />
                                 </Switch>
                             </div>

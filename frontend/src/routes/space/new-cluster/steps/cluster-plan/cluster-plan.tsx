@@ -35,7 +35,13 @@ const { confirm } = Modal;
 const { TabPane } = Tabs;
 
 export function ClusterPlan() {
-    const { form } = useContext(NewSpaceInfoContext);
+    const { form, reqInfo } = useContext(NewSpaceInfoContext);
+    useEffect(() => {
+        form.setFieldsValue({
+            ...form.getFieldsValue(),
+            nodeConfig: reqInfo.nodeConfig || [],
+        });
+    }, [form, reqInfo.nodeConfig]);
     return (
         <Form form={form} name="basic" labelCol={{ span: 2 }} wrapperCol={{ span: 10 }} autoComplete="off">
             <Form.Item name="nodeConfig" style={{ width: '100%' }} wrapperCol={{ span: 24 }}>
@@ -58,7 +64,7 @@ export function ClusterPlanContent(props: any) {
     const [mixMode, setMixMode] = useState(false);
     const [modal, setModal] = useRecoilState(modalState);
     const processID = useRecoilValue(processId);
-    const { data, run: runGetClusterNodes } = useAsync<any[]>({ data: [] });
+    const { data, run: runGetClusterNodes, loading } = useAsync<any[]>({ data: [] });
     const [modalAllData, setModalAllData] = useState<any[]>(data || []);
     const [activeKey, setActiveKey] = useState(DorisNodeTypeEnum.FE);
 
@@ -73,6 +79,42 @@ export function ClusterPlanContent(props: any) {
             message.error(res.msg);
         });
     }, [runGetClusterNodes, reqInfo.cluster_id]);
+
+    useEffect(() => {
+        if (loading) return;
+        if (props.value && feData.length === 0 && beData.length === 0 && data) {
+            const feNodes = props.value.find((item: any) => item.moduleName.toUpperCase() === DorisNodeTypeEnum.FE);
+            const beNodes = props.value.find((item: any) => item.moduleName.toUpperCase() === DorisNodeTypeEnum.BE);
+            if (feNodes && feNodes.nodeIds && feNodes.nodeIds.length > 0) {
+                const feHosts = feNodes.nodeIds.map(
+                    (nodeId: number) => data.find(item => item.nodeId === nodeId)?.host,
+                );
+                setFeChecked(feNodes.nodeIds);
+                setFeData(
+                    feNodes.nodeIds.map((nodeId: number, index: number) => {
+                        return {
+                            nodeId: nodeId,
+                            host: feHosts[index],
+                        };
+                    }),
+                );
+            }
+            if (beNodes && beNodes.nodeIds && beNodes.nodeIds.length > 0) {
+                const beHosts = beNodes.nodeIds.map(
+                    (nodeId: number) => data.find(item => item.nodeId === nodeId)?.host,
+                );
+                setBeChecked(beNodes.nodeIds);
+                setBeData(
+                    beNodes.nodeIds.map((nodeId: number, index: number) => {
+                        return {
+                            nodeId: nodeId,
+                            host: beHosts[index],
+                        };
+                    }),
+                );
+            }
+        }
+    }, [props.value, data, loading]);
 
     useEffect(() => {
         props?.onChange([
@@ -130,13 +172,13 @@ export function ClusterPlanContent(props: any) {
                 const feIndex = feData.findIndex(item => item.nodeId === record.nodeId);
                 feData.splice(feIndex, 1);
                 setFeData([...feData]);
-                setFeChecked(feChecked.filter(item => item !== record.host));
+                setFeChecked(feChecked.filter(item => item !== record.nodeId));
                 break;
             case 'be':
                 const beIndex = beData.findIndex(item => item.nodeId === record.nodeId);
                 beData.splice(beIndex, 1);
                 setBeData([...beData]);
-                setBeChecked(beChecked.filter(item => item !== record.host));
+                setBeChecked(beChecked.filter(item => item !== record.nodeId));
                 break;
             default:
                 break;
@@ -159,12 +201,12 @@ export function ClusterPlanContent(props: any) {
 
         if (roleType === DorisNodeTypeEnum.FE) {
             setFeChecked(selectedRowKeys);
-            let tempFeData = data?.filter(item => selectedRowKeys.includes(item.host));
+            let tempFeData = data?.filter(item => selectedRowKeys.includes(item.nodeId));
             setFeData(tempFeData || []);
         }
         if (roleType === DorisNodeTypeEnum.BE) {
             setBeChecked(selectedRowKeys);
-            let tempBeData = data?.filter(item => selectedRowKeys.includes(item.host));
+            let tempBeData = data?.filter(item => selectedRowKeys.includes(item.nodeId));
             setBeData(tempBeData || []);
         }
     };
@@ -243,7 +285,7 @@ export function ClusterPlanContent(props: any) {
                             rowSelection={rowSelection}
                             columns={nodeColumns}
                             dataSource={modalAllData}
-                            rowKey={'host'}
+                            rowKey={'nodeId'}
                         />
                     </>
                 </Modal>

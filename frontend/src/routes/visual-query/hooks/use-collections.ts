@@ -14,28 +14,29 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-.tabs {
-  transform: translate(35em, 0);
-}
 
-.input-gird {
-  margin: 0 auto;
-  width: 420px;
-  // padding: 32px;
- 
-  line-height: 24px;
-  background-color: #fff;
-  border-radius: 6px;
-  transition: all 0.2s linear 0s;
+import { useEffect, useMemo } from 'react';
+import { message } from 'antd';
+import { useAsync } from '@src/hooks/use-async';
+import { CascaderItem } from '../types';
+import { fetchCollectionAPI } from '../visual-query.api';
+import { getCollections } from '../utils';
 
-  input {
-    width: 100%;
-    padding: 0.75em;
-    background: '#e8f0fe';
-    border-radius: 4px;
-  }
-}
+export function useCollections() {
+    const { data, loading, run: runFetchCollections } = useAsync<CascaderItem[]>({ data: [] });
 
-.input-pass {
-  background: '#e8f0fe';
+    useEffect(() => {
+        runFetchCollections(fetchCollectionAPI()).catch(() => {
+            message.error('获取文件夹列表失败');
+        });
+    }, [runFetchCollections]);
+
+    const collections = useMemo(() => {
+        return getCollections(data as CascaderItem[]);
+    }, [data]);
+
+    return {
+        loading,
+        collections,
+    };
 }

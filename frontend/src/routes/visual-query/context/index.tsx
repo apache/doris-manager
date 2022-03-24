@@ -14,28 +14,28 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-.tabs {
-  transform: translate(35em, 0);
+
+import React, { PropsWithChildren } from 'react';
+import DatabasesContextProvider from './databases-context';
+import DataContextProvider from './data-context';
+import EditorContextProvider from './editor-context';
+
+const providers = [
+    DatabasesContextProvider,
+    DataContextProvider,
+    EditorContextProvider,
+];
+
+export default function VisualQueryProvider(props: PropsWithChildren<{}>) {
+    return (
+        <>
+            {providers.reduce((memo, Provider) => {
+                return <Provider>{memo}</Provider>;
+            }, props.children)}
+        </>
+    );
 }
 
-.input-gird {
-  margin: 0 auto;
-  width: 420px;
-  // padding: 32px;
- 
-  line-height: 24px;
-  background-color: #fff;
-  border-radius: 6px;
-  transition: all 0.2s linear 0s;
-
-  input {
-    width: 100%;
-    padding: 0.75em;
-    background: '#e8f0fe';
-    border-radius: 4px;
-  }
-}
-
-.input-pass {
-  background: '#e8f0fe';
-}
+export * from './databases-context';
+export * from './data-context';
+export * from './editor-context';
