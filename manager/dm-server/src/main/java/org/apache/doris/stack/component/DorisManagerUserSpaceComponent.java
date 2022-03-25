@@ -304,8 +304,12 @@ public class DorisManagerUserSpaceComponent extends BaseService {
                 if (adminUserId < 0) {
                     continue;
                 }
-                // Delete the user from the space administrator role, but will not delete the user from the space?
+                // Delete the user from the space administrator role
                 membershipRepository.deleteByUserIdAndGroupId(clusterInfo.getAdminGroupId(), adminUserId);
+
+                // also delete the user form all user role and cluster space
+                membershipRepository.deleteByUserIdAndGroupId(clusterInfo.getAllUserGroupId(), adminUserId);
+                clusterUserMembershipRepository.deleteByUserIdAndClusterId(adminUserId, clusterInfo.getId());
             }
 
         }
