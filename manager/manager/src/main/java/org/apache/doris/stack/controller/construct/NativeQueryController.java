@@ -19,6 +19,7 @@ package org.apache.doris.stack.controller.construct;
 
 import org.apache.doris.stack.controller.BaseController;
 import org.apache.doris.stack.entity.CoreUserEntity;
+import org.apache.doris.stack.model.request.construct.SqlQueryReq;
 import org.apache.doris.stack.rest.ResponseEntityBuilder;
 import org.apache.doris.stack.service.user.AuthenticationService;
 import org.apache.doris.stack.service.construct.NativeQueryService;
@@ -57,5 +58,15 @@ public class NativeQueryController extends BaseController {
             @RequestBody String stmtBody) throws Exception {
         CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
         return ResponseEntityBuilder.ok(nativeQueryService.executeSql(nsId, dbId, stmtBody, user));
+    }
+
+    @ApiOperation(value = "Execute SQL query")
+    @PostMapping(value = "sql", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object query(HttpServletRequest request,
+                        HttpServletResponse response,
+                        @RequestBody SqlQueryReq queryReq) throws Exception {
+        log.debug("query request.");
+        CoreUserEntity user = authenticationService.checkNewUserAuthWithCookie(request, response);
+        return ResponseEntityBuilder.ok(nativeQueryService.querySql(user, queryReq));
     }
 }
