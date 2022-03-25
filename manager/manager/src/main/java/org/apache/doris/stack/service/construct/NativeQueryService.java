@@ -116,6 +116,7 @@ public class NativeQueryService extends BaseService {
             Statement statement = jdbcSampleClient.getStatement(clusterInfo.getAddress(), clusterInfo.getQueryPort(),
                     clusterInfo.getUser(), clusterInfo.getPasswd(), databaseEntity.getName());
             ResultSet result = jdbcSampleClient.executeSql(statement, queryReq.getQuery());
+            jdbcSampleClient.closeStatement(statement);
             resp.resultDataSet(result);
         } catch (Exception e) {
             log.error("Query sql error.");
