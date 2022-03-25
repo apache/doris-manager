@@ -94,6 +94,26 @@ public class JdbcSampleClient {
         }
     }
 
+    public Statement getStatement(String host, int port, String user, String passwd, String db) throws Exception {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("jdbc:mysql://");
+        buffer.append(host);
+        buffer.append(":");
+        buffer.append(port);
+        buffer.append("/");
+        buffer.append(db);
+        String url = buffer.toString();
+        try {
+            log.info("Get connection by url:{}", url);
+            Connection myCon = DriverManager.getConnection(url, user, passwd);
+            Statement stmt = myCon.createStatement();
+            return stmt;
+        } catch (Exception e) {
+            log.error("Get doris jdbc connection error {}.", e);
+            throw e;
+        }
+    }
+
     public void updateUserPassword(String user, String newPassword, Statement stmt) throws Exception {
         try {
             String sql = "SET PASSWORD FOR '" + user
@@ -182,24 +202,17 @@ public class JdbcSampleClient {
         }
     }
 
-//    public List<String> getBeIps(Statement stmt) throws Exception {
-//        try {
-//            String sql = "SHOW PROC '/backends';";
-//
-//            ResultSet result = stmt.executeQuery(sql);
-//            List<String> ips = new ArrayList<>();
-//            while (result.next()) {
-//                boolean isAlive = result.getBoolean("Alive");
-//                if (isAlive) {
-//                    ips.add(result.getString("IP"));
-//                }
-//            }
-//            return ips;
-//        } catch (Exception e) {
-//            log.error("get be ip by jdbc error {}.", e);
-//            throw e;
-//        }
-//    }
+    // TODO: At present, only the simplest SQL query is implemented, there is no cache connection,
+    //  and multiple SQL statements are not supported
+    public ResultSet executeSql(Statement stmt, String sql) throws Exception {
+        try {
+            ResultSet result = stmt.executeQuery(sql);
+            return result;
+        } catch (Exception e) {
+            log.error("execute sql error {}.", e);
+            throw e;
+        }
+    }
 
     public void closeStatement(Statement stmt) {
         try {
