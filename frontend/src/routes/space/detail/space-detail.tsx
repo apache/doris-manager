@@ -191,6 +191,7 @@ export function SpaceDetail() {
                                             label={user.name}
                                             value={user.id}
                                             title={user.name}
+                                            disabled={userInfo.id === user.id && !userInfo.is_super_admin}
                                         >
                                             <Row justify="space-between">
                                                 <div className={styles.optionContent}>

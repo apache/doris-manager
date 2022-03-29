@@ -15,12 +15,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { Input, Row, Space, Switch } from "antd";
-import React, { useState } from "react";
-import { CustomConfigProps } from "./custom-config.interface";
+import React from 'react';
+import { Input, Row, Space, Switch } from 'antd';
+import { CustomConfigProps } from './custom-config.interface';
 
 export function CustomConfig(props: CustomConfigProps) {
-    const [showCustomConfig, setShowCustomConfig] = useState(false);
+    const { dispatch, activeKey, custom } = props;
     return (
         <>
             <Row style={{ margin: '20px 0' }}>
@@ -30,24 +30,35 @@ export function CustomConfig(props: CustomConfigProps) {
                         style={{ marginLeft: 40 }}
                         checkedChildren="开"
                         unCheckedChildren="关"
-                        defaultChecked={false}
-                        onChange={(checked: boolean) => {
-                            setShowCustomConfig(checked);
+                        checked={custom.visible}
+                        onChange={(visible: boolean) => {
+                            dispatch({
+                                type: activeKey,
+                                payload: {
+                                    ...custom,
+                                    visible,
+                                },
+                            });
                         }}
                     />
                 </Space>
             </Row>
-            {
-                showCustomConfig && (
-                    <Input.TextArea onChange={e => {
-                        props.onChange && props.onChange({
-                            value: e.target.value,
-                            showCustomConfig,
+            {custom.visible && (
+                <Input.TextArea
+                    value={custom.value}
+                    onChange={e => {
+                        dispatch({
+                            type: activeKey,
+                            payload: {
+                                ...custom,
+                                value: e.target.value,
+                            },
                         });
-                    }} rows={5} placeholder="请输入您的自定义配置项，若存在冲突，自定义配置将覆盖上方默认配置 格式: xxx=xxx" />
-                )
-            }
-            
+                    }}
+                    rows={5}
+                    placeholder="请输入您的自定义配置项，若存在冲突，自定义配置将覆盖上方默认配置 格式: xxx=xxx"
+                />
+            )}
         </>
     );
 }
