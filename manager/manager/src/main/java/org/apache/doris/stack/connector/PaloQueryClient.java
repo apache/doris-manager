@@ -77,6 +77,10 @@ public class PaloQueryClient extends PaloClient {
     }
 
     public void deleteUser(String ns, String db, ClusterInfoEntity entity, String userName) {
+        if (userName == null) {
+            log.warn("user name is null");
+            return;
+        }
         if (userName.startsWith("Analyzer") || userName.startsWith("Administrators")) {
             try {
                 String deleteSql = "DROP USER '" + userName + "'@'%'";
