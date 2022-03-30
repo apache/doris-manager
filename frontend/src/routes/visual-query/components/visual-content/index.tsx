@@ -23,6 +23,7 @@ import styles from './style.module.less';
 import VisualEditor from './visual-editor';
 import { DatabasesContext, DataContext } from '../../context';
 import LoadingLayout from '../loading-layout';
+import VisualTable from './visual-table';
 
 function VisualContent(props: any, ref: any) {
     const { databasesLoading } = useContext(DatabasesContext);
@@ -56,6 +57,9 @@ function VisualContent(props: any, ref: any) {
             );
         return (
             <>
+                <div style={{ height: '80%' }}>
+                    <VisualTable ref={visualTableRef} />
+                </div>
             </>
         );
     }, [dataLoading, isFetchingError, resultData, dataError]);

@@ -15,10 +15,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { PropsWithChildren, useEffect, useState } from 'react';
+import React, { PropsWithChildren, useContext, useEffect, useState } from 'react';
 import { message } from 'antd';
 import { fetchDatabases } from '../visual-query.api';
 import { useAsync } from '../hooks';
+import { UserInfoContext } from '@src/common/common.context';
 
 interface DatabasesContextProps {
     databases: any[] | null;
@@ -41,12 +42,15 @@ export default function QueryContextProvider(props: PropsWithChildren<{}>) {
         run: runFetchDatabases,
     } = useAsync<any[]>({ loading: true, data: [] });
     const [selectedDatabaseId, setSelectedDatabaseId] = useState<number | null>(null);
+    const userInfo = useContext(UserInfoContext);
 
     useEffect(() => {
-        runFetchDatabases(fetchDatabases())
-            .then(res => res && res.length > 0 && setSelectedDatabaseId(res[0].id))
-            .catch(() => message.error('获取数据库列表失败'));
-    }, [runFetchDatabases]);
+        if (userInfo && userInfo.space_id) {
+            runFetchDatabases(fetchDatabases(userInfo.space_id))
+                .then(res => res && res.length > 0 && setSelectedDatabaseId(res[0].id))
+                .catch(() => message.error('获取数据库列表失败'));
+        }
+    }, [runFetchDatabases, userInfo?.space_id]);
 
     return (
         <DatabasesContext.Provider

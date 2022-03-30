@@ -18,18 +18,17 @@
 import { http, isSuccess } from '@src/utils/http';
 import { DataType } from './types';
 
-export function fetchDatabases() {
-    return http.get('/api/database/', { include: 'tables' }).then(res => res.data) as Promise<any[]>;
+export function fetchDatabases(nsId: number) {
+    return http.get(`/api/meta/nsId/${nsId}/databases`).then(res => res.data.filter((item: any) => item.name !== 'information_schema')) as Promise<any[]>;
 }
 
-interface NativeSqlQueryParams {
+interface SQLQueryParams {
     database: number;
-    native: { query: string };
-    type: 'NATIVE';
+    query: string;
 }
-
-export function fetchData(params: NativeSqlQueryParams) {
-    return http.post('/api/dataset/', params).then(res => res.data) as Promise<{
+// query
+export function fetchData(params: SQLQueryParams) {
+    return http.post('/api/query/sql/', params).then(res => res.data) as Promise<{
         data: DataType;
         error?: any;
         database_id: number;

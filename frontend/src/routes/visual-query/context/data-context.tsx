@@ -76,7 +76,7 @@ export default function DataContextProvider(props: PropsWithChildren<{}>) {
             return;
         }
         const newColumns = resultData.data.cols.map(item => ({
-            title: item.display_name,
+            title: item.displayName,
             dataIndex: item.name,
         }));
         setColumns(newColumns);
