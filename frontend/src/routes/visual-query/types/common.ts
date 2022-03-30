@@ -19,15 +19,12 @@ import React from 'react';
 
 export interface DataType {
     cols: {
-        source: string;
+        source?: string;
         name: string;
-        display_name: string;
+        displayName: string;
         base_type: string;
     }[];
     rows: any[][];
-    native_form: {
-        query: string;
-    };
 }
 
 export type Dataset = { source: any[][] }[];

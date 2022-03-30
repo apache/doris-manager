@@ -37,7 +37,6 @@
         "style": "css"
       }
     ],
-    ["@babel/plugin-proposal-decorators", { "legacy": true }]
-  ],
-  "plugins": [["import", { "libraryName": "antd", "libraryDirectory": "lib", "style": true}, "antd"],]
+    ["@babel/plugin-proposal-decorators", { "legacy": true }],
+  ]
 }

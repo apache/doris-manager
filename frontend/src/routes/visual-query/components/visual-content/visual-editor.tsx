@@ -46,7 +46,7 @@ export default function VisualEditor(props: VisualEditorProps) {
             message.error('请输入查询语句');
             return;
         }
-        runFetchData(fetchData({ database: selectedDatabaseId, native: { query: editorValue }, type: 'NATIVE' })).catch(
+        runFetchData(fetchData({ database: selectedDatabaseId, query: editorValue })).catch(
             () => message.error('查询失败'),
         );
     };
@@ -77,7 +77,7 @@ export default function VisualEditor(props: VisualEditorProps) {
             >
                 <Editor
                     height="100%"
-                    defaultLanguage="sql"
+                    language="sql"
                     theme={THEME_NAME}
                     options={{
                         minimap: {

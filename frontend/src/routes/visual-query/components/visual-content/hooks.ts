@@ -41,14 +41,14 @@ export function useMonacoEditor() {
         });
         const textArr = textUntilPosition.split(' ');
         const lastText = textArr[textArr.length - 1];
-        const currentDatabase = databases?.find(database => database.id === selectedDatabaseId);
+        // const currentDatabase = databases?.find(database => database.id === selectedDatabaseId);
         const SUGGESTIONS = [
             ...DEFAULT_SUGGESTIONS,
-            ...currentDatabase.tables.map((table: any) => ({
-                label: table.name,
-                insertText: table.name,
-                detail: '表',
-            })),
+            // ...currentDatabase.tables.map((table: any) => ({
+            //     label: table.name,
+            //     insertText: table.name,
+            //     detail: '表',
+            // })),
         ];
         const match = SUGGESTIONS.some((item: any) => {
             // 循环判断是否包含在补全数组中
