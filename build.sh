@@ -15,6 +15,11 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+curdir=`dirname "$0"`
+curdir=`cd "$curdir"; pwd`
+
+export BUILD_HOME=`cd "$curdir"; pwd`
+echo "$BUILD_HOME"
 
 echo "build doris manager home path"
 
@@ -27,6 +32,16 @@ echo "build doris manager frontend end"
 
 cd ../
 echo "copy doris manager web resources to server"
+
+echo "Check whether the front end is compiled successfully"
+export FRONTEND_DIR="$BUILD_HOME/frontend/dist"
+if [ ! -d $FRONTEND_DIR ]; then
+    echo "Error: Front end compilation failed, please check the compilation log."
+    exit 1
+fi
+
+echo "The front end is compiled successfully"
+
 rm -rf manager/manager-server/src/main/resources/web-resource
 mv frontend/dist manager/manager-server/src/main/resources/web-resource
 echo "copy doris manager web resources to server end"

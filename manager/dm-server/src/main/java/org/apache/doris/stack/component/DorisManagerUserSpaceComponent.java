@@ -304,8 +304,12 @@ public class DorisManagerUserSpaceComponent extends BaseService {
                 if (adminUserId < 0) {
                     continue;
                 }
-                // Delete the user from the space administrator role, but will not delete the user from the space?
+                // Delete the user from the space administrator role
                 membershipRepository.deleteByUserIdAndGroupId(clusterInfo.getAdminGroupId(), adminUserId);
+
+                // also delete the user form all user role and cluster space
+                membershipRepository.deleteByUserIdAndGroupId(clusterInfo.getAllUserGroupId(), adminUserId);
+                clusterUserMembershipRepository.deleteByUserIdAndClusterId(adminUserId, clusterInfo.getId());
             }
 
         }
@@ -443,20 +447,24 @@ public class DorisManagerUserSpaceComponent extends BaseService {
         // delete cluster information
         clusterInfoRepository.deleteById(spaceId);
 
-        // delete cluster configuration
-        log.debug("delete cluster {} config infos.", spaceId);
-        settingComponent.deleteAdminSetting(spaceId);
+        try {
+            // delete cluster configuration
+            log.debug("delete cluster {} config infos.", spaceId);
+            settingComponent.deleteAdminSetting(spaceId);
 
-        deleteClusterPermissionInfo(clusterInfo);
+            deleteClusterPermissionInfo(clusterInfo);
 
-        // delete user information
-        log.debug("delete cluster {} all user membership.", spaceId);
-        clusterUserMembershipRepository.deleteByClusterId(spaceId);
+            // delete user information
+            log.debug("delete cluster {} all user membership.", spaceId);
+            clusterUserMembershipRepository.deleteByClusterId(spaceId);
 
-        // TODO: In order to be compatible with the deleted content of spatial information before, it is put here.
-        //  If the interface that releases both cluster and physical resources is implemented later,
-        //  it will be unified in the current doriscluster processing operation
-        clusterManager.deleteClusterOperation(clusterInfo);
+            // TODO: In order to be compatible with the deleted content of spatial information before, it is put here.
+            //  If the interface that releases both cluster and physical resources is implemented later,
+            //  it will be unified in the current doriscluster processing operation
+            clusterManager.deleteClusterOperation(clusterInfo);
+        } catch (Exception e) {
+            log.warn("delete space {} related information failed", spaceId, e);
+        }
     }
 
     private void deleteClusterPermissionInfo(ClusterInfoEntity clusterInfo) throws Exception {

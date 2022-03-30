@@ -15,44 +15,20 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package org.apache.doris.stack.model.response.construct;
+package org.apache.doris.stack.driver;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class NativeQueryResp {
+@Data
+public class SimpleColumn {
+    private String displayName;
 
-    private String type;
+    private String name;
 
-    private int time;
-
-    private List<List<String>> data;
-
-    private List<Meta> meta;
-
-    /**
-     * 类型
-     */
-    public enum Type {
-        exec_status,
-        result_set
-    }
-
-    /**
-     * Meta
-     */
-    @Data
-    @AllArgsConstructor
-    public static class Meta {
-
-        private String name;
-
-        private String type;
-    }
+    // baseType, The unified type of front-end structured display field
+    private String baseType;
 }

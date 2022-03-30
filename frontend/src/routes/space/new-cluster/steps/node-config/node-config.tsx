@@ -42,27 +42,51 @@ interface DataType {
     desc: string | null;
 }
 
-const initData = {
-    feCustom: '',
-    beCustom: '',
-    brokerCustom: '',
+export interface Custom {
+    value: string;
+    visible: boolean;
+}
+
+interface CustomState {
+    feCustom: Custom;
+    beCustom: Custom;
+    brokerCustom: Custom;
+}
+
+const initData: CustomState = {
+    feCustom: {
+        value: '',
+        visible: false,
+    },
+    beCustom: {
+        value: '',
+        visible: false,
+    },
+    brokerCustom: {
+        value: '',
+        visible: false,
+    },
 };
-const reducer = (state: any, action: { type: any; feCustom?: any; beCustom?: any; brokerCustom?: any }) => {
-    let newState = { ...state };
+const reducer = (state: CustomState, action: { type: DorisNodeTypeEnum; payload: Custom }) => {
     switch (action.type) {
-        case 'SET_FE_CONFIG':
-            newState.feCustom = action.feCustom;
-            break;
-        case 'SET_BE_CONFIG':
-            newState.beCustom = action.beCustom;
-            break;
-        case 'SET_BROKER_CONFIG':
-            newState.brokerCustom = action.brokerCustom;
-            break;
+        case DorisNodeTypeEnum.FE:
+            return {
+                ...state,
+                feCustom: action.payload,
+            };
+        case DorisNodeTypeEnum.BE:
+            return {
+                ...state,
+                beCustom: action.payload,
+            };
+        case DorisNodeTypeEnum.BROKER:
+            return {
+                ...state,
+                brokerCustom: action.payload,
+            };
         default:
-            newState = state;
+            return state;
     }
-    return newState;
 };
 
 function getDeployConfigs(name: string, modules: any[]) {
@@ -80,7 +104,7 @@ function tranverseModulesToObject(modules: DataType[]) {
 }
 
 function tranverseStringToObject(customString: string) {
-    if(customString === '') return {}
+    if (customString === '') return {};
     const customModules = customString.split('\n');
     return customModules.reduce((memo, current) => {
         const [key, value] = current.split('=');
@@ -158,8 +182,6 @@ export function NodeConfigContent(props: any) {
     const [feDataSource, setFeDataSource] = useState<DataType[]>([]);
     const [beDataSource, setBeDataSource] = useState<DataType[]>([]);
     const [brokerDataSource, setBrokerDataSource] = useState<DataType[]>([]);
-    // const {fe, be} = useRecoilValue(roleListQuery);
-    const processID = useRecoilValue(processId);
 
     useEffect(() => {
         if (!reqInfo.cluster_id) return;
@@ -184,11 +206,11 @@ export function NodeConfigContent(props: any) {
             const { feCustom, beCustom, brokerCustom } = customState;
             switch (moduleName) {
                 case 'fe':
-                    return getNewConfigsWithCustom(feDataSource, feCustom);
+                    return getNewConfigsWithCustom(feDataSource, feCustom.visible ? feCustom.value : '');
                 case 'be':
-                    return getNewConfigsWithCustom(beDataSource, beCustom);
+                    return getNewConfigsWithCustom(beDataSource, beCustom.visible ? beCustom.value : '');
                 case 'broker':
-                    return getNewConfigsWithCustom(brokerDataSource, brokerCustom);
+                    return getNewConfigsWithCustom(brokerDataSource, brokerCustom.visible ? brokerCustom.value : '');
             }
         },
         [feDataSource, beDataSource, brokerDataSource, customState],
@@ -199,7 +221,7 @@ export function NodeConfigContent(props: any) {
             moduleName: module.name,
             configs: getNewConfigs(module.name),
         }));
-        props.onChange?.(newClusterModules)
+        props.onChange?.(newClusterModules);
     }, [getNewConfigs]);
 
     return (
@@ -231,11 +253,7 @@ export function NodeConfigContent(props: any) {
                                 },
                             }}
                         />
-                        <CustomConfig
-                            onChange={val => {
-                                dispatch({ type: 'SET_FE_CONFIG', feCustom: val.value });
-                            }}
-                        />
+                        <CustomConfig dispatch={dispatch} activeKey={activeKey} custom={customState.feCustom} />
                     </>
                 )}
                 {activeKey === DorisNodeTypeEnum.BE && (
@@ -255,11 +273,7 @@ export function NodeConfigContent(props: any) {
                                 },
                             }}
                         />
-                        <CustomConfig
-                            onChange={val => {
-                                dispatch({ type: 'SET_BE_CONFIG', beCustom: val.value });
-                            }}
-                        />
+                        <CustomConfig dispatch={dispatch} activeKey={activeKey} custom={customState.beCustom} />
                     </>
                 )}
                 {activeKey === DorisNodeTypeEnum.BROKER && (
@@ -280,11 +294,7 @@ export function NodeConfigContent(props: any) {
                                 },
                             }}
                         />
-                        <CustomConfig
-                            onChange={val => {
-                                dispatch({ type: 'SET_BROKER_CONFIG', brokerCustom: val.value });
-                            }}
-                        />
+                        <CustomConfig dispatch={dispatch} activeKey={activeKey} custom={customState.brokerCustom} />
                     </>
                 )}
             </PageContainer>

@@ -15,44 +15,17 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package org.apache.doris.stack.model.response.construct;
+package org.apache.doris.stack.model.request.construct;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class NativeQueryResp {
+@NoArgsConstructor
+public class SqlQueryReq {
+    private int database;
 
-    private String type;
-
-    private int time;
-
-    private List<List<String>> data;
-
-    private List<Meta> meta;
-
-    /**
-     * 类型
-     */
-    public enum Type {
-        exec_status,
-        result_set
-    }
-
-    /**
-     * Meta
-     */
-    @Data
-    @AllArgsConstructor
-    public static class Meta {
-
-        private String name;
-
-        private String type;
-    }
+    private String query;
 }

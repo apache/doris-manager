@@ -15,10 +15,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { ClassAttributes } from "react";
+import { DorisNodeTypeEnum } from '../../../types/params.type';
+import { Custom } from '../node-config';
 
-export interface CustomConfigProps extends ClassAttributes<any>{
-    onChange?: (value: CustomConfigValue) => void;
+export interface CustomConfigProps {
+    dispatch: (value: { type: DorisNodeTypeEnum; payload: Custom }) => void;
+    activeKey: DorisNodeTypeEnum;
+    custom: Custom;
 }
 
 export interface CustomConfigValue {
