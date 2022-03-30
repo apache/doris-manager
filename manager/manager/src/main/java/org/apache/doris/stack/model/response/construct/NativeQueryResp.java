@@ -48,6 +48,7 @@ public class NativeQueryResp {
      * Meta
      */
     @Data
+    @AllArgsConstructor
     public static class Meta {
 
         private String name;
