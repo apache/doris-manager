@@ -44,12 +44,14 @@ public class ResourceClusterManager {
     private ResourceNodeAndAgentManager nodeAndAgentManager;
 
     public long initOperation(int userId, PMResourceClusterAccessInfo authInfo, List<String> hosts) {
+        log.info("create resource cluster");
         ResourceClusterEntity clusterEntity = new ResourceClusterEntity(String.valueOf(userId),
                 JSON.toJSONString(authInfo));
 
         ResourceClusterEntity newClusterEntity = resourceClusterRepository.save(clusterEntity);
         long resourceClusterId = newClusterEntity.getId();
 
+        log.debug("create resource cluster nodes is {}", hosts);
         for (String host : hosts) {
             nodeAndAgentManager.initOperation(resourceClusterId, host);
         }
@@ -59,6 +61,7 @@ public class ResourceClusterManager {
     public void updateOperation(long resourceClusterId, int userId,
                                 PMResourceClusterAccessInfo authInfo,
                                 List<String> hosts) {
+        log.info("update resource cluster {} info", resourceClusterId);
         ResourceClusterEntity clusterEntity = resourceClusterRepository.findById(resourceClusterId).get();
 
         clusterEntity.setAccessInfo(JSON.toJSONString(authInfo));
@@ -66,13 +69,16 @@ public class ResourceClusterManager {
         resourceClusterRepository.save(clusterEntity);
 
         List<String> existHosts = nodeRepository.getHostsByResourceClusterId(resourceClusterId);
+        log.debug("resource cluster {} exist nodes", existHosts);
 
         List<String> reduceList = ListUtil.getReduceList(hosts, existHosts);
+        log.debug("resource cluster {} reduce nodes", reduceList);
         for (String host : reduceList) {
             nodeAndAgentManager.deleteOperation(resourceClusterId, host);
         }
 
         List<String> addList = ListUtil.getAddList(hosts, existHosts);
+        log.debug("resource cluster {} add nodes", addList);
         for (String host : addList) {
             nodeAndAgentManager.initOperation(resourceClusterId, host);
         }
@@ -80,6 +86,7 @@ public class ResourceClusterManager {
 
     public void configOperation(long resourceClusterId, String packageInfo, String installInfo) {
         // TODO:The path can be set separately for each machine later
+        log.info("config resource cluster {}", resourceClusterId);
         ResourceClusterEntity resourceClusterEntity = resourceClusterRepository.findById(resourceClusterId).get();
         resourceClusterEntity.setRegistryInfo(packageInfo);
 
@@ -91,6 +98,7 @@ public class ResourceClusterManager {
     }
 
     public void startOperation(long resourceClusterId, long requestId) {
+        log.info("start resource cluster {} all nodes agent", resourceClusterId);
         ResourceClusterEntity clusterEntity = resourceClusterRepository.findById(resourceClusterId).get();
         PMResourceClusterAccessInfo accessInfo = JSON.parseObject(clusterEntity.getAccessInfo(),
                 PMResourceClusterAccessInfo.class);
@@ -101,12 +109,14 @@ public class ResourceClusterManager {
         configInfo.setSshPort(accessInfo.getSshPort());
         configInfo.setSshKey(accessInfo.getSshKey());
 
+        log.debug("install agent for resource cluster {} all nodes");
         for (ResourceNodeEntity nodeEntity : nodeEntities) {
             nodeAndAgentManager.installAgentOperation(nodeEntity, configInfo, requestId);
         }
     }
 
     public void checkNodesAgentOperation(long resourceClusterId) throws Exception {
+        log.info("check resource cluster {} all nodes agent", resourceClusterId);
         List<ResourceNodeEntity> nodeEntities = nodeRepository.getByResourceClusterId(resourceClusterId);
 
         for (ResourceNodeEntity nodeEntity : nodeEntities) {

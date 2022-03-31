@@ -55,7 +55,6 @@ import org.apache.doris.stack.model.response.control.ClusterModuleInfo;
 import org.apache.doris.stack.model.response.control.ResourceNodeInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,7 +102,6 @@ public class DorisClusterService {
     @Autowired
     private ClusterUserComponent userComponent;
 
-    @Transactional
     public ModelControlResponse creation(CoreUserEntity user, DorisClusterCreationReq creationReq) throws Exception {
         log.info("Rquest info is {}", JSON.toJSON(creationReq));
 
@@ -118,7 +116,6 @@ public class DorisClusterService {
         return response;
     }
 
-    @Transactional
     public ModelControlResponse takeOver(CoreUserEntity user, DorisClusterTakeOverReq takeOverReq) throws Exception {
         log.info("Rquest info is {}", JSON.toJSON(takeOverReq));
         DorisClusterTakeOverRequest request = new DorisClusterTakeOverRequest();
