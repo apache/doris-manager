@@ -40,6 +40,7 @@ import org.apache.doris.stack.model.request.space.ClusterType;
 import org.apache.doris.stack.model.request.space.NewUserSpaceCreateReq;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -78,10 +79,14 @@ public class DorisClusterManager {
     @Autowired
     private JdbcSampleClient jdbcClient;
 
+    // Ensure the data atomicity of creating user space, so add transactions
+    @Transactional
     public long initOperation(NewUserSpaceCreateReq spaceInfo, String creator) throws Exception {
         return userSpaceComponent.create(spaceInfo, creator);
     }
 
+    // Ensure the atomicity of data in user space, so add transactions
+    @Transactional
     public void updateClusterOperation(CoreUserEntity user, long clusterId,
                                        NewUserSpaceCreateReq spaceInfo) throws Exception {
         userSpaceComponent.update(user, clusterId, spaceInfo);
@@ -90,17 +95,22 @@ public class DorisClusterManager {
     public void createClusterResourceOperation(CoreUserEntity user, ClusterInfoEntity clusterInfoEntity,
                                                PMResourceClusterAccessInfo authInfo,
                                                List<String> hosts) {
+        log.info("Create cluster {} resource cluster operation.", clusterInfoEntity.getId());
         long resourceClusterId = clusterInfoEntity.getResourceClusterId();
         if (resourceClusterId < 1L) {
+            log.debug("Cluster {} resource cluster not exist, add a new one.", clusterInfoEntity.getId());
             resourceClusterId = resourceClusterManager.initOperation(user.getId(), authInfo, hosts);
             clusterInfoEntity.setResourceClusterId(resourceClusterId);
             clusterRepository.save(clusterInfoEntity);
         } else {
+            log.debug("Cluster {} resource cluster {} already exist, update it.",
+                    clusterInfoEntity.getId(), resourceClusterId);
             resourceClusterManager.updateOperation(resourceClusterId, user.getId(), authInfo, hosts);
         }
     }
 
     public void configClusterResourceOperation(ClusterInfoEntity clusterInfoEntity, String packageInfo, String installInfo) {
+        log.info("Config cluster {} resource info operation.", clusterInfoEntity.getId());
         clusterInfoEntity.setInstallInfo(installInfo);
         clusterRepository.save(clusterInfoEntity);
 
@@ -108,6 +118,7 @@ public class DorisClusterManager {
     }
 
     public void startClusterResourceOperation(ClusterInfoEntity clusterInfoEntity, long requestId) {
+        log.info("Start cluster {} resource cluster operation.", clusterInfoEntity.getId());
         resourceClusterManager.startOperation(clusterInfoEntity.getResourceClusterId(), requestId);
     }
 
@@ -115,6 +126,7 @@ public class DorisClusterManager {
         // Step fallback operation
         // If you have done scheduling and allocation before, you need to delete the created data.
         // If not, do nothing directly
+        log.info("Schedule cluster {} operation.", clusterId);
         deleteClusterOperation(clusterId);
 
         // Add broker node installation information, which is available for each node by default
@@ -138,6 +150,7 @@ public class DorisClusterManager {
     }
 
     public void configClusterOperation(ClusterInfoEntity clusterInfoEntity, List<DorisClusterModuleDeployConfig> deployConfigs) {
+        log.info("Config cluster {} operation.", clusterInfoEntity.getId());
 
         ResourceClusterEntity resourceClusterEntity =
                 resourceClusterRepository.findById(clusterInfoEntity.getResourceClusterId()).get();
@@ -150,6 +163,7 @@ public class DorisClusterManager {
 
     public void deployClusterOperation(long clusterId, long requestId) {
         // TODO:Step fallback operation
+        log.info("Deploy cluster {} operation.", clusterId);
 
         List<ClusterModuleEntity> moduleEntities = moduleRepository.getByClusterId(clusterId);
 
@@ -166,6 +180,7 @@ public class DorisClusterManager {
      * @throws Exception
      */
     public ClusterCreateReq deployClusterAfterOperation(long clusterId, String newPassword) throws Exception {
+        log.info("Deploy cluster {} after operation.", clusterId);
         List<ClusterModuleServiceEntity> serviceEntities = serviceRepository.getByClusterId(clusterId);
 
         int feJdbcPort = 0;
@@ -199,10 +214,12 @@ public class DorisClusterManager {
             }
         }
 
+        log.debug("Get doris jdbc connection");
         // get doris jdbc connection
         String feHost = feAccessInfo.get(0);
         Statement stmt = jdbcClient.getStatement(feHost, feJdbcPort, ServerAndAgentConstant.USER_ROOT, "");
         // add fe Observer
+        log.debug("Add fe Observers {}", feObserverInfo);
         List<String> feObserverHostsPorts = new ArrayList<>();
         for (String feObserverHost : feObserverInfo) {
             String feObserverHostsPort = feObserverHost + ":" + feEditPort;
@@ -211,6 +228,7 @@ public class DorisClusterManager {
         jdbcClient.addFeObserver(feObserverHostsPorts, stmt);
 
         // add be
+        log.debug("Add be {}", beAccessInfo);
         List<String> beHostsPorts = new ArrayList<>();
         for (String beHost : beAccessInfo) {
             String beHostsPort = beHost + ":" + beHeartPort;
@@ -219,6 +237,7 @@ public class DorisClusterManager {
         jdbcClient.addBe(beHostsPorts, stmt);
 
         // add broker
+        log.debug("Add broker {}", brokerAccessInfo);
         List<String> brokerHostsPorts = new ArrayList<>();
         for (String brokerHost : brokerAccessInfo) {
             String brokerHostsPort = brokerHost + ":" + brokerRpcPort;
@@ -227,6 +246,7 @@ public class DorisClusterManager {
         jdbcClient.addBrokerName(brokerHostsPorts, stmt);
 
         // update password
+        log.debug("Update doris root and admin user default password.");
         jdbcClient.updateUserPassword(ServerAndAgentConstant.USER_ADMIN, newPassword, stmt);
         jdbcClient.updateUserPassword(ServerAndAgentConstant.USER_ROOT, newPassword, stmt);
 
@@ -245,11 +265,13 @@ public class DorisClusterManager {
     }
 
     public void clusterAccessOperation(long clusterId, ClusterCreateReq clusterAccessInfo) throws Exception {
+        log.info("Access cluster {} operation.", clusterId);
         ClusterInfoEntity clusterInfo = clusterRepository.findById(clusterId).get();
         userSpaceComponent.clusterAccess(clusterAccessInfo, clusterInfo);
     }
 
     public void checkClusterDeployOperation(long clusterId, long requestId) throws Exception {
+        log.info("Check cluster {} deploy operation.", clusterId);
         List<ClusterModuleEntity> moduleEntities = moduleRepository.getByClusterId(clusterId);
 
         for (ClusterModuleEntity moduleEntity : moduleEntities) {
@@ -258,6 +280,7 @@ public class DorisClusterManager {
     }
 
     public void checkClusterInstancesOperation(long clusterId) throws Exception {
+        log.info("Check cluster {} instances operation.", clusterId);
         List<ClusterModuleEntity> moduleEntities = moduleRepository.getByClusterId(clusterId);
 
         for (ClusterModuleEntity moduleEntity : moduleEntities) {
@@ -266,6 +289,7 @@ public class DorisClusterManager {
     }
 
     public void stopClusterOperation(long clusterId, long requestId) throws Exception {
+        log.info("Stop cluster {} instances operation.", clusterId);
         List<ClusterModuleEntity> moduleEntities = moduleRepository.getByClusterId(clusterId);
 
         for (ClusterModuleEntity moduleEntity : moduleEntities) {
@@ -274,6 +298,7 @@ public class DorisClusterManager {
     }
 
     public void startClusterOperation(long clusterId, long requestId) throws Exception {
+        log.info("Start cluster {} instances operation.", clusterId);
         List<ClusterModuleEntity> moduleEntities = moduleRepository.getByClusterId(clusterId);
 
         for (ClusterModuleEntity moduleEntity : moduleEntities) {
@@ -282,6 +307,7 @@ public class DorisClusterManager {
     }
 
     public void reStartClusterOperation(long clusterId, long requestId) throws Exception {
+        log.info("Restart cluster {} instances operation.", clusterId);
         List<ClusterModuleEntity> moduleEntities = moduleRepository.getByClusterId(clusterId);
 
         for (ClusterModuleEntity moduleEntity : moduleEntities) {
@@ -291,6 +317,7 @@ public class DorisClusterManager {
 
     public void deleteClusterOperation(ClusterInfoEntity clusterInfo)throws Exception {
         long clusterId = clusterInfo.getId();
+        log.info("Delete cluster {} instances operation.", clusterId);
         deleteClusterOperation(clusterId);
     }
 

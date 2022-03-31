@@ -55,6 +55,7 @@ public class ResourceNodeAndAgentManager {
     private HeartBeatEventRepository heartBeatEventRepository;
 
     public long initOperation(long resourceClusterId, String host) {
+        log.info("create a new node {} for resource cluster {}", host, resourceClusterId);
         ResourceNodeEntity nodeEntity = new ResourceNodeEntity(resourceClusterId, host);
         ResourceNodeEntity newNodeEntity = nodeRepository.save(nodeEntity);
         return newNodeEntity.getId();
@@ -62,10 +63,12 @@ public class ResourceNodeAndAgentManager {
 
     // TODO:Uninstall agent
     public void deleteOperation(long resourceClusterId, String host) {
+        log.info("delete node {} for resource cluster {}", host, resourceClusterId);
         nodeRepository.deleteByResourceClusterIdAndHost(resourceClusterId, host);
     }
 
     public void installAgentOperation(ResourceNodeEntity node, AgentInstallEventConfigInfo configInfo, long requestId) {
+        log.info("install node {} agent for request {}", node.getId(), requestId);
         configInfo.setAgentNodeId(node.getId());
         configInfo.setInstallDir(node.getAgentInstallDir());
         configInfo.setHost(node.getHost());
@@ -75,6 +78,7 @@ public class ResourceNodeAndAgentManager {
         // Check whether the current node is already installing agent or agent installation has failed
         HeartBeatEventEntity agentInstallAgentEntity;
         if (eventId < 1L) {
+            log.debug("first install agent for node {}", node.getId());
             // fisrt time install agent
             // create HeartBeatEvent
             HeartBeatEventEntity eventEntity = new HeartBeatEventEntity(HeartBeatEventType.AGENT_INSTALL.name(),
@@ -86,6 +90,7 @@ public class ResourceNodeAndAgentManager {
             node.setCurrentEventId(eventId);
             nodeRepository.save(node);
         } else {
+            log.debug("install agent for node {} heart beat event {} exist", node.getId(), eventId);
             HeartBeatEventEntity eventEntity = heartBeatEventRepository.findById(eventId).get();
             // If the agent has been successfully installed and a new agent request operation has been performed,
             // the installation cannot be performed again
