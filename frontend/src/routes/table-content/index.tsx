@@ -38,11 +38,12 @@ import DataPreview from './tabs/data.pre';
 const { Content, Sider } = Layout;
 const iconTable = <TableOutlined />;
 import { isTableIdSame } from '@src/utils/utils';
+import { useTranslation } from 'react-i18next';
 const { TabPane } = Tabs;
 let id: any = '',
     name: any = '';
 function TableContent(props: any) {
-    console.log(props)
+    const { t } = useTranslation()
     const history = useHistory();
     const { match } = props;
     const [dbId, setDbId] = useState<any>();
@@ -71,13 +72,13 @@ function TableContent(props: any) {
             <div styleName="table-content">
                 <Tabs
                     // defaultActiveKey={`${ma}`}
-                    activeKey={matchedPath ? matchedPath[3] : TableInfoTabTypeEnum.BasicInfo}
+                    activeKey={matchedPath ? matchedPath[2] : TableInfoTabTypeEnum.BasicInfo}
                     onChange={(activeTab: string) => handleTabChange(activeTab)}
                 >
-                    <TabPane tab="基本信息" key={TableInfoTabTypeEnum.BasicInfo}>
+                    <TabPane tab={t`BasicInfo`} key={TableInfoTabTypeEnum.BasicInfo}>
                         {/* <BaseInfo tableInfo={tableInfo} /> */}
                     </TabPane>
-                    <TabPane tab="数据预览" key={TableInfoTabTypeEnum.DataPreview}>
+                    <TabPane tab={t`DataPreview`} key={TableInfoTabTypeEnum.DataPreview}>
                         {/* 12312 */}
                     </TabPane>
                     <TabPane tab="Schema" key={TableInfoTabTypeEnum.Schema}></TabPane>

@@ -39,12 +39,15 @@ import { SpaceAPI } from '../space.api';
 import { isSuccess } from '@src/utils/http';
 import { requestInfoState, stepDisabledState } from '../access-cluster/access-cluster.recoil';
 import { checkParam } from '../space.utils';
+import { useTranslation } from 'react-i18next';
+
 const { Step } = Steps;
 
 const PREV_DISABLED_STEPS = [NewClusterStepsEnum[3], NewClusterStepsEnum[6], NewClusterStepsEnum[7]];
 const NEXT_DISABLED_STEPS = [NewClusterStepsEnum[3], NewClusterStepsEnum[6]];
 
 export function NewCluster(props: any) {
+    const {t} = useTranslation()
     const match = useRouteMatch<{ requestId: string }>();
     const history = useHistory();
     const [step, setStep] = React.useState(0);
@@ -188,17 +191,17 @@ export function NewCluster(props: any) {
                 <ProCard style={{ marginTop: 20 }}>
                     <div style={{ position: 'fixed', top: 80, right: 80 }}>
                         <Steps direction="vertical" current={step} style={{ padding: '20px 0 40px 0' }}>
-                            <Step title="注册空间" description="&nbsp;&nbsp;" />
-                            <Step title="添加主机" description="&nbsp;&nbsp;" />
-                            <Step title="安装选项" description="&nbsp;&nbsp;" />
-                            <Step title="校验主机" description="&nbsp;&nbsp;" />
-                            <Step title="规划节点" description="&nbsp;&nbsp;" />
-                            <Step title="配置参数" description="&nbsp;&nbsp;" />
-                            <Step title="部署集群" description="&nbsp;&nbsp;" />
-                            <Step title="完成创建" description="&nbsp;&nbsp;" />
+                            <Step title={t`Space Register`} description="&nbsp;&nbsp;" />
+                            <Step title={t`AddHost`} description="&nbsp;&nbsp;" />
+                            <Step title={t`SetupOptions`} description="&nbsp;&nbsp;" />
+                            <Step title={t`CheckoutHost`} description="&nbsp;&nbsp;" />
+                            <Step title={t`PlaningNodes`} description="&nbsp;&nbsp;" />
+                            <Step title={t`SetUpParameters`} description="&nbsp;&nbsp;" />
+                            <Step title={t`DeployCluster`} description="&nbsp;&nbsp;" />
+                            <Step title={t`creationComplete`} description="&nbsp;&nbsp;" />
                         </Steps>
                     </div>
-                    <div style={{ marginRight: 240 }}>
+                    <div style={{ marginRight: 300 }}>
                         <CacheSwitch>
                             <CacheRoute path={`${match.path}/register-space`} component={SpaceRegister} />
                             <CacheRoute path={`${match.path}/add-node`} component={AddNode} />
@@ -222,7 +225,7 @@ export function NewCluster(props: any) {
                                         }}
                                         disabled={stepDisabled.prev}
                                     >
-                                        上一步
+                                        {t`previousStep`}
                                     </Button>
                                 )}
                                 {step === NewClusterStepsEnum['finish'] ? (
@@ -233,7 +236,7 @@ export function NewCluster(props: any) {
                                             finish();
                                         }}
                                     >
-                                        完成
+                                        {t`Accomplish`}
                                     </Button>
                                 ) : (
                                     <Button
@@ -244,7 +247,7 @@ export function NewCluster(props: any) {
                                         disabled={stepDisabled.next}
                                         loading={loading}
                                     >
-                                        下一步
+                                        {t`nextStep`}
                                     </Button>
                                 )}
                             </Space>
