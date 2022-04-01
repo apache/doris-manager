@@ -51,7 +51,7 @@ public class DorisClusterInstanceManager {
 
     public long initOperation(long clusterId, ClusterModuleEntity moudle, long nodeId) {
         // TODO:Judge whether node can deploy this instance
-        log.info("create a new instance for cluster {} moudle {} on node {}", clusterId, moudle.getId(), nodeId);
+        log.info("create a new instance for cluster {} moudle {} on node {}", clusterId, moudle.getModuleName(), nodeId);
         ResourceNodeEntity nodeEntity = nodeRepository.findById(nodeId).get();
 
         ClusterInstanceEntity instanceEntity = new ClusterInstanceEntity(clusterId, moudle.getId(), nodeId,
