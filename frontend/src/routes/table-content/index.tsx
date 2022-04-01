@@ -71,7 +71,7 @@ function TableContent(props: any) {
             <div styleName="table-content">
                 <Tabs
                     // defaultActiveKey={`${ma}`}
-                    activeKey={matchedPath ? matchedPath[3] : TableInfoTabTypeEnum.BasicInfo}
+                    activeKey={matchedPath ? matchedPath[2] : TableInfoTabTypeEnum.BasicInfo}
                     onChange={(activeTab: string) => handleTabChange(activeTab)}
                 >
                     <TabPane tab="基本信息" key={TableInfoTabTypeEnum.BasicInfo}>
