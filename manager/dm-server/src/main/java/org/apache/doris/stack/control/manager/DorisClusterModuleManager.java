@@ -59,7 +59,7 @@ public class DorisClusterModuleManager {
     private DorisClusterInstanceManager instanceManager;
 
     public long initOperation(long clusterId, DorisClusterModuleResourceConfig resourceConfig) {
-        log.info("create module for cluster {}", clusterId);
+        log.info("create module {} for cluster {}", resourceConfig.getModuleName(), clusterId);
         ClusterModuleEntity moduleEntity = new ClusterModuleEntity(clusterId, resourceConfig.getModuleName());
 
         ClusterModuleEntity newModuleEntity = clusterModuleRepository.save(moduleEntity);
