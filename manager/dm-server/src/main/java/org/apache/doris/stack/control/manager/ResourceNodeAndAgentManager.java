@@ -67,26 +67,55 @@ public class ResourceNodeAndAgentManager {
         nodeRepository.deleteByResourceClusterIdAndHost(resourceClusterId, host);
     }
 
+    public boolean isAvailableAgentPort(ResourceNodeEntity node, AgentInstallEventConfigInfo configInfo)
+            throws Exception {
+        // agent port check, eg: Spring Boot Param server.port=8008
+        log.info("check {} node port {}:{}", node.getId(), node.getHost(), node.getAgentPort());
+        String sshkey = String.format("sshkey-%d-%d", node.getId(), node.getAgentPort());
+        File sshKeyFile = SSH.buildSshKeyFile(sshkey);
+        SSH.writeSshKeyFile(configInfo.getSshKey(), sshKeyFile);
+
+        // only check listen port
+        String checkPortCmd = String.format("netstat -tunlp | grep  -w %d", node.getAgentPort());
+        SSH checkPortSSH = new SSH(configInfo.getSshUser(), configInfo.getSshPort(),
+                sshKeyFile.getAbsolutePath(), node.getHost(), checkPortCmd);
+        if (checkPortSSH.run()) {
+            String netInfo = checkPortSSH.getStdoutResponse();
+            log.info("agent node {} port check return output\n: {}", node.getId(), netInfo);
+
+            if (netInfo != null && !netInfo.trim().isEmpty()) {
+                log.error("agent node {} port {} already in use:\n {}", node.getId(), node.getAgentPort(), netInfo);
+                return false;
+            }
+        } else if (checkPortSSH.getExitCode() != 1) { //exit 1 when grep failed, other exit code is exception
+            log.warn("run check port cmd failed");
+            throw new Exception("check agent port scrpit execution exception");
+        }
+        return true;
+    }
+
     public void installAgentOperation(ResourceNodeEntity node, AgentInstallEventConfigInfo configInfo, long requestId) {
         log.info("install node {} agent for request {}", node.getId(), requestId);
         configInfo.setAgentNodeId(node.getId());
         configInfo.setInstallDir(node.getAgentInstallDir());
         configInfo.setHost(node.getHost());
+        configInfo.setAgentPort(node.getAgentPort());
 
         long eventId = node.getCurrentEventId();
-
+        log.info("event {}: to install and start {} node agent {}:{} in {}", eventId, node.getId(),
+                node.getHost(), node.getAgentPort(), node.getAgentInstallDir());
         // Check whether the current node is already installing agent or agent installation has failed
         HeartBeatEventEntity agentInstallAgentEntity;
         if (eventId < 1L) {
             log.debug("first install agent for node {}", node.getId());
-            // fisrt time install agent
+            // first time install agent
             // create HeartBeatEvent
             HeartBeatEventEntity eventEntity = new HeartBeatEventEntity(HeartBeatEventType.AGENT_INSTALL.name(),
                     HeartBeatEventResultType.INIT.name(), JSON.toJSONString(configInfo), requestId);
 
             agentInstallAgentEntity = heartBeatEventRepository.save(eventEntity);
             eventId = agentInstallAgentEntity.getId();
-
+            log.info("first time to install agent, create heart beat event {}", eventId);
             node.setCurrentEventId(eventId);
             nodeRepository.save(node);
         } else {
@@ -189,61 +218,25 @@ public class ResourceNodeAndAgentManager {
 
         // agent start
         // AGENT_START stage
+        try {
+            if (!isAvailableAgentPort(node, configInfo)) {
+                log.error("port {}:{} already in use", configInfo.getHost(), configInfo.getAgentPort());
+                updateFailResult(String.format("agent port %s:%d already in use",
+                                configInfo.getHost(), configInfo.getAgentPort()),
+                        AgentInstallEventStage.AGENT_DEPLOY.getStage(), agentInstallAgentEntity);
+                return;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("check agent port exception, skip port check");
+        }
+
         String agentInstallHome = configInfo.getInstallDir() + File.separator + "agent";
 
-        // 1 port check, eg: server.port=8008
-        // grep = application.properties | grep  -w server.port  | awk -F '=' '{print $2}'
-        String confFile = agentInstallHome + File.separator + AGENT_CONFIG_PATH;
-        String portGetFormat = "grep = %s | grep  -w server.port  | awk -F '=' '{print $2}'";
-        String portGetCmd = String.format(portGetFormat, confFile);
-
-        SSH portGetSSH = new SSH(configInfo.getSshUser(), configInfo.getSshPort(),
-                sshKeyFile.getAbsolutePath(), configInfo.getHost(), portGetCmd);
-
-        int agentPort = -1;
-        if (portGetSSH.run()) {
-            String portStr = portGetSSH.getStdoutResponse();
-            log.info("agent {} port get return output: {}", configInfo.getAgentNodeId(), portStr);
-
-            if (portStr == null || portStr.isEmpty()) {
-                log.warn("agent {} server.port is not set", configInfo.getAgentNodeId());
-            } else {
-                try {
-                    agentPort = Integer.parseInt(portStr.trim());
-                } catch (NumberFormatException e) {
-                    log.warn("agent port format is not Integer");
-                }
-            }
-
-        } else {
-            log.warn("run agent port get cmd failed:{}, skip the check and use default port",
-                    portGetSSH.getErrorResponse());
-        }
-
-        if (agentPort > 0) {
-            log.info("agent start port is {}", agentPort);
-            // only check listen port
-            String checkPortCmd = String.format("netstat -tunlp | grep  -w %s", agentPort);
-            SSH checkPortSSH = new SSH(configInfo.getSshUser(), configInfo.getSshPort(),
-                    sshKeyFile.getAbsolutePath(), configInfo.getHost(), checkPortCmd);
-            if (checkPortSSH.run()) {
-                String netInfo = checkPortSSH.getStdoutResponse();
-                log.info("agent {} port check return output: {}", configInfo.getAgentNodeId(), netInfo);
-
-                if (netInfo != null && !netInfo.trim().isEmpty()) {
-                    log.error("port {} already in use, {}", agentPort, netInfo);
-                    updateFailResult("port already in use",
-                            AgentInstallEventStage.AGENT_START.getStage(), agentInstallAgentEntity);
-                    return;
-                }
-            } else {
-                log.warn("run check port cmd failed");
-            }
-        }
-
-        // 2 run start shell
-        String command = "cd %s && sh %s  --server %s --agent %s";
-        String cmd = String.format(command, agentInstallHome, AGENT_START_SCRIPT, getServerAddr(), configInfo.getAgentNodeId());
+        log.info("to start agent with port {}", configInfo.getAgentPort());
+        String command = "cd %s && sh %s  --server %s --agent %d --port %d";
+        String cmd = String.format(command, agentInstallHome, AGENT_START_SCRIPT,
+                getServerAddr(), configInfo.getAgentNodeId(), configInfo.getAgentPort());
         SSH startSsh = new SSH(configInfo.getSshUser(), configInfo.getSshPort(),
                 sshKeyFile.getAbsolutePath(), configInfo.getHost(), cmd);
         if (!startSsh.run()) {

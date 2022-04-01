@@ -34,6 +34,7 @@ public abstract class BaseCommand {
     protected String[] resultCommand;
     protected String stdoutResponse;
     protected String errorResponse;
+    protected int exitCode;
 
     protected abstract void buildCommand();
 
@@ -43,6 +44,10 @@ public abstract class BaseCommand {
 
     public String getErrorResponse() {
         return this.errorResponse;
+    }
+
+    public int getExitCode() {
+        return this.exitCode;
     }
 
     public boolean run() {
@@ -59,7 +64,8 @@ public abstract class BaseCommand {
 
             stdoutResponse = stdoutBufferedReader.lines().parallel().collect(Collectors.joining(System.lineSeparator()));
             errorResponse = errorBufferedReader.lines().parallel().collect(Collectors.joining(System.lineSeparator()));
-            final int exitCode = process.waitFor();
+
+            exitCode = process.waitFor();
             if (exitCode == 0) {
                 return true;
             } else {

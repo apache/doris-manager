@@ -39,6 +39,8 @@ public class DorisClusterTakeOverReq extends ModelControlReq {
 
     private String installInfo;
 
+    private int agentPort;
+
     // Step 4: check Install agent
     // Step 5: create cluster module and instance, check agent instance
 }
