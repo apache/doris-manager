@@ -84,20 +84,23 @@ public class ResourceClusterManager {
         }
     }
 
-    public void configOperation(long resourceClusterId, String packageInfo, String installInfo) {
+    public void configOperation(long resourceClusterId, String packageInfo, String installInfo, int agentPort) {
         // TODO:The path can be set separately for each machine later
         log.info("config resource cluster {}", resourceClusterId);
         ResourceClusterEntity resourceClusterEntity = resourceClusterRepository.findById(resourceClusterId).get();
         resourceClusterEntity.setRegistryInfo(packageInfo);
+        resourceClusterRepository.save(resourceClusterEntity);
 
         List<ResourceNodeEntity> nodeEntities = nodeRepository.getByResourceClusterId(resourceClusterId);
         for (ResourceNodeEntity nodeEntity : nodeEntities) {
             nodeEntity.setAgentInstallDir(installInfo);
+            nodeEntity.setAgentPort(agentPort);
             nodeRepository.save(nodeEntity);
         }
     }
 
-    public void startOperation(long resourceClusterId, long requestId) {
+    public void startOperation(long resourceClusterId, long requestId) throws Exception {
+
         log.info("start resource cluster {} all nodes agent", resourceClusterId);
         ResourceClusterEntity clusterEntity = resourceClusterRepository.findById(resourceClusterId).get();
         PMResourceClusterAccessInfo accessInfo = JSON.parseObject(clusterEntity.getAccessInfo(),
@@ -109,7 +112,18 @@ public class ResourceClusterManager {
         configInfo.setSshPort(accessInfo.getSshPort());
         configInfo.setSshKey(accessInfo.getSshKey());
 
-        log.debug("install agent for resource cluster {} all nodes");
+        log.debug("check agent port for resource cluster {} all nodes", resourceClusterId);
+
+        // before install and start agent, to check whether port is available or not，
+        // it can not guarantee the port must not be used when starting the agent，
+        // but it may expose this problem early if the port has been uses.
+        for (ResourceNodeEntity nodeEntity : nodeEntities) {
+            if (!nodeAndAgentManager.isAvailableAgentPort(nodeEntity, configInfo)) {
+                throw new Exception(nodeEntity.getHost() + ":" + nodeEntity.getAgentPort() + " is already in use");
+            }
+        }
+
+        log.debug("install agent for resource cluster {} all nodes", resourceClusterId);
         for (ResourceNodeEntity nodeEntity : nodeEntities) {
             nodeAndAgentManager.installAgentOperation(nodeEntity, configInfo, requestId);
         }

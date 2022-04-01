@@ -109,15 +109,17 @@ public class DorisClusterManager {
         }
     }
 
-    public void configClusterResourceOperation(ClusterInfoEntity clusterInfoEntity, String packageInfo, String installInfo) {
+    public void configClusterResourceOperation(ClusterInfoEntity clusterInfoEntity, String packageInfo,
+                                               String installInfo, int agentPort) {
         log.info("Config cluster {} resource info operation.", clusterInfoEntity.getId());
         clusterInfoEntity.setInstallInfo(installInfo);
         clusterRepository.save(clusterInfoEntity);
 
-        resourceClusterManager.configOperation(clusterInfoEntity.getResourceClusterId(), packageInfo, installInfo);
+        resourceClusterManager.configOperation(clusterInfoEntity.getResourceClusterId(), packageInfo,
+                installInfo, agentPort);
     }
 
-    public void startClusterResourceOperation(ClusterInfoEntity clusterInfoEntity, long requestId) {
+    public void startClusterResourceOperation(ClusterInfoEntity clusterInfoEntity, long requestId) throws Exception {
         log.info("Start cluster {} resource cluster operation.", clusterInfoEntity.getId());
         resourceClusterManager.startOperation(clusterInfoEntity.getResourceClusterId(), requestId);
     }

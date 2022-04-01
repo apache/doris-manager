@@ -27,6 +27,7 @@ OPTS=$(getopt \
   -o '' \
   -l 'server:' \
   -l 'agent:' \
+  -l 'port:' \
   -- "$@")
 
 eval set -- "$OPTS"
@@ -34,10 +35,12 @@ eval set -- "$OPTS"
 #host:port
 SERVER=
 AGENT=
+PORT=
 while true; do
     case "$1" in
         --server) SERVER=$2 ; shift 2;;
         --agent) AGENT=$2 ; shift 2;;
+        --port) PORT=$2 ; shift  2;;
         --) shift ;  break ;;
         *) echo "Internal error" ; exit 1 ;;
     esac
@@ -52,6 +55,12 @@ if [ x"$AGENT" == x"" ]; then
     echo "--agent node id can not empty!"
     exit 1
 fi
+
+if [ x"$PORT" == x"" ]; then
+    echo "--port agent port can not empty!"
+    exit 1
+fi
+
 export AGENT_HOME=`cd "$curdir/.."; pwd`
 
 #
@@ -60,7 +69,7 @@ export AGENT_HOME=`cd "$curdir/.."; pwd`
 # LOG_DIR
 # PID_DIR
 export JAVA_OPTS="-Xmx1024m"
-export SERVER_PARAMS="--manager.server.endpoint=$SERVER --agent.node.id=$AGENT"
+export SERVER_PARAMS="--manager.server.endpoint=$SERVER --agent.node.id=$AGENT --server.port=$PORT"
 export LOG_DIR="$AGENT_HOME/log"
 export PID_DIR=`cd "$curdir"; pwd`
 

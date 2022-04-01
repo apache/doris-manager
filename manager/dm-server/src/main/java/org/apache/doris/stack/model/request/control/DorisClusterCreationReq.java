@@ -37,6 +37,8 @@ public class DorisClusterCreationReq extends ModelControlReq {
 
     private String installInfo;
 
+    private int agentPort;
+
     // Step 4: Install agent
 
     // Step 5:Planning resource node

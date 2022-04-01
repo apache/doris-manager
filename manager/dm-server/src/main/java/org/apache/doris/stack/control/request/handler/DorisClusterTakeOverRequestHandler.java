@@ -118,7 +118,7 @@ public class DorisClusterTakeOverRequestHandler extends DorisClusterRequestHandl
 
     // CREATE_AND_START_RESOURCE_CLUSTER
     private ModelControlResponse handleCreateAndStartResourceClusterEvent(CoreUserEntity user,
-                                                               DorisClusterTakeOverRequest request) throws Exception {
+                                                                          DorisClusterTakeOverRequest request) throws Exception {
         long clusterId = request.getClusterId();
         log.info("handle take over cluster {} CREATE_AND_START_RESOURCE_CLUSTER request {} event",
                 clusterId, request.getRequestId());
@@ -147,8 +147,10 @@ public class DorisClusterTakeOverRequestHandler extends DorisClusterRequestHandl
         log.debug("The node list IP of Doris cluster is {}", nodeIps);
 
         dorisClusterManager.createClusterResourceOperation(user, clusterInfo, request.getReqInfo().getAuthInfo(), nodeIps);
-        dorisClusterManager.configClusterResourceOperation(clusterInfo, "", request.getReqInfo().getInstallInfo());
+        dorisClusterManager.configClusterResourceOperation(clusterInfo, "",
+                request.getReqInfo().getInstallInfo(), request.getReqInfo().getAgentPort());
 
+        // TODO  sshInfo  and  iplist  can check agent port
         List<ResourceNodeEntity> nodeEntities =
                 nodeRepository.getByResourceClusterId(clusterInfo.getResourceClusterId());
         Set<Long> feNodeIds = new HashSet<>();

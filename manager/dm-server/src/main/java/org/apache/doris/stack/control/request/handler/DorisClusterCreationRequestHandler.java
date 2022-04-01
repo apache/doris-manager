@@ -104,11 +104,12 @@ public class DorisClusterCreationRequestHandler extends DorisClusterRequestHandl
 
     // CONFIG_AND_START_RESOURCE_CLUSTER
     private ModelControlResponse handleConfigAndStartResourceClusterEvent(CoreUserEntity user,
-                                                                  DorisClusterCreationRequest request) {
+                                                                          DorisClusterCreationRequest request)
+            throws Exception {
         long clusterId = request.getClusterId();
         ClusterInfoEntity clusterInfoEntity = clusterInfoRepository.findById(clusterId).get();
         dorisClusterManager.configClusterResourceOperation(clusterInfoEntity, request.getReqInfo().getPackageInfo(),
-                request.getReqInfo().getInstallInfo());
+                request.getReqInfo().getInstallInfo(), request.getReqInfo().getAgentPort());
         dorisClusterManager.startClusterResourceOperation(clusterInfoEntity, request.getRequestId());
 
         return getResponse(request, false);
@@ -135,7 +136,7 @@ public class DorisClusterCreationRequestHandler extends DorisClusterRequestHandl
 
     // CONFIG_AND_DEPLOY_DORIS_CLUSTER
     private ModelControlResponse handleConfigAndDeployDorisClusterEvent(CoreUserEntity user,
-                                                                DorisClusterCreationRequest request) {
+                                                                        DorisClusterCreationRequest request) {
         long clusterId = request.getClusterId();
 
         ClusterInfoEntity clusterInfoEntity = clusterInfoRepository.findById(clusterId).get();
@@ -147,7 +148,7 @@ public class DorisClusterCreationRequestHandler extends DorisClusterRequestHandl
 
     // DORIS_CLUSTER_DEPLOYED
     private ModelControlResponse handleDorisClusterDeployedEvent(CoreUserEntity user,
-                                                               DorisClusterCreationRequest request) throws Exception {
+                                                                 DorisClusterCreationRequest request) throws Exception {
         long clusterId = request.getClusterId();
         dorisClusterManager.checkClusterInstancesOperation(clusterId);
         return getResponse(request, false);
