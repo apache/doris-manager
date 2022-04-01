@@ -27,13 +27,14 @@ import { TableInfoResponse } from '../table.interface';
 import EventEmitter from '@src/utils/event-emitter';
 import { getShowTime } from '../../../utils/utils';
 import { Helper } from '@src/components/helper/helper';
+import { useTranslation } from 'react-i18next';
 const layout = {
     labelCol: { span: 6 },
     wrapperCol: { span: 18 },
 };
 
 function Table(props: any) {
-    console.log('Table', props)
+    const { t } = useTranslation()
     // const history = useHistory();
     const [tableInfo, setTableInfo] = useState<TableInfoResponse>({
         createTime: '',
@@ -64,13 +65,13 @@ function Table(props: any) {
     return (
         <div styleName="table-content-des">
             <Form {...layout} labelAlign="left">
-                <Form.Item label="表名称">{tableInfo.name}</Form.Item>
-                <Form.Item label="数据表描述信息">{tableInfo.describe ? tableInfo.describe : '-'}</Form.Item>
-                <Form.Item label="创建时间">{getShowTime(tableInfo.createTime)? getShowTime(tableInfo.createTime) : '-'}</Form.Item>
-                <Form.Item label="最近修改时间">
+                <Form.Item label={t`TableName`}>{tableInfo.name}</Form.Item>
+                <Form.Item label={t`TableDescription`}>{tableInfo.describe ? tableInfo.describe : '-'}</Form.Item>
+                <Form.Item label={t`CreateTime`}>{getShowTime(tableInfo.createTime)? getShowTime(tableInfo.createTime) : '-'}</Form.Item>
+                <Form.Item label={t`UpdateTime`}>
                     {getShowTime(tableInfo.updateTime)}
                     {tableInfo.updateTime ? (
-                        <Helper title="记录该表最近发生表结构变更的时间" className={styles['table-content-tips']} />
+                        <Helper title={t`UpdateTimeHelper`} className={styles['table-content-tips']} />
                     ) : (
                         '-'
                     )}
