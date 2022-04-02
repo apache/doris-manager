@@ -15,20 +15,18 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React from 'react';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { RoleList } from './list/list';
 import { RoleMembers } from './member/member';
 
-export function Role(props: any) {
-    const { match } = props;
+export function Role() {
     return (
         <>
-            <Switch>
-                <Route exact path={`${match.path}`} component={RoleList} />
-                <Route path={`${match.path}/:roleId`} component={RoleMembers} />
-                <Redirect to={`${match.path}`} />
-            </Switch>
+            <Routes>
+                <Route path="list" element={<RoleList />} />
+                <Route path=":roleId" element={<RoleMembers />} />
+                <Route path="/" element={<Navigate replace to="list" />} />
+            </Routes>
         </>
     );
 }

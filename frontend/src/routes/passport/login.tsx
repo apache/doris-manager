@@ -15,43 +15,44 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useEffect, useState } from 'react';
-import { Form, Input, Button, Radio, Checkbox, message } from 'antd';
+import { Form, Input, Button, Checkbox, message } from 'antd';
 import styles from './index.module.less';
 import { PassportAPI } from './passport.api';
 import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
-import { useAuth } from '@src/hooks/use-auth';
-export function Login(props: any) {
+import { useNavigate } from 'react-router';
+import { useEffect } from 'react';
+import { dorisAuthProvider } from '@src/components/auths/doris-auth-provider';
+export function Login() {
     const [form] = Form.useForm();
-    const { t }  = useTranslation();
-    const history = useHistory();
-    const {initialized} = useAuth();
+    const { t } = useTranslation();
+    const navigate = useNavigate();
     function handleLogin(_value: any) {
         PassportAPI.SessionLogin(_value).then(res => {
             if (res.code === 0) {
                 PassportAPI.getCurrentUser().then(user => {
-                    window.localStorage.setItem('login', 'true')
+                    window.localStorage.setItem('login', 'true');
                     window.localStorage.setItem('user', JSON.stringify(user.data));
-                    history.push('/space/list');
-                })
+                    navigate('/space/list');
+                });
             } else {
                 message.warn(res.msg);
             }
         });
     }
 
+    useEffect(() => {
+        const login = dorisAuthProvider.checkLogin();
+        if (login) {
+            navigate('/');
+        }
+    }, []);
+
     return (
         <div className={styles['not-found']}>
             <div className={styles['login-container']}>
-                <Form
-                    form={form}
-                    layout="vertical"
-                    requiredMark={true}
-                    onFinish={handleLogin}
-                >
-                    <h2 style={{ textAlign: 'center' }}>{ t`login`}</h2>
-                    <Form.Item label={ t`Username or Mail`} required name="username">
+                <Form form={form} layout="vertical" requiredMark={true} onFinish={handleLogin}>
+                    <h2 style={{ textAlign: 'center' }}>{t`login`}</h2>
+                    <Form.Item label={t`Username or Mail`} required name="username">
                         <Input placeholder={t`Please input the username or email`} />
                     </Form.Item>
                     <Form.Item label={t`password`} required name="password">
@@ -65,19 +66,11 @@ export function Login(props: any) {
                     </Form.Item>
                     <Form.Item>
                         <Button type="primary" style={{ width: '100%', borderRadius: 4, height: 45 }} htmlType="submit">
-                            { t`SignIn`}
+                            {t`SignIn`}
                         </Button>
                     </Form.Item>
-                    {/* <Form.Item style={{ textAlign: 'center' }}>
-                        <Link
-                            style={{ fontSize: '14px', color: '#C7CFD4' }}
-                            onClick={() => props.history.push(`/forgot`)}
-                        >
-                            { t`ForgetThePassword`}
-                        </Link>
-                    </Form.Item> */}
                 </Form>
             </div>
         </div>
     );
-};
+}

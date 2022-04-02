@@ -15,17 +15,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from '../space.less';
 import { Button, Form, Input, Row, Space, Select, Col, InputNumber, Tag } from 'antd';
-import { Divider, message } from 'antd';
+import { message } from 'antd';
 import { SpaceAPI } from '../space.api';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { RequiredMark } from 'antd/lib/form/Form';
-import { modal } from '@src/components/doris-modal/doris-modal';
-import { useRecoilValue } from 'recoil';
-import { usersQuery } from '../space.recoil';
 import { useUserInfo } from '@src/hooks/use-userinfo.hooks';
 import { useAsync } from '@src/hooks/use-async';
 import { isSuccess } from '@src/utils/http';
@@ -35,13 +31,12 @@ export function SpaceDetail() {
     const [form] = Form.useForm();
     const [userInfo, setUserInfo] = useUserInfo();
     const params = useParams<{ spaceId: string }>();
-    const [buttonType, setButtonType] = useState<'primary' | 'default'>('default');
     const [saveButtonDisable, setSaveButtonDisable] = useState(true);
     const [initForm, setInitForm] = useState<any>({});
-    const history = useHistory();
+    const navigate = useNavigate();
     const { data: allUsers, loading, run: runGetAllUsers } = useAsync<any[]>({ data: [], loading: true });
     function getSpaceInfo() {
-        SpaceAPI.spaceGet(params.spaceId).then(res => {
+        SpaceAPI.spaceGet(params.spaceId as string).then(res => {
             const { msg, data, code } = res;
             if (code === 0) {
                 if (res.data) {
@@ -74,53 +69,22 @@ export function SpaceDetail() {
         getSpaceInfo();
     }, [loading]);
 
-    function handleDelete() {
-        const spaceId = params.spaceId;
-        modal.confirm(t`notice`, t`SpaceDeleteTips`, async () => {
-            SpaceAPI.spaceDelete(spaceId).then(result => {
-                if (result && result.code !== 0) {
-                    modal.error('空间删除失败', result.msg);
-                } else {
-                    modal.success('空间删除成功').then(result => {
-                        if (result.isConfirmed) {
-                            history.push(`/space/list`);
-                        }
-                    });
-                }
-            });
-        });
-    }
-
     const handleSave = () => {
         form.validateFields().then(value => {
             SpaceAPI.spaceUpdate({
                 describe: value.describe,
                 name: value.name.trim(),
                 spaceAdminUsers: value.spaceAdminUserId,
-                spaceId: params.spaceId,
+                spaceId: params.spaceId as string,
             }).then(res => {
                 console.log(res);
                 if (res.code === 0) {
                     message.success(res.msg);
                     setSaveButtonDisable(true);
-                    // history.push('/')
                 } else {
                     message.error(res.msg);
                 }
             });
-        });
-    };
-
-    const handleMeta = () => {
-        SpaceAPI.metaOption().then(res => {
-            if (res.code === 0) {
-                setButtonType('primary');
-                window.setTimeout(() => {
-                    setButtonType('default');
-                }, 2000);
-            } else {
-                message.error(res.msg);
-            }
         });
     };
 
@@ -149,7 +113,7 @@ export function SpaceDetail() {
                                         if (value === initForm?.name) {
                                             return Promise.resolve();
                                         }
-                                        let resData = await SpaceAPI.spaceCheck(value);
+                                        const resData = await SpaceAPI.spaceCheck(value);
                                         if (resData.code === 0) {
                                             return Promise.resolve();
                                         }
@@ -210,28 +174,9 @@ export function SpaceDetail() {
 
             <Row justify="center">
                 <Space>
-                    {/* <Button
-                        type="primary"
-                        onClick={() => {
-                            history.push(`/space/list`);
-                        }}
-                    >
-                        取消
-                    </Button>
-                    {
-                        userInfo?.is_super_admin && (
-                            <Button type="primary" danger onClick={handleDelete}>
-                                删除
-                            </Button>
-                        )
-                    } */}
-                    {/* {
-                        userInfo?.is_admin && ( */}
                     <Button type="primary" onClick={handleSave} disabled={saveButtonDisable}>
                         {t`Save`}
                     </Button>
-                    {/* )
-                    } */}
                 </Space>
             </Row>
         </div>

@@ -24,7 +24,7 @@ import './helper.less';
 export function Helper(props: TooltipProps) {
     return (
         <Tooltip {...props}>
-            <QuestionCircleFilled style={{ cursor: 'pointer', ...props.style }} className="palo-studio-helper" />
+            <QuestionCircleFilled style={{ cursor: 'pointer', ...props.style }} className="palo-manager-helper" />
         </Tooltip>
     );
 }

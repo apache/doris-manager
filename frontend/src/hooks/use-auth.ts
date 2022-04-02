@@ -15,17 +15,18 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import { AuthTypeEnum } from '@src/common/common.data';
 import { InitializeAPI } from '@src/routes/initialize/initialize.api';
 import { isSuccess } from '@src/utils/http';
 import { useEffect, useState } from 'react';
-import { useHistory, useLocation } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 
 export function useAuth() {
     const [initialized, setInitialized] = useState(false);
     const { pathname } = useLocation();
-    const history = useHistory();
+    const navigate = useNavigate();
     const [initStep, setInitStep] = useState(0);
-    const [authType, setAuthType] = useState();
+    const [authType, setAuthType] = useState<AuthTypeEnum>();
     useEffect(() => {
         getInitProperties();
     }, []);
@@ -34,15 +35,15 @@ export function useAuth() {
         const res = await InitializeAPI.getInitProperties();
         if (isSuccess(res)) {
             setInitStep(res.data.initStep);
-            setAuthType(res.data.auth_type);
+            setAuthType(res.data.auth_type === 'studio' ? AuthTypeEnum.LOCAL : AuthTypeEnum.LDAP);
             if (res.data.completed) {
                 localStorage.setItem('initialized', 'true');
                 setInitialized(true);
             } else {
                 localStorage.setItem('initialized', 'false');
                 setInitialized(false);
-                if (!pathname.includes('/initialize')) {
-                    history.push('/initialize');
+                if (!pathname.includes('initialize')) {
+                    navigate('initialize');
                 }
             }
         }

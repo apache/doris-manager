@@ -15,8 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
-import { Redirect, Switch, Route, useHistory } from 'react-router-dom';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { Card } from 'antd';
 import { useTranslation } from 'react-i18next';
 import styles from './admin.module.less';
@@ -30,14 +30,14 @@ import { useUserInfo } from '@src/hooks/use-userinfo.hooks';
 import LoadingLayout from '@src/components/loading-layout';
 
 export function Admin() {
-    const {t} = useTranslation()
-    const history = useHistory();
+    const { t } = useTranslation();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [userInfo] = useUserInfo();
     useEffect(() => {
         if (userInfo.id == null) return;
         if (userInfo.id != null && !userInfo.is_super_admin && !userInfo.is_admin) {
-            history.push('/');
+            navigate('/');
             return;
         }
         setLoading(false);
@@ -61,11 +61,11 @@ export function Admin() {
                         fallback={<LoadingLayout loading wrapperStyle={{ textAlign: 'center', marginTop: 200 }} />}
                     >
                         <LoadingLayout loading={loading} wrapperStyle={{ textAlign: 'center', marginTop: 200 }}>
-                            <Switch>
-                                <Route path="/admin/space/:spaceId" component={SpaceDetail} />
-                                <Route path="/admin/people" component={People} />
-                                <Redirect to={`/admin/space/${userInfo.space_id}`} />
-                            </Switch>
+                            <Routes>
+                                <Route path="space/:spaceId" element={<SpaceDetail />} />
+                                <Route path="people/*" element={<People />} />
+                                <Route path="/" element={<Navigate replace to={`space/${userInfo.space_id}`} />} />
+                            </Routes>
                         </LoadingLayout>
                     </Suspense>
                 </Card>

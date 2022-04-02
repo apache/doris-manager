@@ -16,57 +16,41 @@
 // under the License.
 
 import { Menu, Col, Row, Dropdown, Button } from 'antd';
-import {SettingOutlined } from '@ant-design/icons';
-import React, { useContext, useState } from 'react';
+import { SettingOutlined } from '@ant-design/icons';
+import { useContext } from 'react';
 import { LayoutAPI } from './header.api';
-import { useHistory } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 import { UserInfoContext } from '@src/common/common.context';
 import Swal from 'sweetalert2';
-const VERSION = require('../../../package.json').version;
+import { useNavigate } from 'react-router';
+import { VERSION } from '@src/config';
 
-type HeaderMode = 'normal' | 'initialize' | 'super-admin';
-interface HeaderProps {
-    mode: HeaderMode;
-}
-
-export function Header(props: HeaderProps) {
+export function Header() {
     const { t, i18n } = useTranslation();
-    const history = useHistory();
-    const [statisticInfo, setStatisticInfo] = useState<any>({});
-    const user = JSON.parse(window.localStorage.getItem('user') as string);
-    const userInfo = useContext(UserInfoContext);
-    function getCurrentUser() {
-        LayoutAPI.getCurrentUser()
-            .then(res => {
-                window.localStorage.setItem('user', JSON.stringify(res.data))
-                LayoutAPI.getSpaceName(res.data.space_id).then(res1 => {
-                    setStatisticInfo(res1.data || {});
-                })
-            })
-            .catch(err => {
-                console.log(err);
-            });
-    }
+    const navigate = useNavigate();
+    const user = useContext(UserInfoContext);
     function onAccountSettings() {
-        history.push( `/user-setting`);
+        navigate(`/user-setting`);
     }
     function onLogout() {
-        LayoutAPI.signOut()
-            .then(res => {
-                console.log(res)
-                if (res.code === 0) {
-                    localStorage.removeItem('login');
-                    history.push(`/login`);
-                }
-            })
-
+        LayoutAPI.signOut().then(res => {
+            console.log(res);
+            if (res.code === 0) {
+                localStorage.removeItem('login');
+                navigate(`/login`);
+            }
+        });
     }
     const menu = (
         <Menu>
-            <Menu.Item style={{ padding: '10px 20px' }} onClick={onAccountSettings}>{t`accountSettings`}</Menu.Item>
             <Menu.Item
+                key="account_setting"
+                style={{ padding: '10px 20px' }}
+                onClick={onAccountSettings}
+            >{t`accountSettings`}</Menu.Item>
+            <Menu.Item
+                key="about"
                 onClick={() => {
                     Swal.fire({
                         width: '480px',
@@ -83,38 +67,27 @@ export function Header(props: HeaderProps) {
             >
                 {t`About`} Doris Manager
             </Menu.Item>
-            <Menu.Item style={{ padding: '10px 20px' }} onClick={onLogout}>{t`Logout`}</Menu.Item>
+            <Menu.Item key="logout" style={{ padding: '10px 20px' }} onClick={onLogout}>{t`Logout`}</Menu.Item>
         </Menu>
     );
     return (
         <div
-            className={user && user?.is_super_admin ? styles['adminStyle']: styles['userStyle']}
+            className={user && user?.is_super_admin ? styles['adminStyle'] : styles['userStyle']}
             style={{ padding: 0, borderBottom: '1px solid #d9d9d9' }}
-        > 
-            <Row justify="end" align="middle" style={{paddingBottom: 8}}>
-                {/* {
-                    user && user.is_super_admin ? (
-                        <div
-                            className={styles['logo']}
-                        />
-                    ) :(
-                        <Col style={{ marginLeft: '2em' }}>
-                            <span>{t`namespace`}：{(userInfo as UserInfo)?.space_name}</span>
-                        </Col>
-                    )
-                } */}
-                 <Button
+        >
+            <Row justify="end" align="middle" style={{ paddingBottom: 8 }}>
+                <Button
                     type="link"
-                    style={{marginTop: 2}}
+                    style={{ marginTop: 2 }}
                     onClick={() => {
                         i18n.changeLanguage(i18n.language === 'zh' ? 'en' : 'zh');
                     }}
                 >
                     {i18n.language === 'zh' ? 'Switch to English' : '切换为中文'}
                 </Button>
-                <Col style={{ cursor: 'pointer', marginRight: 20, fontSize: 22}}>
+                <Col style={{ cursor: 'pointer', marginRight: 20, fontSize: 22 }}>
                     <Dropdown overlay={menu} placement="bottomLeft">
-                        <span onClick={e=> e.preventDefault()}>
+                        <span onClick={e => e.preventDefault()}>
                             <SettingOutlined />
                         </span>
                     </Dropdown>

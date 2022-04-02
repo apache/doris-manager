@@ -15,25 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { InitializeAPI } from '@src/routes/initialize/initialize.api';
-import { isSuccess } from '@src/utils/http';
-import { Dispatch, SetStateAction, useState, useEffect } from 'react';
+import { UserInfo } from '@src/common/common.interface';
 
-export function useLDAPUsers(): {
-    ldapUsers: any[];
-    setLDAPUsers: Dispatch<SetStateAction<any[]>>;
-    getLDAPUsers: () => void;
-} {
-    const [ldapUsers, setLDAPUsers] = useState<any>();
-    useEffect(() => {
-        getLDAPUsers();
-    }, []);
-
-    async function getLDAPUsers() {
-        const res = await InitializeAPI.getLDAPUser();
-        if (isSuccess(res)) {
-            setLDAPUsers(res.data);
-        }
-    }
-    return { ldapUsers, getLDAPUsers, setLDAPUsers };
+export interface AuthContextType {
+    userInfo: UserInfo;
+    signIn: (user: string, callback: VoidFunction) => void;
+    signOut: (callback: VoidFunction) => void;
 }

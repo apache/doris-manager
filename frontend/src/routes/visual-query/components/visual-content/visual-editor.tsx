@@ -77,7 +77,7 @@ export default function VisualEditor(props: VisualEditorProps) {
             >
                 <Editor
                     height="100%"
-                    language="sql"
+                    defaultLanguage="sql"
                     theme={THEME_NAME}
                     options={{
                         minimap: {

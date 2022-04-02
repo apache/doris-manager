@@ -19,7 +19,12 @@
 
 module.exports = {
     parser: '@typescript-eslint/parser',
-    extends: ['plugin:prettier/recommended', 'plugin:@typescript-eslint/recommended', "plugin:react/recommended", "plugin:react/jsx-runtime"],
+    extends: [
+        'plugin:prettier/recommended',
+        'plugin:@typescript-eslint/recommended',
+        'plugin:react/recommended',
+        'plugin:react/jsx-runtime',
+    ],
     parserOptions: {
         ecmaVersion: 2019,
         sourceType: 'module',
@@ -28,6 +33,9 @@ module.exports = {
         browser: true,
         node: true,
     },
+    ignorePatterns: ['./config/*.js'],
     rules: {
+        'react/jsx-uses-react': 'off',
+        'react/react-in-jsx-scope': 'off',
     },
 };

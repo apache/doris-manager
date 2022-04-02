@@ -15,39 +15,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
-.admin-header {
-    display: flex;
-    width: 100%;
-    background-color: #001529;
-}
-.admin-header-logo {
-    color: white;
-    width: 240px;
-    padding-left: 40px;
-    line-height: 48px;
-    cursor: pointer;
-}
-.palo-opt-box{
-    display: flex;
-    height: 50px;
-    align-items: center;
-    div{
-      margin-right: 16px;
-      padding: 10px;
-      cursor: pointer;
-      .icon{
-        font-size: 20px;
-      }
-      .icon-tip{
-        margin-left: 0.5rem;
-        vertical-align: text-bottom;
-      }
+import { Navigate, useLocation } from 'react-router';
+import { dorisAuthProvider } from './doris-auth-provider';
+
+export function RequireInitialized({ children }: { children: JSX.Element }) {
+    const location = useLocation();
+
+    if (!dorisAuthProvider.checkInitialized()) {
+        // Redirect them to the /initialize page, but save the current location they were
+        // trying to go to when they were redirected. This allows us to send them
+        // along to that page after they initialize, which is a nicer user experience
+        // than dropping them off on the home page.
+        return <Navigate to="initialize" state={{ from: location }} replace />;
     }
-    div:hover{
-      border-radius: 8px;
-      background: rgb(32,78,171);
-    }
-    div:last-child{
-      margin-right: 0;
-    }
+
+    return children;
 }

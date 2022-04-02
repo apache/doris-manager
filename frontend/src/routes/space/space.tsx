@@ -15,27 +15,22 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React from 'react';
-import { Switch, Route, Redirect, useRouteMatch } from 'react-router';
-import { SpaceList } from './list/list';
-import { NewCluster } from './new-cluster/new-cluster';
-import { Logs } from './new-cluster/logs/logs'
-import { SpaceDetail } from './detail/space-detail';
+import { Navigate, Route, Routes } from 'react-router';
 import { AccessCluster } from './access-cluster/access-cluster';
+import { SpaceDetail } from './detail/space-detail';
+import { SpaceList } from './list/list';
+import { Logs } from './new-cluster/logs/logs';
+import { NewCluster } from './new-cluster/new-cluster';
 
 export function Space() {
-    const match = useRouteMatch();
     return (
-        <>
-            <Switch>
-                <Route path={`${match.path}/list`} component={SpaceList} />
-                <Route path={`${match.path}/new/:requestId`} component={NewCluster} />
-                <Route path={`${match.path}/access/:requestId`} component={AccessCluster} />
-                <Route path={`${match.path}/detail/:spaceId`} component={SpaceDetail} />
-                <Route path={`${match.path}/logs/:taskId`} component={Logs} />
-                <Redirect to={`${match.path}/list`} />
-            </Switch>
-        </>
+        <Routes>
+            <Route path="list" element={<SpaceList />} />
+            <Route path={`new/:requestId/*`} element={<NewCluster />} />
+            <Route path={`access/:requestId/*`} element={<AccessCluster />} />
+            <Route path={`detail/:spaceId`} element={<SpaceDetail />} />
+            <Route path={`logs/:taskId`} element={<Logs />} />
+            <Route path="/" element={<Navigate replace to="list" />} />
+        </Routes>
     );
 }
-

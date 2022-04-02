@@ -17,25 +17,24 @@
 
 /** @format */
 
-import React, { useState, useEffect } from 'react';
-import { Tree, Spin, Input, message } from 'antd';
-import { useHistory } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Tree, message } from 'antd';
 import { TableOutlined, HddOutlined, HomeOutlined } from '@ant-design/icons';
 import { TreeAPI } from './tree.api';
 import { DataNode } from './tree.interface';
 import { updateTreeData } from './tree.service';
 import { ContentRouteKeyEnum } from './tree.data';
-import CreateMenu from './create-menu/index';
 import styles from './tree.module.less';
 import EventEmitter from '@src/utils/event-emitter';
 import { useTranslation } from 'react-i18next';
-// import { LoadingWrapper } from '@src/components/loadingwrapper/loadingwrapper';
+import { useNavigate } from 'react-router';
+
 const initTreeDate: DataNode[] = [];
-export function MetaBaseTree(props: any) {
+export function MetaBaseTree() {
     const [treeData, setTreeData] = useState(initTreeDate);
     const [loading, setLoading] = useState(true);
-    const history = useHistory();
-    const { t } = useTranslation()
+    const { t } = useTranslation();
+    const navigate = useNavigate();
     useEffect(() => {
         initTreeData();
         EventEmitter.on('refreshData', initTreeData);
@@ -71,7 +70,7 @@ export function MetaBaseTree(props: any) {
                 const tables = res.data;
                 const children: Array<any> = [];
                 if (tables.length) {
-                    tables.forEach((item, index) => {
+                    tables.forEach((item: any) => {
                         children.push({
                             title: `${item.name}`,
                             key: `2¥${db_id}¥${db_name}¥${item.id}¥${item.name}`,
@@ -97,39 +96,32 @@ export function MetaBaseTree(props: any) {
         });
     }
 
-    function handleTreeSelect(keys: any[], info: any) {
+    function handleTreeSelect(keys: any[]) {
         if (keys.length > 0) {
             const [storey, db_id, db_name, id, name] = keys[0].split('¥');
             if (storey === '1') {
                 localStorage.setItem('database_id', id);
                 localStorage.setItem('database_name', name);
-                history.push({
-                    pathname: `/meta/${ContentRouteKeyEnum.Database}/${id}`,
-                    state: { id: id, name: name },
-                });
+                navigate(`/meta/${ContentRouteKeyEnum.Database}/${id}`, { state: { id, name: name } });
             } else {
                 localStorage.setItem('database_id', db_id);
                 localStorage.setItem('database_name', db_name);
                 localStorage.setItem('table_id', id);
                 localStorage.setItem('table_name', name);
-                history.push({
-                    pathname: `/meta/${ContentRouteKeyEnum.Table}/${id}`,
-                    state: { id: id, name: name },
-                });
+                navigate(`/meta/${ContentRouteKeyEnum.Table}/${id}`, { state: { id, name: name } });
             }
         }
     }
 
     function goHome() {
-        history.push(`/meta`);
+        navigate(`/meta`);
     }
     return (
         <div className={styles['palo-tree-container']}>
             <h2 className={styles['palo-tree-title']}>
                 <HomeOutlined onClick={goHome} />
-                { t`DataTree` }
+                {t`DataTree`}
             </h2>
-            {/* <LoadingWrapper loading={loading}> */}
             <div className={styles['palo-tree-wrapper']}>
                 <Tree
                     showIcon={true}
@@ -139,7 +131,6 @@ export function MetaBaseTree(props: any) {
                     onSelect={(selectedKeys, info) => handleTreeSelect(selectedKeys, info)}
                 />
             </div>
-            {/* </LoadingWrapper> */}
         </div>
     );
 }

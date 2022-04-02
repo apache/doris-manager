@@ -43,7 +43,6 @@ export enum TableTypeEnum {
     AGG_KEYS = 'AGG_KEYS',
 }
 
-
 export const TABLE_TYPE_KEYS = [
     {
         value: TableTypeEnum.PRIMARY_KEYS,
@@ -91,12 +90,7 @@ export const FIRST_COLUMN_FIELD_TYPES = FIELD_TYPES.filter(
     (field: any) => !FIRST_COLUMN_FIELD_TYPE_CANNOT_BE.includes(field),
 );
 
-export const ANALYTICS_URL = '/login';
-export const STUDIO_INDEX_URL = `/meta/index`; //待确认
-export const MANAGE_INDEX_URL = `/super-admin/space/list`;
-
-
 export enum AuthTypeEnum {
     LDAP = 'ldap',
-    STUDIO = 'studio',
+    LOCAL = 'local',
 }

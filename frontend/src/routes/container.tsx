@@ -15,62 +15,41 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React from 'react';
 import styles from './container.less';
 
 import { Layout } from 'antd';
-import { Redirect, Route, Router, Switch, useHistory } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { Sidebar } from '@src/components/sidebar/sidebar';
 import { Header } from '@src/components/header/header';
-import { CommonAPI } from '@src/common/common.api';
 import { UserInfoContext } from '@src/common/common.context';
-import { UserInfo } from '@src/common/common.interface';
-import { Dashboard } from './dashboard/dashboard';
 import { Meta } from './meta/meta';
-import { NodeDashboard } from './node/dashboard';
-import {NodeList} from './node/list'; 
-import { Configuration } from './node/list/configuration';
-import { FEConfiguration } from './node/list/fe-configuration';
-import { BEConfiguration } from './node/list/be-configuration';
-import { Query } from './query';
-import { QueryDetails } from './query/query-details';
 import { Cluster } from './cluster/cluster';
 import { UserSetting } from './user-setting';
 import { useUserInfo } from '@src/hooks/use-userinfo.hooks';
 import VisualQuery from './visual-query/visual-query';
-export function Container(props: any) {
+
+export function Container() {
     const [userInfo] = useUserInfo();
-    const history = useHistory();
 
     return (
-        <Router history={history}>
-            <UserInfoContext.Provider value={userInfo}>
-                <Layout style={{ height: '100vh' }}>
-                    <Layout>
-                        <Sidebar width={200} />
-                        <div className={styles['container']}>
-                            <Header mode="normal"></Header>
-                            <div className={styles['container-content']}>
-                                <Switch>
-                                    <Route path="/dashboard" component={Dashboard} />
-                                    <Route path="/meta" component={Meta} />
-                                    <Route path="/cluster" component={Cluster} />
-                                    <Route path="/list" component={NodeList} />
-                                    <Route path="/configuration/fe" component={FEConfiguration} />
-                                    <Route path="/configuration/be" component={BEConfiguration} />
-                                    <Route path="/configuration" component={Configuration} />
-                                    <Route path="/node-dashboard" component={NodeDashboard} />
-                                    {/* <Route path="/query" component={Query} /> */}
-                                    <Route path="/details/:queryId" component={QueryDetails} />
-                                    <Route path="/user-setting" component={UserSetting} />
-                                    <Route path="/visual-query" component={VisualQuery} />
-                                    <Redirect to="/cluster" />
-                                </Switch>
-                            </div>
+        <UserInfoContext.Provider value={userInfo}>
+            <Layout style={{ height: '100vh' }}>
+                <Layout>
+                    <Sidebar width={200} />
+                    <div className={styles['container']}>
+                        <Header mode="normal"></Header>
+                        <div className={styles['container-content']}>
+                            <Routes>
+                                <Route path="/meta/*" element={<Meta />} />
+                                <Route path="/cluster/*" element={<Cluster />} />
+                                <Route path="/user-setting/*" element={<UserSetting />} />
+                                <Route path="/visual-query/*" element={<VisualQuery />} />
+                                <Route path="/" element={<Navigate replace to="meta" />} />
+                            </Routes>
                         </div>
-                    </Layout>
+                    </div>
                 </Layout>
-            </UserInfoContext.Provider>
-        </Router>
+            </Layout>
+        </UserInfoContext.Provider>
     );
 }

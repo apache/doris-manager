@@ -16,8 +16,6 @@
 // under the License.
 
 import React from 'react';
-import { hot } from 'react-hot-loader/root';
-import { BrowserRouter as Router, Switch } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ConfigProvider } from 'antd';
 import zh from 'antd/lib/locale/zh_CN';
@@ -39,4 +37,4 @@ const App = () => {
     );
 };
 
-export default hot(App);
+export default App;

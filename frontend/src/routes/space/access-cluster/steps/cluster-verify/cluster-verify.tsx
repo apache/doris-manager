@@ -15,11 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useContext, useEffect, useLayoutEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { PageContainer } from '@ant-design/pro-layout';
-import ProCard from '@ant-design/pro-card';
-import { Button, message, Row, Space, Steps, Table, Tabs } from 'antd';
-import { useHistory, useRouteMatch } from 'react-router';
+import { message, Steps, Table, Tabs } from 'antd';
 import TabPane from '@ant-design/pro-card/lib/components/TabPane';
 import { isSuccess } from '@src/utils/http';
 import { NewSpaceInfoContext } from '@src/common/common.context';
@@ -38,7 +36,6 @@ const ERROR_STATUS = [OperateStatusEnum.FAIL, OperateStatusEnum.CANCEL];
 export function ClusterVerify(props: any) {
     const [activeKey, setActiveKey] = useState(DorisNodeTypeEnum.FE);
     const { reqInfo } = useContext(NewSpaceInfoContext);
-    const match = useRouteMatch<{ spaceId: string }>();
     const [instance, setInstance] = useState([]);
     const [nodeTypes, setNodeTypes] = useState<any[]>([]);
     const [feNodes, setFENodes] = useState([]);
@@ -93,7 +90,7 @@ export function ClusterVerify(props: any) {
                     const feNodes = res.data.filter(item => item.moduleName?.toUpperCase() === DorisNodeTypeEnum.FE);
                     const beNodes = res.data.filter(item => item.moduleName?.toUpperCase() === DorisNodeTypeEnum.BE);
                     const brokerNodes = res.data.filter(
-                        item => item.moduleName?.toUpperCase() === DorisNodeTypeEnum.BROKER,
+                        (item: any) => item.moduleName?.toUpperCase() === DorisNodeTypeEnum.BROKER,
                     );
                     setFENodes(feNodes);
                     setBENodes(beNodes);

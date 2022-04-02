@@ -15,9 +15,21 @@
 // specific language governing permissions and limitations
 // under the License.
 
-.connect-info-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    padding: 0 3px 3px 0;
+import { RequireAuth } from './require-auth';
+import { RequireInitialized } from './require-initialized';
+interface AuthRouteProps {
+    children: JSX.Element;
+    requireInitialized?: boolean;
+}
+
+export function AuthRoute({ children, requireInitialized = true }: AuthRouteProps) {
+    if (requireInitialized) {
+        return (
+            <RequireInitialized>
+                <RequireAuth>{children}</RequireAuth>
+            </RequireInitialized>
+        );
+    } else {
+        return <RequireAuth>{children}</RequireAuth>;
+    }
 }

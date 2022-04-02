@@ -15,9 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { Steps } from 'antd';
-import { Switch, Route, Redirect, useRouteMatch } from 'react-router';
+import { useEffect, useMemo, useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import styles from './cluster.module.less';
 import { UserInfoContext } from '@src/common/common.context';
@@ -28,8 +27,7 @@ import TabsHeader from '@src/components/tabs-header';
 import { useUserInfo } from '@src/hooks/use-userinfo.hooks';
 import LoadingLayout from '@src/components/loading-layout';
 
-export function Cluster(props: any) {
-    // const match = useRouteMatch();
+export function Cluster() {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [userInfo] = useUserInfo();
@@ -50,12 +48,12 @@ export function Cluster(props: any) {
             <div className={styles.container}>
                 <TabsHeader routes={tabRoutes} />
                 <LoadingLayout loading={loading} wrapperStyle={{ textAlign: 'center', marginTop: 200 }}>
-                    <Switch>
-                        <Route path="/cluster/overview" component={ClusterOverview} />
-                        <Route path="/cluster/nodes" component={Nodes} />
-                        <Route path="/cluster/configuration" component={Configuration} />
-                        <Redirect to="/cluster/overview" />
-                    </Switch>
+                    <Routes>
+                        <Route path="overview" element={<ClusterOverview />} />
+                        <Route path="nodes" element={<Nodes />} />
+                        <Route path="configuration" element={<Configuration />} />
+                        <Route path="/" element={<Navigate replace to="overview" />} />
+                    </Routes>
                 </LoadingLayout>
             </div>
         </UserInfoContext.Provider>

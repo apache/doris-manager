@@ -15,13 +15,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-export enum StudioStepsEnum {
+export enum LocalStepsEnum {
     'admin-user',
-    'finish'
+    'finish',
 }
 
 export enum LDAPStepsEnum {
     'ldap-info',
     'admin-user',
-    'finish'
+    'finish',
 }

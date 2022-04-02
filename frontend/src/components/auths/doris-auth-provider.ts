@@ -15,6 +15,30 @@
 // specific language governing permissions and limitations
 // under the License.
 
-.dashboard {
-  //
-}
+const dorisAuthProvider = {
+    isAuthenticated: false,
+    checkInitialized(): boolean {
+        const initialized: boolean = JSON.parse(localStorage.getItem('initialized') as string);
+        if (initialized) {
+            return true;
+        }
+        return false;
+    },
+    checkLogin(): boolean {
+        const login: any = JSON.parse(localStorage.getItem('login') as string);
+        if (login) {
+            return true;
+        }
+        return false;
+    },
+    signIn(callback: VoidFunction) {
+        dorisAuthProvider.isAuthenticated = true;
+        setTimeout(callback, 100);
+    },
+    signOut(callback: VoidFunction) {
+        dorisAuthProvider.isAuthenticated = false;
+        setTimeout(callback, 100);
+    },
+};
+
+export { dorisAuthProvider };

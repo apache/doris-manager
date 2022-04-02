@@ -15,13 +15,20 @@
 // specific language governing permissions and limitations
 // under the License.
 
-/** @format */
+import { Navigate, useLocation } from 'react-router';
+import { dorisAuthProvider } from './doris-auth-provider';
 
-.home-main {
-  background: #f9fbfc;
-  border-radius: 16px;
+export function RequireAuth({ children }: { children: JSX.Element }) {
+    const location = useLocation();
+    const isPassportLogin = location.pathname.includes('/passport/login');
 
-  .home-content {
-    padding: 0 38px 15px;
-  }
+    if (dorisAuthProvider.checkLogin() || isPassportLogin) {
+        return children;
+    } else {
+        // Redirect them to the /login page, but save the current location they were
+        // trying to go to when they were redirected. This allows us to send them
+        // along to that page after they login, which is a nicer user experience
+        // than dropping them off on the home page.
+        return <Navigate to="/passport/login" state={{ from: location }} replace />;
+    }
 }

@@ -17,13 +17,11 @@
 
 import { PageContainer } from '@ant-design/pro-layout';
 import { NewSpaceInfoContext } from '@src/common/common.context';
-import { Result, Button, Checkbox, Form, Input, Row, Space } from 'antd';
+import { Result, Form, Input, Row, Space } from 'antd';
 import React, { useContext } from 'react';
-import { useHistory } from 'react-router';
 
-export function SpaceCreateFinish(props: any) {
+export function SpaceCreateFinish() {
     const { form } = useContext(NewSpaceInfoContext);
-    const history = useHistory();
     const onFinish = (values: any) => {
         console.log('Success:', values);
     };
