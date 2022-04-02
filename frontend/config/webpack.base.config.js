@@ -35,7 +35,7 @@ const postCssLoader = () => {
 
 module.exports = {
     entry: {
-        index: ['react-hot-loader/patch'].concat([path.resolve(__dirname, '../src/index.tsx')]),
+        index: path.resolve(__dirname, '../src/index.tsx'),
     },
     output: {
         path: path.join(__dirname, '../dist/'),
@@ -54,7 +54,7 @@ module.exports = {
             '@pages': path.resolve(__dirname, '../src/pages'),
             '@utils': path.resolve(__dirname, '../src/utils'),
             '@tools': path.resolve(__dirname, '../src/tools'),
-            'bn.js': path.resolve(process.cwd(), 'node_modules', 'bn.js')
+            'bn.js': path.resolve(process.cwd(), 'node_modules', 'bn.js'),
         },
         extensions: ['.ts', '.tsx', '.js', '.jsx'],
         fallback: {
@@ -107,7 +107,7 @@ module.exports = {
                         loader: 'less-loader',
                         options: {
                             lessOptions: {
-                                modifyVars: {...themes},
+                                modifyVars: { ...themes },
                                 javascriptEnabled: true,
                             },
                             implementation: require('less'),
@@ -132,7 +132,7 @@ module.exports = {
                         loader: 'less-loader',
                         options: {
                             lessOptions: {
-                                modifyVars: {...themes},
+                                modifyVars: { ...themes },
                                 javascriptEnabled: true,
                             },
                             implementation: require('less'),
@@ -159,6 +159,5 @@ module.exports = {
         }),
 
         new ESLintPlugin(),
-        
     ],
 };

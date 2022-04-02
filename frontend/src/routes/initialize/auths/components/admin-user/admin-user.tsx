@@ -18,21 +18,16 @@
 import { InitializeAPI } from '@src/routes/initialize/initialize.api';
 import { isSuccess } from '@src/utils/http';
 import { Form, Input, Button, message } from 'antd';
-import { useForm } from 'antd/lib/form/Form';
-import React from 'react';
-import { RouteProps, useHistory, useRouteMatch } from 'react-router';
+import { useNavigate } from 'react-router';
 import styles from './admin-user.less';
-interface AdminUserProps extends RouteProps {}
 
-export function AdminUser(props: AdminUserProps) {
-    const [form] = useForm();
-    const history = useHistory();
-    const match = useRouteMatch();
+export function AdminUser() {
+    const navigate = useNavigate();
     async function onFinish(values: any) {
-        const { password_confirm, username, ...params } = values;
+        const { username, ...params } = values;
         const res = await InitializeAPI.setAdmin({ ...params, name: username });
         if (isSuccess(res)) {
-            history.push('/initialize/auth/studio/finish');
+            navigate('/initialize/auth/local/finish');
         } else {
             message.error(res.msg);
         }
@@ -40,13 +35,7 @@ export function AdminUser(props: AdminUserProps) {
 
     return (
         <div className={styles['admin-user']}>
-            <Form
-                name="basic"
-                layout="vertical"
-                onFinish={onFinish}
-                //   onFinishFailed={onFinishFailed}
-                autoComplete="off"
-            >
+            <Form name="basic" layout="vertical" onFinish={onFinish} autoComplete="off">
                 <Form.Item
                     label="Admin用户名"
                     tooltip="用于访问Palo Studio最高级管理员权限"

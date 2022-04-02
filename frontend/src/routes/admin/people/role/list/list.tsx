@@ -21,28 +21,25 @@ import { FlatBtnGroup, FlatBtn } from '@src/components/flatbtn';
 import { useRoles } from '@src/hooks/use-roles.hooks';
 import { isSuccess } from '@src/utils/http';
 import { showName } from '@src/utils/utils';
-import { Button, Table, Modal, message, Row } from 'antd';
+import { Table, Modal, message, Row } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRouteMatch } from 'react-router';
 import { RoleAPI } from '../role.api';
 import { CreateOrEditRoleModal } from './create-or-edit-modal';
 
-export function RoleList(props: any) {
+export function RoleList() {
     const { t } = useTranslation();
     const { roles, getRoles, loading } = useRoles();
     const [visible, setVisible] = useState(false);
     const [currentRole, setCurrentRole] = useState<IRole | undefined>();
-    const [modalLoading, setModalLoading] = useState(false);
-    const match = useRouteMatch();
     const [form] = useForm();
     const { confirm } = Modal;
     const columns = [
         {
             title: t`roleName`,
             key: 'name',
-            render: (record: IRole) => <FlatBtn to={`${match.path}/${record.id}`}>{showName(record.name)}</FlatBtn>,
+            render: (record: IRole) => <FlatBtn to={record.id}>{showName(record.name)}</FlatBtn>,
         },
         {
             title: t`members`,
@@ -95,37 +92,10 @@ export function RoleList(props: any) {
             },
         });
     }
-    function onCancel() {
-        setVisible(false);
-    }
-    // async function handleCreate(values: any) {
-    //     setCurrentRole(undefined);
-    //     setModalLoading(true);
-    //     const res = await RoleAPI.createRole(values);
-    //     setModalLoading(false);
-    //     if (isSuccess(res)) {
-    //         message.success('创建成功');
-    //         setVisible(false);
-    //         getRoles();
-    //     }
-    // }
-    async function handleEdit(values: any) {}
     return (
         <>
             <Row justify="space-between" align="middle" style={{ marginBottom: 20 }}>
-                <span style={{ color: '#aaa' }}>
-                    {t`roleTopMessage`}
-                </span>
-                {/* <Button
-                    key="1"
-                    type="primary"
-                    onClick={() => {
-                        setVisible(true);
-                        setCurrentRole(undefined);
-                    }}
-                >
-                    {t`create`}
-                </Button> */}
+                <span style={{ color: '#aaa' }}>{t`roleTopMessage`}</span>
             </Row>
 
             <Table

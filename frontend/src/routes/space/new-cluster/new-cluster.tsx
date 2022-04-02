@@ -18,15 +18,10 @@
 import ProCard from '@ant-design/pro-card';
 import { Button, message, Row, Space, Steps } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { Switch, Route, Redirect, useRouteMatch, useHistory } from 'react-router';
 import { NewClusterStepsEnum } from './new-cluster.data';
 import { ClusterPlan } from './steps/cluster-plan/cluster-plan';
 import { NodeConfig } from './steps/node-config/node-config';
-import { RunCluster } from './steps/run-cluster/run-cluster';
-import { stepState, CurrentProcessQuery, processId } from './recoils/index';
-import { useRecoilState, useRecoilValue } from 'recoil';
-import CacheRoute, { CacheSwitch } from 'react-router-cache-route';
-import { pathToRegexp } from 'path-to-regexp';
+import { useRecoilState } from 'recoil';
 import { AddNode } from './steps/add-node/add-node';
 import { InstallOptions } from './steps/install-options/install-options';
 import { ClusterDeploy } from './steps/cluster-deploy/cluster-deploy';
@@ -41,44 +36,44 @@ import { requestInfoState, stepDisabledState } from '../access-cluster/access-cl
 import { checkParam } from '../space.utils';
 import { useTranslation } from 'react-i18next';
 
+import { Navigate, Route, Routes, useLocation, useMatch, useNavigate } from 'react-router';
+import { useSearchParams } from 'react-router-dom';
 const { Step } = Steps;
 
 const PREV_DISABLED_STEPS = [NewClusterStepsEnum[3], NewClusterStepsEnum[6], NewClusterStepsEnum[7]];
 const NEXT_DISABLED_STEPS = [NewClusterStepsEnum[3], NewClusterStepsEnum[6]];
 
-export function NewCluster(props: any) {
-    const {t} = useTranslation()
-    const match = useRouteMatch<{ requestId: string }>();
-    const history = useHistory();
+export function NewCluster() {
+    const { t } = useTranslation();
+    const navigate = useNavigate();
+    const location = useLocation();
     const [step, setStep] = React.useState(0);
     const [stepDisabled, setStepDisabled] = useRecoilState(stepDisabledState);
-    // const [curStep, setStepState] = useRecoilState(stepState);
-    const [curProcessId, setProcessId] = useRecoilState(processId);
     const [requestInfo, setRequestInfo] = useRecoilState(requestInfoState);
     const [loading, setLoading] = useState(false);
     const [form] = useForm();
+    const [searchParams] = useSearchParams();
+    const requestId = searchParams.get('requestId');
+    const match = useMatch('space/new/:requestId/:step');
 
     useEffect(() => {
-        if (history.location.pathname === '/space/list') {
+        if (location.pathname === '/space/list') {
             return;
         }
-        const regexp = pathToRegexp(`${match.path}/:step`);
-        const paths = regexp.exec(history.location.pathname);
-        const step = (paths as string[])[2];
+        const step = match?.params.step as string;
         setStep(NewClusterStepsEnum[step]);
         setStepDisabled({
             ...stepDisabled,
             next: NEXT_DISABLED_STEPS.includes(step),
             prev: PREV_DISABLED_STEPS.includes(step),
         });
-        if (match.params.requestId && +match.params.requestId !== 0) {
+        if (requestId && +requestId !== 0) {
             getRequestInfo();
         }
-    }, [history.location.pathname]);
+    }, [location.pathname]);
 
     async function getRequestInfo() {
-        const requestId = match.params.requestId;
-        const res = await SpaceAPI.getRequestInfo(requestId);
+        const res = await SpaceAPI.getRequestInfo(requestId as string);
         if (isSuccess(res)) {
             setRequestInfo(res.data);
         }
@@ -145,7 +140,7 @@ export function NewCluster(props: any) {
             setRequestInfo(res.data);
             setStep(newStep);
             setTimeout(() => {
-                history.push(`/space/new/${res.data.requestId}/${NewClusterStepsEnum[newStep]}`);
+                navigate(`/space/new/${res.data.requestId}/${NewClusterStepsEnum[newStep]}`);
             }, 0);
         } else {
             message.error(res.msg);
@@ -155,7 +150,7 @@ export function NewCluster(props: any) {
     function prevStep() {
         const newStep = step - 1;
         setStep(newStep);
-        history.push(`/space/new/${requestInfo.requestId}/${NewClusterStepsEnum[newStep]}`);
+        navigate(`/space/new/${requestInfo.requestId}/${NewClusterStepsEnum[newStep]}`);
     }
 
     async function finish() {
@@ -173,7 +168,7 @@ export function NewCluster(props: any) {
         const res = await SpaceAPI.createCluster(params);
         setLoading(false);
         if (isSuccess(res)) {
-            history.push(`/space/list`);
+            navigate(`/space/list`);
         } else {
             message.error(res.msg);
         }
@@ -201,18 +196,18 @@ export function NewCluster(props: any) {
                             <Step title={t`creationComplete`} description="&nbsp;&nbsp;" />
                         </Steps>
                     </div>
-                    <div style={{ marginRight: 300 }}>
-                        <CacheSwitch>
-                            <CacheRoute path={`${match.path}/register-space`} component={SpaceRegister} />
-                            <CacheRoute path={`${match.path}/add-node`} component={AddNode} />
-                            <CacheRoute path={`${match.path}/install-options`} component={InstallOptions} />
-                            <CacheRoute path={`${match.path}/verify-node`} component={NodeVerify} />
-                            <CacheRoute path={`${match.path}/cluster-plan`} component={ClusterPlan} />
-                            <CacheRoute path={`${match.path}/node-config`} component={NodeConfig} />
-                            <CacheRoute path={`${match.path}/cluster-deploy`} component={ClusterDeploy} />
-                            <CacheRoute path={`${match.path}/finish`} component={SpaceCreateFinish} />
-                            <Redirect to={`${match.path}/register-space`} />
-                        </CacheSwitch>
+                    <div style={{ marginRight: 240 }}>
+                        <Routes>
+                            <Route path={`register-space`} element={<SpaceRegister />} />
+                            <Route path={`add-node`} element={<AddNode />} />
+                            <Route path={`install-options`} element={<InstallOptions />} />
+                            <Route path={`verify-node`} element={<NodeVerify />} />
+                            <Route path={`cluster-plan`} element={<ClusterPlan />} />
+                            <Route path={`node-config`} element={<NodeConfig />} />
+                            <Route path={`cluster-deploy`} element={<ClusterDeploy />} />
+                            <Route path={`finish`} element={<SpaceCreateFinish />} />
+                            <Route path="/" element={<Navigate replace to="register-space" />} />
+                        </Routes>
                         <Row justify="end" style={{ marginTop: 20 }}>
                             <Space>
                                 {step === 0 ? (

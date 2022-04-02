@@ -15,18 +15,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React from 'react';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { UserList } from './list/list';
 
-export function User(props: any) {
-    const { match } = props;
+export function User() {
     return (
         <>
-            <Switch>
-                <Route exact path={`${match.path}`} component={UserList} />
-                <Redirect to={`${match.path}`} />
-            </Switch>
+            <Routes>
+                <Route path="list" element={<UserList />} />
+                <Route path="/" element={<Navigate replace to="list" />} />
+            </Routes>
         </>
     );
 }

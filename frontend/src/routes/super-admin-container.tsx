@@ -19,12 +19,10 @@ import { UserInfoContext } from '@src/common/common.context';
 import { Header } from '@src/components/header/header';
 import { Sidebar } from '@src/components/sidebar/sidebar';
 import { useUserInfo } from '@src/hooks/use-userinfo.hooks';
-import React from 'react';
-import { Redirect, Route, Switch, useRouteMatch } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { Space } from './space/space';
 
-export function SuperAdminContainer(props: any) {
-    const match = useRouteMatch();
+export function SuperAdminContainer() {
     const [userInfo] = useUserInfo();
 
     return (
@@ -34,10 +32,10 @@ export function SuperAdminContainer(props: any) {
                 <div style={{ marginLeft: 80 }}>
                     <Header mode="super-admin" />
                     <div>
-                        <Switch>
-                            <Route path={`${match.path}`} component={Space} />
-                            <Redirect to={`${match.path}`} />
-                        </Switch>
+                        <Routes>
+                            <Route path="*" element={<Space />} />
+                            {/* <Route path="/" element={<Navigate replace to="space" />} /> */}
+                        </Routes>
                     </div>
                 </div>
             </UserInfoContext.Provider>

@@ -17,16 +17,9 @@
 
 import { Menu } from 'antd';
 import Sider from 'antd/lib/layout/Sider';
-import {
-    ClusterOutlined,
-    ConsoleSqlOutlined,
-    DatabaseOutlined,
-    SettingOutlined,
-    TableOutlined,
-    AppstoreOutlined,
-} from '@ant-design/icons';
-import { Link, useHistory, useLocation } from 'react-router-dom';
-import React, { useState, useEffect, useContext, useMemo } from 'react';
+import { ClusterOutlined, DatabaseOutlined, SettingOutlined, TableOutlined, AppstoreOutlined } from '@ant-design/icons';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useContext, useMemo } from 'react';
 
 import { useTranslation } from 'react-i18next';
 import styles from './sidebar.less';
@@ -41,30 +34,25 @@ export function Sidebar(props: any) {
     const { mode } = props;
     const user = useContext(UserInfoContext);
 
-    const history = useHistory();
-    const { pathname } = useLocation();
+    const navigate = useNavigate();
+    const location = useLocation();
     const isSuperAdmin = user?.is_super_admin;
     const isSpaceAdmin = user?.is_admin;
     const isInSpace = !GLOBAL_PATHS.includes(selectedKeys);
     const logoRoute = useMemo(
-        () => (GLOBAL_PATHS.some(path => pathname.startsWith(path)) ? '/space' : '/cluster'),
-        [pathname],
+        () => (GLOBAL_PATHS.some(path => location.pathname.startsWith(path)) ? '/space' : '/cluster'),
+        [location.pathname],
     );
+    const MENU_KEYS = ['/cluster', '/space', '/settings', '/admin', '/meta'];
     useEffect(() => {
-        if (history.location.pathname.includes('configuration')) {
-            setSelectedKeys('/configuration');
-        } else if (history.location.pathname.startsWith('/cluster')) {
-            setSelectedKeys('/cluster');
-        } else if (history.location.pathname.startsWith('/space')) {
-            setSelectedKeys('/space');
-        } else if (history.location.pathname.startsWith('/settings')) {
-            setSelectedKeys('/settings');
-        } else if (history.location.pathname.startsWith('/admin')) {
-            setSelectedKeys('/admin');
-        } else {
-            setSelectedKeys(history.location.pathname);
-        }
-    }, [history.location.pathname]);
+        let selectKey = location.pathname;
+        MENU_KEYS.forEach(key => {
+            if (location.pathname.startsWith(key)) {
+                selectKey = key;
+            }
+        });
+        setSelectedKeys(selectKey);
+    }, [location.pathname]);
 
     function onCollapse() {
         setCollapsed(!collapsed);
@@ -102,7 +90,7 @@ export function Sidebar(props: any) {
                     >
                         <div
                             className={collapsed ? styles['logo-collapsed'] : styles['logo']}
-                            onClick={() => history.push(`/meta/index`)}
+                            onClick={() => navigate(`/meta/index`)}
                         />
                     </Menu.Item>
                 </Menu>
@@ -127,7 +115,6 @@ export function Sidebar(props: any) {
                 >
                     <Menu.Item
                         style={{
-                            height: 60,
                             backgroundColor: '#00284D',
                             marginTop: 0,
                             display: 'flex',
@@ -135,7 +122,7 @@ export function Sidebar(props: any) {
                             alignItems: 'center',
                         }}
                         key="/logo"
-                        onClick={() => history.push(logoRoute)}
+                        onClick={() => navigate(logoRoute)}
                     >
                         <div className={collapsed ? styles['logo-collapsed'] : styles['logo']} />
                     </Menu.Item>
@@ -147,9 +134,6 @@ export function Sidebar(props: any) {
                             <Menu.Item key="/meta" icon={<TableOutlined />}>
                                 <Link to={`/meta`}>{t`data`}</Link>
                             </Menu.Item>
-                            {/* <Menu.Item key="/query" icon={<ConsoleSqlOutlined />}>
-                                <Link to={`/query`}>{t`Query`}</Link>
-                            </Menu.Item> */}
                             {(isSuperAdmin || isSpaceAdmin) && (
                                 <Menu.Item key="/admin" icon={<AppstoreOutlined />}>
                                     <Link to={`/admin`}>{t`Space Manager`}</Link>
@@ -159,7 +143,7 @@ export function Sidebar(props: any) {
                         </>
                     )}
                     <Menu.Item key="/space" icon={<DatabaseOutlined />}>
-                        <Link to={`/space/list`}>{t`Space List`}</Link>
+                        <Link to={`/space`}>{t`Space List`}</Link>
                     </Menu.Item>
                     {isSuperAdmin && (
                         <Menu.Item id="aaaa" key="/settings" icon={<SettingOutlined />}>

@@ -18,7 +18,7 @@
 import { useRequest } from 'ahooks';
 import { Form, Row, Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { TableTypeEnum, TABLE_TYPE_KEYS } from '@src/common/common.data';
 import { LoadingWrapper } from '@src/components/loadingwrapper/loadingwrapper';
 import { IResult } from 'src/interfaces/http.interface';
@@ -29,7 +29,7 @@ import { useTranslation } from 'react-i18next';
 import styles from '../tabs/tabs.module.less';
 
 export function Schema(props: any) {
-    const {t } = useTranslation()
+    const { t } = useTranslation();
     const [dataSource, setDataSource] = useState([]);
     const [columns, setColumns] = useState<ColumnsType<any>>([]);
     const [tableType, setTableType] = useState('');
@@ -40,16 +40,12 @@ export function Schema(props: any) {
         });
         return unListen;
     }, []);
-    const { loading } = useRequest<IResult<any>>(() => SchemaAPI.getSchema(tableId), {
+    const { loading } = useRequest<IResult<any>, any>(() => SchemaAPI.getSchema(tableId), {
         refreshDeps: [tableId],
         onSuccess: async (res: any) => {
             if (isSuccess(res)) {
-                const {
-                    TABLE_COLUMN_DUPLICATE,
-                    TABLE_COLUMN_AGGREGATE,
-                    TABLE_COLUMN_UNIQUE,
-                    BASIC_COLUMN,
-                } = await import('./schema.data');
+                const { TABLE_COLUMN_DUPLICATE, TABLE_COLUMN_AGGREGATE, TABLE_COLUMN_UNIQUE, BASIC_COLUMN } =
+                    await import('./schema.data');
                 setDataSource(res.data.schema);
                 const type =
                     TABLE_TYPE_KEYS.filter(tableType => tableType.value === res.data.keyType)[0]?.text || '元数据表';

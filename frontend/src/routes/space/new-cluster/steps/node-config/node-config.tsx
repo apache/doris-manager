@@ -16,24 +16,19 @@
 // under the License.
 
 import React, { useState, useEffect, useReducer, useContext, useCallback } from 'react';
-import { Table, Input, Button, Popconfirm, Form, Row, Space, Switch, Tabs, message } from 'antd';
-import { FormInstance } from 'antd/lib/form';
+import { Form, Tabs, message } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
 import { CustomConfig } from './components/custom-config';
-import ProCard from '@ant-design/pro-card';
 import type { ProColumns } from '@ant-design/pro-table';
 import { EditableProTable } from '@ant-design/pro-table';
-import { useHistory } from 'react-router';
-import { BASE_BE_CONFIG, BASE_FE_CONFIG, BASE_BROKER_CONFIG } from './data';
-import * as types from './../../types/index.type';
-import API from './../../new-cluster.api';
-import { processId, roleListQuery, stepState } from './../../recoils/index';
+import { processId, stepState } from './../../recoils/index';
 import { useRecoilState, useRecoilValue } from 'recoil';
 import { isSuccess } from '@src/utils/http';
 import { DorisNodeTypeEnum } from './../../types/index.type';
 import { NewSpaceInfoContext } from '@src/common/common.context';
 import { useAsync } from '@src/hooks/use-async';
 import { SpaceAPI } from '@src/routes/space/space.api';
+import { useNavigate } from 'react-router';
 const { TabPane } = Tabs;
 
 interface DataType {
@@ -146,8 +141,6 @@ export function NodeConfig() {
 
 export function NodeConfigContent(props: any) {
     const { reqInfo } = useContext(NewSpaceInfoContext);
-    const history = useHistory();
-    const [step, setStep] = useRecoilState(stepState);
     const [customState, dispatch] = useReducer(reducer, initData);
     const [activeKey, setActiveKey] = useState(DorisNodeTypeEnum.FE);
     const { data: clusterModules, run: runGetClusterModules, loading } = useAsync<any[]>({ data: [], loading: true });
@@ -217,7 +210,7 @@ export function NodeConfigContent(props: any) {
     );
 
     useEffect(() => {
-        const newClusterModules = clusterModules!.map(module => ({
+        const newClusterModules = clusterModules?.map(module => ({
             moduleName: module.name,
             configs: getNewConfigs(module.name),
         }));

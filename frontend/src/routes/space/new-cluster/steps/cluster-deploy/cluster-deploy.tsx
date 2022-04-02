@@ -17,10 +17,8 @@
 
 import React, { useContext, useEffect, useState } from 'react';
 import { PageContainer } from '@ant-design/pro-layout';
-import ProCard from '@ant-design/pro-card';
-import { Button, Row, Space, Table, Tabs, message, Steps } from 'antd';
-import { LoadingOutlined, PlayCircleFilled } from '@ant-design/icons';
-import { useHistory } from 'react-router';
+import { Table, Tabs, message, Steps } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
 import TabPane from '@ant-design/pro-card/lib/components/TabPane';
 import { DorisNodeTypeEnum } from '../../types/params.type';
@@ -29,7 +27,6 @@ import { SpaceAPI } from '@src/routes/space/space.api';
 import { OperateStatusEnum } from '@src/routes/space/space.data';
 import { isSuccess } from '@src/utils/http';
 import { NewSpaceInfoContext } from '@src/common/common.context';
-import { useDidCache, useDidRecover } from 'react-router-cache-route';
 import { useRecoilState } from 'recoil';
 import { stepDisabledState } from '@src/routes/space/access-cluster/access-cluster.recoil';
 
@@ -45,7 +42,6 @@ const STEP_MAP = {
 
 export function ClusterDeploy(props: any) {
     const { reqInfo, step } = useContext(NewSpaceInfoContext);
-    const history = useHistory();
     const [activeKey, setActiveKey] = useState(DorisNodeTypeEnum.FE);
     const [instances, setInstances] = useState<any[]>([]);
     const [stepDisabled, setStepDisabled] = useRecoilState(stepDisabledState);
@@ -105,17 +101,6 @@ export function ClusterDeploy(props: any) {
             },
         },
     );
-
-    useDidCache(() => {
-        getClusterInstances.cancel();
-        getClusterInstances.cancel();
-    });
-
-    useDidRecover(() => {
-        if (reqInfo.cluster_id && step === 6) {
-            getClusterInstances.run(reqInfo.cluster_id);
-        }
-    });
 
     useEffect(() => {
         if (reqInfo.cluster_id && step === 6) {

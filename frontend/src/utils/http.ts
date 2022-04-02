@@ -20,7 +20,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { message } from 'antd';
 import { IResult } from '../interfaces/http.interface';
-import { ANALYTICS_URL } from '@src/common/common.data';
 
 interface HTTPConfig extends AxiosRequestConfig {
     message?: string;
@@ -48,7 +47,7 @@ axios.interceptors.response.use(
     (result): AxiosResponse<IResult<any>> => {
         if (result.data.code !== 0) {
             // console.log(result);
-            if(result.data.code === 401){
+            if (result.data.code === 401) {
                 window.localStorage.removeItem('login');
                 window.localStorage.removeItem('user');
             }
@@ -72,7 +71,7 @@ class HttpClient {
         }
         const result: AxiosResponse = await axios.get(url, config);
         if (result.data.code === 401) {
-            window.location.href = ANALYTICS_URL;
+            window.location.href = '/';
         }
         return result.data;
     }

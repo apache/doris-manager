@@ -15,13 +15,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import * as React from 'react';
-export const NotFound = () => {
-  return (
-    <>
-      <div className="components-notfound">
-          404
-      </div>
-    </>
-  );
-};
+import React from 'react';
+
+export function NotFound() {
+    return (
+        <>
+            <div className="components-notfound">404</div>
+        </>
+    );
+}

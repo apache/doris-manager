@@ -18,8 +18,6 @@
 import ProCard from '@ant-design/pro-card';
 import { Button, message, Row, Space, Steps } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { Redirect, useRouteMatch, useHistory } from 'react-router';
-import CacheRoute, { CacheSwitch } from 'react-router-cache-route';
 import { pathToRegexp } from 'path-to-regexp';
 import { NewSpaceInfoContext } from '@src/common/common.context';
 import { useForm } from 'antd/lib/form/Form';
@@ -31,20 +29,24 @@ import { NodeVerify } from '../components/node-verify/node-verify';
 import { isSuccess } from '@src/utils/http';
 import { SpaceAPI } from '../space.api';
 import { ClusterAccessParams } from '../space.interface';
-import { useRecoilState, useRecoilValue } from 'recoil';
+import { useRecoilState } from 'recoil';
 import { requestInfoState, stepDisabledState } from './access-cluster.recoil';
 import { ClusterVerify } from './steps/cluster-verify/cluster-verify';
 import { SpaceAccessFinish } from './steps/finish/finish';
 import { checkParam } from '../space.utils';
+import { Navigate, Route, Routes, useLocation, useMatch, useNavigate, useSearchParams } from 'react-router-dom';
 const { Step } = Steps;
 
-export function AccessCluster(props: any) {
-    const match = useRouteMatch<{ requestId: string }>();
-    const history = useHistory();
+export function AccessCluster() {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [step, setStep] = React.useState(0);
     const [loading, setLoading] = useState(false);
     const [requestInfo, setRequestInfo] = useRecoilState(requestInfoState);
     const [stepDisabled, setStepDisabled] = useRecoilState(stepDisabledState);
+    const requestId = searchParams.get('requestId');
+    const match = useMatch('space/access/:requestId/:step');
     const hidePrevSteps = [
         AccessClusterStepsEnum['space-register'],
         AccessClusterStepsEnum['node-verify'],
@@ -53,26 +55,23 @@ export function AccessCluster(props: any) {
     ];
 
     useEffect(() => {
-        if (history.location.pathname === '/space/list') {
+        if (location.pathname === '/space/list') {
             return;
         }
-        const regexp = pathToRegexp(`${match.path}/:step`);
-        const paths = regexp.exec(history.location.pathname);
-        const step = (paths as string[])[2];
+        const step = match?.params.step as string;
         setStep(AccessClusterStepsEnum[step]);
 
         setStepDisabled({ ...stepDisabled, next: false });
 
-        if (match.params.requestId && +match.params.requestId !== 0) {
+        if (requestId && +requestId !== 0) {
             getRequestInfo();
         }
-    }, [history.location.pathname]);
+    }, [location.pathname]);
 
     const [form] = useForm();
 
     async function getRequestInfo() {
-        const requestId = match.params.requestId;
-        const res = await SpaceAPI.getRequestInfo(requestId);
+        const res = await SpaceAPI.getRequestInfo(requestId as string);
         if (isSuccess(res)) {
             setRequestInfo(res.data);
         }
@@ -124,8 +123,8 @@ export function AccessCluster(props: any) {
             isParamsValid =
                 checkParam(params.authInfo.sshUser, '请填写SSH用户') &&
                 checkParam(params.authInfo.sshPort, '请填写SSH端口') &&
-                checkParam(params.authInfo.sshKey, '请填写SSH私钥') && 
-                checkParam(params.installInfo, '请填写安装路径')
+                checkParam(params.authInfo.sshKey, '请填写SSH私钥') &&
+                checkParam(params.installInfo, '请填写安装路径');
         }
         if (!isParamsValid) return;
         setLoading(true);
@@ -136,7 +135,7 @@ export function AccessCluster(props: any) {
             setStep(newStep);
             setStepDisabled({ ...stepDisabled, next: false });
             setTimeout(() => {
-                history.push(`/space/access/${res.data.requestId}/${AccessClusterStepsEnum[newStep]}`);
+                navigate(`/space/access/${res.data.requestId}/${AccessClusterStepsEnum[newStep]}`);
             }, 0);
         } else {
             message.error(res.msg);
@@ -147,11 +146,11 @@ export function AccessCluster(props: any) {
         const newStep = step - 1;
         setStep(newStep);
         setStepDisabled({ ...stepDisabled, prev: false });
-        history.push(`/space/access/${requestInfo.requestId}/${AccessClusterStepsEnum[newStep]}`);
+        navigate(`/space/access/${requestInfo.requestId}/${AccessClusterStepsEnum[newStep]}`);
     }
 
     function finish() {
-        history.push('/space/list');
+        navigate('/space/list');
     }
 
     return (
@@ -175,24 +174,15 @@ export function AccessCluster(props: any) {
                         </Steps>
                     </div>
                     <div style={{ marginRight: 240 }}>
-                        <CacheSwitch>
-                            <CacheRoute path={`${match.path}/${AccessClusterStepsEnum[0]}`} component={SpaceRegister} />
-                            <CacheRoute
-                                path={`${match.path}/${AccessClusterStepsEnum[1]}`}
-                                component={ConnectCluster}
-                            />
-                            <CacheRoute
-                                path={`${match.path}/${AccessClusterStepsEnum[2]}`}
-                                component={ManagedOptions}
-                            />
-                            <CacheRoute path={`${match.path}/${AccessClusterStepsEnum[3]}`} component={NodeVerify} />
-                            <CacheRoute path={`${match.path}/${AccessClusterStepsEnum[4]}`} component={ClusterVerify} />
-                            <CacheRoute
-                                path={`${match.path}/${AccessClusterStepsEnum[5]}`}
-                                component={SpaceAccessFinish}
-                            />
-                            <Redirect to={`${match.path}/${AccessClusterStepsEnum[0]}`} />
-                        </CacheSwitch>
+                        <Routes>
+                            <Route path={`${AccessClusterStepsEnum[0]}`} element={<SpaceRegister />} />
+                            <Route path={`${AccessClusterStepsEnum[1]}`} element={<ConnectCluster />} />
+                            <Route path={`${AccessClusterStepsEnum[2]}`} element={<ManagedOptions />} />
+                            <Route path={`${AccessClusterStepsEnum[3]}`} element={<NodeVerify />} />
+                            <Route path={`${AccessClusterStepsEnum[4]}`} element={<ClusterVerify />} />
+                            <Route path={`${AccessClusterStepsEnum[5]}`} element={<SpaceAccessFinish />} />
+                            <Route path="/" element={<Navigate replace to={AccessClusterStepsEnum[0]} />} />
+                        </Routes>
                         <Row justify="end" style={{ marginTop: 20 }}>
                             <Space>
                                 {hidePrevSteps.includes(step) ? (
