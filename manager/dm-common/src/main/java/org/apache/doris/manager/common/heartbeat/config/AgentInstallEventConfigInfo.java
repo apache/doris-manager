@@ -39,4 +39,6 @@ public class AgentInstallEventConfigInfo {
 
     private long agentNodeId;
 
+    private int agentPort;
+
 }

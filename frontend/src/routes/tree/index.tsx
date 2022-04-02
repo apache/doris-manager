@@ -28,12 +28,14 @@ import { ContentRouteKeyEnum } from './tree.data';
 import CreateMenu from './create-menu/index';
 import styles from './tree.module.less';
 import EventEmitter from '@src/utils/event-emitter';
+import { useTranslation } from 'react-i18next';
 // import { LoadingWrapper } from '@src/components/loadingwrapper/loadingwrapper';
 const initTreeDate: DataNode[] = [];
 export function MetaBaseTree(props: any) {
     const [treeData, setTreeData] = useState(initTreeDate);
     const [loading, setLoading] = useState(true);
     const history = useHistory();
+    const { t } = useTranslation()
     useEffect(() => {
         initTreeData();
         EventEmitter.on('refreshData', initTreeData);
@@ -125,7 +127,7 @@ export function MetaBaseTree(props: any) {
         <div className={styles['palo-tree-container']}>
             <h2 className={styles['palo-tree-title']}>
                 <HomeOutlined onClick={goHome} />
-                数据目录树
+                { t`DataTree` }
             </h2>
             {/* <LoadingWrapper loading={loading}> */}
             <div className={styles['palo-tree-wrapper']}>

@@ -38,6 +38,11 @@ import java.util.Map;
 @Component
 public class DorisInstanceOperator {
 
+    // Actual broker installation path
+    // For compatibility, the actual broker deployment folder name may be baidu_doris_broker
+    // or apache_hdfs_broker when the cluster is hosted
+    private String brokerInstallationPath = "";
+
     // Download installation package
     public boolean downloadInstancePackage(String moudleName, String installInfo, String packageInfo) {
         File packageFile = Paths.get(installInfo, moudleName).toFile();
@@ -82,7 +87,15 @@ public class DorisInstanceOperator {
                 }
                 confFile = Paths.get(installInfo, moudleName, "conf", ServerAndAgentConstant.BE_CONF_FILE).toFile();
             } else {
-                confFile = Paths.get(installInfo, moudleName, "conf", ServerAndAgentConstant.BROKER_CONF_FILE).toFile();
+                String actualBrokerPath = getBrokerInstallationPath(installInfo);
+                String configFileName = ServerAndAgentConstant.BROKER_CONF_FILE;
+
+                if (actualBrokerPath.equals(ServerAndAgentConstant.BAIDU_BROKER_INIT_SUB_DIR)) {
+                    log.debug("Baidu doris broker config");
+                    configFileName = ServerAndAgentConstant.BAIDU_BROKER_CONF_FILE;
+                    parms.putAll(ServerAndAgentConstant.BAIDU_BROKER_CONFIG_DEDAULT);
+                }
+                confFile = Paths.get(installInfo, actualBrokerPath, "conf", configFileName).toFile();
             }
 
             // Create a new profile
@@ -108,17 +121,22 @@ public class DorisInstanceOperator {
     public boolean startInstance(String moudleName, String installInfo, String followerEndpoint) {
         log.info("begin to start {} instance", moudleName);
         try {
+            if (moudleName.equals(ServerAndAgentConstant.BROKER_NAME)) {
+                moudleName = getBrokerInstallationPath(installInfo);
+            }
+
             int mainProcPid = processIsRunning(moudleName, installInfo);
             if (mainProcPid == -1) {
                 log.info("{} instance not running, start it", moudleName);
-                String startScript = ServerAndAgentConstant.FE_START_SCRIPT;
-                if (followerEndpoint != null && !followerEndpoint.isEmpty()) {
-                    startScript += " --helper " + followerEndpoint;
-                }
-
-                if (moudleName.equals(ServerAndAgentConstant.BE_NAME)) {
+                String startScript = "";
+                if (moudleName.equals(ServerAndAgentConstant.FE_NAME)) {
+                    startScript = ServerAndAgentConstant.FE_START_SCRIPT;
+                    if (followerEndpoint != null && !followerEndpoint.isEmpty()) {
+                        startScript += " --helper " + followerEndpoint;
+                    }
+                } else if (moudleName.equals(ServerAndAgentConstant.BE_NAME)) {
                     startScript = ServerAndAgentConstant.BE_START_SCRIPT;
-                } else if (moudleName.equals(ServerAndAgentConstant.BROKER_NAME)) {
+                } else {
                     startScript = ServerAndAgentConstant.BROKER_START_SCRIPT;
                 }
                 startScript += " --daemon";
@@ -138,13 +156,19 @@ public class DorisInstanceOperator {
     public boolean stopInstance(String moudleName, String installInfo) {
         log.info("begin to stop {} instance", moudleName);
         try {
+            if (moudleName.equals(ServerAndAgentConstant.BROKER_NAME)) {
+                moudleName = getBrokerInstallationPath(installInfo);
+            }
+
             int mainProcPid = processIsRunning(moudleName, installInfo);
             if (mainProcPid > -1) {
                 log.info("{} instance is running, stop it", moudleName);
-                String stopScript = ServerAndAgentConstant.FE_STOP_SCRIPT;
-                if (moudleName.equals(ServerAndAgentConstant.BE_NAME)) {
+                String stopScript = "";
+                if (moudleName.equals(ServerAndAgentConstant.FE_NAME)) {
+                    stopScript = ServerAndAgentConstant.FE_STOP_SCRIPT;
+                } else if (moudleName.equals(ServerAndAgentConstant.BE_NAME)) {
                     stopScript = ServerAndAgentConstant.BE_STOP_SCRIPT;
-                } else if (moudleName.equals(ServerAndAgentConstant.BROKER_NAME)) {
+                } else {
                     stopScript = ServerAndAgentConstant.BROKER_STOP_SCRIPT;
                 }
                 executePkgShellScript(stopScript, installInfo, moudleName, Maps.newHashMap());
@@ -170,6 +194,9 @@ public class DorisInstanceOperator {
     // Check whether the instance has been installed and started
     public boolean checkInstanceDeploy(String moudleName, String installInfo) {
         try {
+            if (moudleName.equals(ServerAndAgentConstant.BROKER_NAME)) {
+                moudleName = getBrokerInstallationPath(installInfo);
+            }
             int bePid = processIsRunning(moudleName, installInfo);
             if (bePid < 0) {
                 return false;
@@ -192,14 +219,22 @@ public class DorisInstanceOperator {
      */
     private int processIsRunning(String moduleName, String runningDir) throws Exception {
 
-        String processName = ServerAndAgentConstant.FE_PID_NAME;
-        String pidFileName = ServerAndAgentConstant.FE_PID_FILE;
-        if (moduleName.equals(ServerAndAgentConstant.BE_NAME)) {
+        String processName = "";
+        String pidFileName = "";
+
+        if (moduleName.equals(ServerAndAgentConstant.FE_NAME)) {
+            processName = ServerAndAgentConstant.FE_PID_NAME;
+            pidFileName = ServerAndAgentConstant.FE_PID_FILE;
+        } else if (moduleName.equals(ServerAndAgentConstant.BE_NAME)) {
             processName = ServerAndAgentConstant.BE_PID_NAME;
             pidFileName = ServerAndAgentConstant.BE_PID_FILE;
-        } else if (moduleName.equals(ServerAndAgentConstant.BROKER_NAME)) {
+        } else {
             processName = ServerAndAgentConstant.BROKER_PID_NAME;
-            pidFileName = ServerAndAgentConstant.BROKER_PID_FILE;
+            if (moduleName.equals(ServerAndAgentConstant.BAIDU_BROKER_INIT_SUB_DIR)) {
+                pidFileName = ServerAndAgentConstant.BAIDU_BROKER_PID_FILE;
+            } else {
+                pidFileName = ServerAndAgentConstant.BROKER_PID_FILE;
+            }
         }
 
         int pid = getPid(processName);
@@ -300,6 +335,7 @@ public class DorisInstanceOperator {
         int index = scripts.indexOf(":") + 1;
         scripts = scripts.substring(0, index) + "//" + scripts.substring(index + 1);
         final String shellCmd = "sh " + scripts;
+
         log.info("begin to execute: `" + shellCmd + "`");
         executeShell(shellCmd, environment);
     }
@@ -326,6 +362,32 @@ public class DorisInstanceOperator {
             if (!file.mkdirs()) {
                 throw new Exception("failed to create dir: " + path);
             }
+        }
+    }
+
+    // Set the actual path of the broker
+    private String getBrokerInstallationPath(String installInfo) {
+        if (brokerInstallationPath.isEmpty()) {
+
+            File brokerFile = Paths.get(installInfo, ServerAndAgentConstant.BROKER_NAME).toFile();
+            if (brokerFile.exists()) {
+                return ServerAndAgentConstant.BROKER_NAME;
+            }
+
+            brokerFile = Paths.get(installInfo, ServerAndAgentConstant.BROKER_INIT_SUB_DIR).toFile();
+            if (brokerFile.exists()) {
+                return ServerAndAgentConstant.BROKER_INIT_SUB_DIR;
+            }
+
+            brokerFile = Paths.get(installInfo, ServerAndAgentConstant.BAIDU_BROKER_INIT_SUB_DIR).toFile();
+            if (brokerFile.exists()) {
+                return ServerAndAgentConstant.BAIDU_BROKER_INIT_SUB_DIR;
+            }
+
+            return ServerAndAgentConstant.BROKER_NAME;
+
+        } else {
+            return brokerInstallationPath;
         }
     }
 }
