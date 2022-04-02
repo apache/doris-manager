@@ -15,9 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
+/* eslint-disable @typescript-eslint/no-var-requires */
 const webpackBaseConfig = require('./webpack.base.config');
 const { merge } = require('webpack-merge');
-const SERVER_RD = 'http://st01-meg-lijiu02-414.st01.baidu.com:8880/';
+const SERVER_RD = 'http://127.0.0.1:8080/';
 
 module.exports = merge(webpackBaseConfig, {
     mode: 'development',

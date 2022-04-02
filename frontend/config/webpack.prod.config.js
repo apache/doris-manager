@@ -15,9 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const webpackBaseConfig = require("./webpack.base.config");
-const { merge } = require("webpack-merge");
-const path = require("path");
+/* eslint-disable @typescript-eslint/no-var-requires */
+const webpackBaseConfig = require('./webpack.base.config');
+const { merge } = require('webpack-merge');
+const path = require('path');
 const TerserWebpackPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
@@ -85,7 +86,7 @@ module.exports = merge(webpackBaseConfig, {
         new CopyPlugin({
             patterns: [
                 { from: path.join(__dirname, '../src/assets/'), to: path.join(__dirname, '../dist/src/assets/') },
-                { from: path.join(__dirname, '../favicon.ico'), to: path.join(__dirname, '../dist/') }
+                { from: path.join(__dirname, '../favicon.ico'), to: path.join(__dirname, '../dist/') },
             ],
         }),
         // new BundleAnalyzerPlugin()
