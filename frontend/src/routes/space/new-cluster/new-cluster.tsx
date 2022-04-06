@@ -115,8 +115,11 @@ export function NewCluster() {
         if (value && step === NewClusterStepsEnum['install-options']) {
             params.installInfo = value.installDir;
             params.packageInfo = value.packageUrl;
+            params.agentPort = value.agentPort ? parseInt(value.agentPort) : value.agentPort;
             isParamsValid =
-                checkParam(params.installInfo, '请填写代码包路径') && checkParam(params.packageInfo, '请填写安装路径');
+                checkParam(params.installInfo, '请填写代码包路径') &&
+                checkParam(params.packageInfo, '请填写安装路径') &&
+                checkParam(params.agentPort, '请填写Agent启动端口');
         }
         if (value && step === NewClusterStepsEnum['cluster-plan']) {
             params.nodeConfig = value.nodeConfig;

@@ -44,7 +44,7 @@ export function Header(props: HeaderProps) {
                 <span styleName="common-header-icon">{props.icon}</span>
                 <span styleName="common-header-name">{props.title}</span>
             </div>
-            <div styleName="common-header-refresh">
+            {/* <div styleName="common-header-refresh">
                 <SyncOutlined
                     spin={loading}
                     onClick={() => {
@@ -52,7 +52,7 @@ export function Header(props: HeaderProps) {
                         setLoading(true);
                     }}
                 />
-            </div>
+            </div> */}
         </div>
     );
 }

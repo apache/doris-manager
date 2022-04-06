@@ -18,7 +18,6 @@
 import ProCard from '@ant-design/pro-card';
 import { Button, message, Row, Space, Steps } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { pathToRegexp } from 'path-to-regexp';
 import { NewSpaceInfoContext } from '@src/common/common.context';
 import { useForm } from 'antd/lib/form/Form';
 import { AccessClusterStepsEnum } from './access-cluster.data';
@@ -120,11 +119,13 @@ export function AccessCluster() {
                 sshUser: value.sshUser,
             };
             params.installInfo = value.installInfo;
+            params.agentPort = value.agentPort ? parseInt(value.agentPort) : value.agentPort;
             isParamsValid =
                 checkParam(params.authInfo.sshUser, '请填写SSH用户') &&
                 checkParam(params.authInfo.sshPort, '请填写SSH端口') &&
                 checkParam(params.authInfo.sshKey, '请填写SSH私钥') &&
-                checkParam(params.installInfo, '请填写安装路径');
+                checkParam(params.installInfo, '请填写安装路径') &&
+                checkParam(params.agentPort, '请填写Agent启动端口');
         }
         if (!isParamsValid) return;
         setLoading(true);

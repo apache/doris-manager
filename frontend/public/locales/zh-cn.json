@@ -354,6 +354,9 @@
     "TableDescription": "数据表描述信息",
     "CreateTime": "创建时间",
     "UpdateTime": "最近修改时间",
-    "UpdateTimeHelper": "记录该表最近发生表结构变更的时间"
+    "UpdateTimeHelper": "记录该表最近发生表结构变更的时间",
+
+    "Sync successfully, please refresh the page": "同步成功，请刷新页面" ,
+    "Sync failed": "同步失败"
 }
 
