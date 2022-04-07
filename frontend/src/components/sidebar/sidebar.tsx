@@ -146,7 +146,7 @@ export function Sidebar(props: any) {
                         <Link to={`/space`}>{t`Space List`}</Link>
                     </Menu.Item>
                     {isSuperAdmin && (
-                        <Menu.Item id="aaaa" key="/settings" icon={<SettingOutlined />}>
+                        <Menu.Item id="settings" key="/settings" icon={<SettingOutlined />}>
                             <Link to={`/settings`}>{t`Platform Settings`}</Link>
                         </Menu.Item>
                     )}
