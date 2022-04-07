@@ -341,5 +341,8 @@
     "TableDescription": "Table Description",
     "CreateTime": "Create Time",
     "UpdateTime": "Update Time",
-    "UpdateTimeHelper": "Records the time when the last table structure change occurred"
+    "UpdateTimeHelper": "Records the time when the last table structure change occurred",
+    
+    "Sync successfully, please refresh the page": "Sync successfully, please refresh the page",
+    "Sync failed": "Sync failed"
 }

@@ -76,3 +76,7 @@ export function showName(name: string): string {
     }
     return name;
 }
+
+export function delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}

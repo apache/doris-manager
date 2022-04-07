@@ -40,12 +40,11 @@ export interface ISpaceParam {
     spaceAdminUsers: number[];
 }
 
-
 export interface ISpaceUser {
     name: string;
     email: string;
     id: number;
-    is_active: boolean
+    is_active: boolean;
 }
 export type IRequiredMark = boolean | 'optional';
 
@@ -88,4 +87,5 @@ export interface ClusterAccessParams {
     clusterAccessInfo?: ClusterAccessInfo;
     installInfo?: string;
     spaceInfo?: SpaceInfo;
+    agentPort?: number;
 }

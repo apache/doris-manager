@@ -19,22 +19,28 @@
 
 import { useState, useEffect } from 'react';
 import { Tree, message } from 'antd';
-import { TableOutlined, HddOutlined, HomeOutlined } from '@ant-design/icons';
+import { TableOutlined, HddOutlined, HomeOutlined, SyncOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { TreeAPI } from './tree.api';
 import { DataNode } from './tree.interface';
 import { updateTreeData } from './tree.service';
 import { ContentRouteKeyEnum } from './tree.data';
-import styles from './tree.module.less';
 import EventEmitter from '@src/utils/event-emitter';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
+import { HeaderAPI } from '@src/components/common-header/header.api';
+import styles from './tree.module.less';
+import { delay } from '@src/utils/utils';
+import { isSuccess } from '@src/utils/http';
+
+// import { LoadingWrapper } from '@src/components/loadingwrapper/loadingwrapper';
 const initTreeDate: DataNode[] = [];
 export function MetaBaseTree() {
     const [treeData, setTreeData] = useState(initTreeDate);
     const [loading, setLoading] = useState(true);
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const [syncLoading, setSyncLoading] = useState(false);
     useEffect(() => {
         initTreeData();
         EventEmitter.on('refreshData', initTreeData);
@@ -47,7 +53,7 @@ export function MetaBaseTree() {
                 const num = Math.random();
                 const database = res.data;
                 const treeData: Array<DataNode> = [];
-                database.forEach((item, index) => {
+                database.forEach(item => {
                     treeData.push({
                         title: `${item.name}`,
                         key: `1¥${num}¥name¥${item.id}¥${item.name}`,
@@ -116,11 +122,29 @@ export function MetaBaseTree() {
     function goHome() {
         navigate(`/meta`);
     }
+
+    function syncData() {
+        setSyncLoading(true);
+        Promise.all([delay(500), HeaderAPI.refreshData()])
+            .then(res => {
+                if (isSuccess(res[1])) {
+                    message.success(t`Sync successfully, please refresh the page`);
+                    return;
+                }
+                message.error(res[1].msg);
+            })
+            .catch(() => {
+                message.error(t`Sync Failed`);
+            })
+            .finally(() => setSyncLoading(false));
+    }
+
     return (
         <div className={styles['palo-tree-container']}>
             <h2 className={styles['palo-tree-title']}>
                 <HomeOutlined onClick={goHome} />
-                {t`DataTree`}
+                <span>{t`DataTree`}</span>
+                <SyncOutlined spin={syncLoading} style={{ color: '#1890ff', padding: 0 }} onClick={syncData} />
             </h2>
             <div className={styles['palo-tree-wrapper']}>
                 <Tree
@@ -128,7 +152,7 @@ export function MetaBaseTree() {
                     loadData={onLoadData}
                     treeData={treeData}
                     className={styles['palo-side-tree']}
-                    onSelect={(selectedKeys, info) => handleTreeSelect(selectedKeys, info)}
+                    onSelect={selectedKeys => handleTreeSelect(selectedKeys)}
                 />
             </div>
         </div>
