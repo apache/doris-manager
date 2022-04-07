@@ -39,7 +39,9 @@ export function RoleList() {
         {
             title: t`roleName`,
             key: 'name',
-            render: (record: IRole) => <FlatBtn to={record.id}>{showName(record.name)}</FlatBtn>,
+            render: (record: IRole) => (
+                <FlatBtn to={`/admin/people/role/${record.id}`}>{showName(record.name)}</FlatBtn>
+            ),
         },
         {
             title: t`members`,

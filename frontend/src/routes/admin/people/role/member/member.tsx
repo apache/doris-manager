@@ -33,7 +33,7 @@ import { useMatch } from 'react-router';
 
 export function RoleMembers() {
     const { t } = useTranslation();
-    const match = useMatch('admin/role/:roleId');
+    const match = useMatch('admin/people/role/:roleId');
     const roleId = match?.params.roleId as string;
     const { users } = useSpaceUsers();
     const { members, getRoleMembers, loading } = useRoleMember(roleId);
