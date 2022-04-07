@@ -24,7 +24,6 @@ import { InitializeAPI } from './initialize.api';
 import styles from './initialize.less';
 
 export function InitializeSetType() {
-    console.log('hello');
     const [authType, setAuthType] = useState<AuthTypeEnum>(AuthTypeEnum.LOCAL);
     const navigate = useNavigate();
     async function handleSetAuthType() {
