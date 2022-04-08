@@ -52,10 +52,8 @@ export function NewCluster() {
     const [requestInfo, setRequestInfo] = useRecoilState(requestInfoState);
     const [loading, setLoading] = useState(false);
     const [form] = useForm();
-    const [searchParams] = useSearchParams();
-    const requestId = searchParams.get('requestId');
     const match = useMatch('space/new/:requestId/:step');
-
+    const requestId = match?.params.requestId;
     useEffect(() => {
         if (location.pathname === '/space/list') {
             return;
