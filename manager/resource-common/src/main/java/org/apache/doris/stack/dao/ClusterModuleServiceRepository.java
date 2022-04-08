@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -34,6 +35,7 @@ public interface ClusterModuleServiceRepository extends JpaRepository<ClusterMod
     @Query("select c from ClusterModuleServiceEntity c where c.clusterId = :clusterId")
     List<ClusterModuleServiceEntity> getByClusterId(@Param("clusterId") long clusterId);
 
+    @Transactional
     @Modifying
     @Query("delete from ClusterModuleServiceEntity c where c.moduleId = :moduleId")
     void deleteByModuleId(@Param("moduleId") long moduleId);

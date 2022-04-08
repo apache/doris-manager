@@ -95,9 +95,11 @@ public class SSH extends BaseCommand {
 
     protected void buildCommand() {
         String[] command = new String[]{"ssh",
-                "-o", "ConnectTimeOut=60",
+                "-o", "ConnectTimeOut=20",
                 "-o", "StrictHostKeyChecking=no",
                 "-o", "BatchMode=yes",
+                // close password auth in case of blocking program when ssh auth failed
+                "-o", "PasswordAuthentication=no",
                 "-i", this.sshKeyFile,
                 "-p", String.valueOf(this.sshPort),
                 this.user + "@" + this.host, this.command
