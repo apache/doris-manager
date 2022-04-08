@@ -75,6 +75,9 @@ h1,h2,h3,h4,h5,h6 {
   width: 64px !important;
 }
 .ant-layout-sider-trigger {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   color: white;
   text-align: center;
   padding: 12px 0;

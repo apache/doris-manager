@@ -43,7 +43,7 @@ export function useAuth() {
                 localStorage.setItem('initialized', 'false');
                 setInitialized(false);
                 if (!pathname.includes('initialize')) {
-                    navigate('initialize');
+                    navigate('/initialize');
                 }
             }
         }

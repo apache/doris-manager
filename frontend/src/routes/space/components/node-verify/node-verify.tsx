@@ -31,6 +31,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 const Step = Steps.Step;
 
 const ERROR_STATUS = [OperateStatusEnum.FAIL, OperateStatusEnum.CANCEL];
+const PENDING_STATUS = [OperateStatusEnum.PROCESSING, OperateStatusEnum.INIT];
 
 export function NodeVerify(props: any) {
     const { reqInfo } = useContext(NewSpaceInfoContext);
@@ -52,7 +53,7 @@ export function NodeVerify(props: any) {
                     if (failedNode) {
                         message.error(failedNode.operateResult);
                     }
-                    if (data.filter(item => item.operateStatus === OperateStatusEnum.PROCESSING).length === 0) {
+                    if (data.filter(item => PENDING_STATUS.includes(item.operateStatus)).length === 0) {
                         getClusterNodes.cancel();
                     }
                     if (data.filter(item => item.operateStatus !== OperateStatusEnum.SUCCESS).length > 0) {

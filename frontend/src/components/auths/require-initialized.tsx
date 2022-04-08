@@ -26,7 +26,7 @@ export function RequireInitialized({ children }: { children: JSX.Element }) {
         // trying to go to when they were redirected. This allows us to send them
         // along to that page after they initialize, which is a nicer user experience
         // than dropping them off on the home page.
-        return <Navigate to="initialize" state={{ from: location }} replace />;
+        return <Navigate to="/initialize" state={{ from: location }} replace />;
     }
 
     return children;
