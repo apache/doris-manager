@@ -23,7 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.doris.manager.common.heartbeat.HeartBeatEventResultType;
 import org.apache.doris.manager.common.heartbeat.HeartBeatEventType;
 import org.apache.doris.manager.common.heartbeat.config.AgentInstallEventConfigInfo;
+import org.apache.doris.manager.common.heartbeat.config.AgentUnInstallEventConfigInfo;
 import org.apache.doris.manager.common.heartbeat.stage.AgentInstallEventStage;
+import org.apache.doris.manager.common.heartbeat.stage.AgentUnInstallEventStage;
 import org.apache.doris.stack.constant.EnvironmentDefine;
 import org.apache.doris.stack.dao.HeartBeatEventRepository;
 import org.apache.doris.stack.dao.ResourceNodeRepository;
@@ -41,11 +43,14 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Paths;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Component
 public class ResourceNodeAndAgentManager {
     private static final String AGENT_START_SCRIPT = Constants.KEY_DORIS_AGENT_START_SCRIPT;
+    private static final String AGENT_STOP_SCRIPT = Constants.KEY_DORIS_AGENT_STOP_SCRIPT;
     private static final String AGENT_CONFIG_PATH = Constants.KEY_DORIS_AGENT_CONFIG_PATH;
 
     @Autowired
@@ -61,37 +66,44 @@ public class ResourceNodeAndAgentManager {
         return newNodeEntity.getId();
     }
 
-    // TODO:Uninstall agent
     public void deleteOperation(long resourceClusterId, String host) {
         log.info("delete node {} for resource cluster {}", host, resourceClusterId);
         nodeRepository.deleteByResourceClusterIdAndHost(resourceClusterId, host);
     }
 
-    public boolean isAvailableAgentPort(ResourceNodeEntity node, AgentInstallEventConfigInfo configInfo)
+    public void deleteOperation(long nodeId) {
+        log.info("delete node {}", nodeId);
+        nodeRepository.deleteById(nodeId);
+    }
+
+    // only responsible to stop agent
+    public void deleteAgentOperation(ResourceNodeEntity node, AgentUnInstallEventConfigInfo configInfo)
             throws Exception {
-        // agent port check, eg: Spring Boot Param server.port=8008
-        log.info("check {} node port {}:{}", node.getId(), node.getHost(), node.getAgentPort());
-        String sshkey = String.format("sshkey-%d-%d", node.getId(), node.getAgentPort());
-        File sshKeyFile = SSH.buildSshKeyFile(sshkey);
-        SSH.writeSshKeyFile(configInfo.getSshKey(), sshKeyFile);
 
-        // only check listen port
-        String checkPortCmd = String.format("netstat -tunlp | grep  -w %d", node.getAgentPort());
-        SSH checkPortSSH = new SSH(configInfo.getSshUser(), configInfo.getSshPort(),
-                sshKeyFile.getAbsolutePath(), node.getHost(), checkPortCmd);
-        if (checkPortSSH.run()) {
-            String netInfo = checkPortSSH.getStdoutResponse();
-            log.info("agent node {} port check return output\n: {}", node.getId(), netInfo);
-
-            if (netInfo != null && !netInfo.trim().isEmpty()) {
-                log.error("agent node {} port {} already in use:\n {}", node.getId(), node.getAgentPort(), netInfo);
-                return false;
-            }
-        } else if (checkPortSSH.getExitCode() != 1) { //exit 1 when grep failed, other exit code is exception
-            log.warn("run check port cmd failed");
-            throw new Exception("check agent port scrpit execution exception");
+        // check agent has been installed or not
+        if (!checkAgentOperation(node)) {
+            log.warn("node[{}]:{} does not install agent, no need to uninstall", node.getId(), node.getHost());
+            return;
         }
-        return true;
+
+        HeartBeatEventEntity uninstallEvent = new HeartBeatEventEntity(HeartBeatEventType.AGENT_STOP.name(),
+                HeartBeatEventResultType.INIT.name(), JSON.toJSONString(configInfo), 0);
+
+        uninstallEvent = heartBeatEventRepository.save(uninstallEvent);
+
+        log.info("create event of deleting agent , event id {}", uninstallEvent.getId());
+        node.setCurrentEventId(uninstallEvent.getId());
+        nodeRepository.save(node);
+
+        log.info("to stop node[{}] agent for resource cluster {}", node.getHost(),
+                node.getResourceClusterId());
+
+        HeartBeatEventEntity finalUninstallEvent = uninstallEvent;
+        CompletableFuture<Void> uninstallFuture = CompletableFuture.runAsync(() -> {
+            log.info("start to handle uninstall agent event on {} node {}", node.getId(), node.getHost());
+            uninstallEventProcess(node, configInfo, finalUninstallEvent);
+            log.info("async uninstall agent on {} node {} success", node.getId(), node.getHost());
+        });
     }
 
     public void installAgentOperation(ResourceNodeEntity node, AgentInstallEventConfigInfo configInfo, long requestId) {
@@ -137,6 +149,125 @@ public class ResourceNodeAndAgentManager {
             eventEntity.setConfigInfo(JSON.toJSONString(configInfo));
 
             agentInstallAgentEntity = heartBeatEventRepository.save(eventEntity);
+        }
+
+        // handle install agent event async
+        CompletableFuture<Void> installFuture = CompletableFuture.runAsync(() -> {
+            log.info("start to handle install agent event to {} node {}", node.getId(), node.getHost());
+            installEventProcess(node, configInfo, agentInstallAgentEntity);
+            log.info("async install agent to {} node {} success", node.getId(), node.getHost());
+        });
+    }
+
+    public boolean checkAgentOperation(ResourceNodeEntity node) {
+        long eventId = node.getCurrentEventId();
+
+        if (eventId < 1L) {
+            log.warn("The node no have agent");
+            return false;
+        } else {
+            HeartBeatEventEntity eventEntity = heartBeatEventRepository.findById(eventId).get();
+            // If the agent has been successfully installed and a new agent request operation has been performed,
+            // the installation cannot be performed again
+            if (!eventEntity.getType().equals(HeartBeatEventType.AGENT_INSTALL.name())) {
+                return true;
+            }
+
+            if (eventEntity.isCompleted() && eventEntity.getStatus().equals(HeartBeatEventResultType.SUCCESS.name())) {
+                return true;
+            }
+
+            log.warn("Agent has not been installed successfully");
+            return false;
+        }
+    }
+
+    public boolean isAvailableAgentPort(ResourceNodeEntity node, AgentInstallEventConfigInfo configInfo)
+            throws Exception {
+        // agent port check, eg: Spring Boot Param server.port=8008
+        log.info("check {} node port {}:{}", node.getId(), node.getHost(), node.getAgentPort());
+        String sshkey = String.format("sshkey-%d-%d", node.getId(), node.getAgentPort());
+        File sshKeyFile = SSH.buildSshKeyFile(sshkey);
+        SSH.writeSshKeyFile(configInfo.getSshKey(), sshKeyFile);
+
+        // only check listen port
+        String checkPortCmd = String.format("netstat -tunlp | grep  -w %d", node.getAgentPort());
+        SSH checkPortSSH = new SSH(configInfo.getSshUser(), configInfo.getSshPort(),
+                sshKeyFile.getAbsolutePath(), node.getHost(), checkPortCmd);
+        if (checkPortSSH.run(3000)) {
+            String netInfo = checkPortSSH.getStdoutResponse();
+            log.info("agent node {} port check return output\n: {}", node.getId(), netInfo);
+
+            if (netInfo != null && !netInfo.trim().isEmpty()) {
+                log.error("agent node {} port {} already in use:\n {}", node.getId(), node.getAgentPort(), netInfo);
+                return false;
+            }
+        } else if (checkPortSSH.getExitCode() != 1) { //exit 1 when grep failed, other exit code is exception
+            log.warn("run check port cmd failed");
+            throw new Exception("check agent port scrpit execution exception:" +  checkPortSSH.getErrorResponse());
+        }
+        log.info("{} node {}:{} is available", node.getId(), node.getHost(), node.getAgentPort());
+        return true;
+    }
+
+    public void checkSshConnect(ResourceNodeEntity node, AgentInstallEventConfigInfo configInfo)
+            throws Exception {
+
+        log.info("check {} node {} ssh connect", node.getId(), node.getHost());
+        String sshkey = String.format("sshkey-%d", node.getId());
+        File sshKeyFile = SSH.buildSshKeyFile(sshkey);
+        SSH.writeSshKeyFile(configInfo.getSshKey(), sshKeyFile);
+
+        SSH checkSSH = new SSH(configInfo.getSshUser(), configInfo.getSshPort(),
+                sshKeyFile.getAbsolutePath(), node.getHost(), "echo ok");
+
+        // if ssh-key is invalid, ssh commond will enter interactive mode that will block the process
+        // user not exists(255), user error(need input password), ssh port error(1), host error(1)
+        if (checkSSH.run(3000)) {
+            log.info("ssh connect {} node {} success", node.getId(), node.getHost());
+        } else {
+            throw new Exception(String.format("ssh connect node %s failed: error code %d, error msg: %s",
+                    node.getHost(), checkSSH.getExitCode(),
+                    checkSSH.getErrorResponse()));
+        }
+    }
+
+    public void checkStopScriptExist(ResourceNodeEntity node, AgentInstallEventConfigInfo configInfo)
+            throws Exception {
+        log.info("check node {} agent stop script", node.getId());
+        checkPathExist(node, configInfo, Paths.get(node.getAgentInstallDir(), "agent", AGENT_STOP_SCRIPT).toString());
+    }
+
+    public void checkPathExist(ResourceNodeEntity node, AgentInstallEventConfigInfo configInfo,
+                               String path) throws Exception {
+
+        String sshkey = String.format("sshkey-%d", node.getId());
+        File sshKeyFile = SSH.buildSshKeyFile(sshkey);
+        SSH.writeSshKeyFile(configInfo.getSshKey(), sshKeyFile);
+
+        String checkPathExistCmd = "if test -e " + path + "; then echo ok; else exit 1; fi";
+        SSH checkPathSSH = new SSH(configInfo.getSshUser(), configInfo.getSshPort(),
+                sshKeyFile.getAbsolutePath(), node.getHost(), checkPathExistCmd);
+        if (!checkPathSSH.run()) {
+            if (checkPathSSH.getExitCode() == 1) {
+                log.error("path {} is not exist on node {}", path, node.getId());
+                throw new Exception(String.format("node %s does not have path: %s", node.getHost(), path));
+            } else {
+                throw new Exception("check path exception:" +  checkPathSSH.getErrorResponse());
+            }
+        }
+    }
+
+    private void installEventProcess(ResourceNodeEntity node, AgentInstallEventConfigInfo configInfo,
+                                     HeartBeatEventEntity agentInstallAgentEntity) {
+        if (!agentInstallAgentEntity.getType().equals(HeartBeatEventType.AGENT_INSTALL.name())) {
+            log.warn("agent has been installed on {} node {}", node.getId(), node.getHost());
+            return;
+        }
+
+        if (!agentInstallAgentEntity.getStatus().equals(HeartBeatEventResultType.INIT.name())) {
+            log.warn("agent is being installed on {} node {}", node.getId(), node.getHost());
+            return;
         }
 
         // AGENT_INSTALL heartbeat handle
@@ -218,19 +349,6 @@ public class ResourceNodeAndAgentManager {
 
         // agent start
         // AGENT_START stage
-        try {
-            if (!isAvailableAgentPort(node, configInfo)) {
-                log.error("port {}:{} already in use", configInfo.getHost(), configInfo.getAgentPort());
-                updateFailResult(String.format("agent port %s:%d already in use",
-                                configInfo.getHost(), configInfo.getAgentPort()),
-                        AgentInstallEventStage.AGENT_DEPLOY.getStage(), agentInstallAgentEntity);
-                return;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("check agent port exception, skip port check");
-        }
-
         String agentInstallHome = configInfo.getInstallDir() + File.separator + "agent";
 
         log.info("to start agent with port {}", configInfo.getAgentPort());
@@ -240,7 +358,7 @@ public class ResourceNodeAndAgentManager {
         SSH startSsh = new SSH(configInfo.getSshUser(), configInfo.getSshPort(),
                 sshKeyFile.getAbsolutePath(), configInfo.getHost(), cmd);
         if (!startSsh.run()) {
-            log.error("agent start failed:{}", ssh.getErrorResponse());
+            log.error("agent start failed:{}", startSsh.getErrorResponse());
             updateFailResult(AgentInstallEventStage.AGENT_START.getError(),
                     AgentInstallEventStage.AGENT_START.getStage(), agentInstallAgentEntity);
             return;
@@ -250,27 +368,46 @@ public class ResourceNodeAndAgentManager {
                 AgentInstallEventStage.AGENT_START.getStage(), agentInstallAgentEntity);
     }
 
-    public boolean checkAgentOperation(ResourceNodeEntity node) {
-        long eventId = node.getCurrentEventId();
-
-        if (eventId < 1L) {
-            log.warn("The node no have agent");
-            return false;
-        } else {
-            HeartBeatEventEntity eventEntity = heartBeatEventRepository.findById(eventId).get();
-            // If the agent has been successfully installed and a new agent request operation has been performed,
-            // the installation cannot be performed again
-            if (!eventEntity.getType().equals(HeartBeatEventType.AGENT_INSTALL.name())) {
-                return true;
-            }
-
-            if (eventEntity.isCompleted() && eventEntity.getStatus().equals(HeartBeatEventResultType.SUCCESS.name())) {
-                return true;
-            }
-
-            log.warn("Agent has not been installed successfully");
-            return false;
+    private void uninstallEventProcess(ResourceNodeEntity node, AgentUnInstallEventConfigInfo configInfo,
+                                       HeartBeatEventEntity agentUninstallAgentEntity) {
+        if (!agentUninstallAgentEntity.getType().equals(HeartBeatEventType.AGENT_STOP.name())) {
+            log.warn("agent no need to stop on {} node {}", node.getId(), node.getHost());
+            return;
         }
+
+        if (!agentUninstallAgentEntity.getStatus().equals(HeartBeatEventResultType.INIT.name())) {
+            log.warn("agent is being stopped on {} node {}", node.getId(), node.getHost());
+            return;
+        }
+        // warning: multithreaded write operation
+        String sshkey = String.format("sshkey-%d", node.getId());
+        File sshKeyFile = SSH.buildSshKeyFile(sshkey);
+        SSH.writeSshKeyFile(configInfo.getSshKey(), sshKeyFile);
+
+        String agentInstallHome = configInfo.getInstallDir() + File.separator + "agent";
+
+        log.info("to uninstall {} agent", configInfo.getHost());
+//        String command = "cd %s && sh %s && rm -rf %s";
+//        String cmd = String.format(command, agentInstallHome, AGENT_STOP_SCRIPT, agentInstallHome);
+        String command = "cd %s && sh %s";
+        String cmd = String.format(command, agentInstallHome, AGENT_STOP_SCRIPT);
+        SSH stopSsh = new SSH(configInfo.getSshUser(), configInfo.getSshPort(),
+                sshKeyFile.getAbsolutePath(), configInfo.getHost(), cmd);
+        if (!stopSsh.run()) {
+            log.error("agent stop failed:{}", stopSsh.getErrorResponse());
+            agentUninstallAgentEntity.setCompleted(true);
+            agentUninstallAgentEntity.setStatus(HeartBeatEventResultType.FAIL.name());
+            heartBeatEventRepository.save(agentUninstallAgentEntity);
+
+            updateFailResult(AgentUnInstallEventStage.AGENT_STOP.getError() + stopSsh.getErrorResponse(),
+                    AgentUnInstallEventStage.AGENT_STOP.getStage(), agentUninstallAgentEntity);
+        }
+
+        log.info("node {} success to uninstall agent", node.getHost());
+
+        agentUninstallAgentEntity.setCompleted(true);
+        agentUninstallAgentEntity.setStatus(HeartBeatEventResultType.SUCCESS.name());
+        heartBeatEventRepository.save(agentUninstallAgentEntity);
     }
 
     private void updateProcessingResult(String result, int stage, HeartBeatEventEntity eventEntity) {

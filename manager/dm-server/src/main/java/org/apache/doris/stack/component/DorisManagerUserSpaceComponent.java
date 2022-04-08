@@ -26,6 +26,7 @@ import org.apache.doris.stack.constant.ConstantDef;
 import org.apache.doris.stack.control.ModelControlLevel;
 import org.apache.doris.stack.control.ModelControlRequestType;
 import org.apache.doris.stack.control.manager.DorisClusterManager;
+import org.apache.doris.stack.control.manager.ResourceClusterManager;
 import org.apache.doris.stack.dao.ClusterInfoRepository;
 import org.apache.doris.stack.dao.ClusterUserMembershipRepository;
 import org.apache.doris.stack.dao.CoreUserRepository;
@@ -94,6 +95,9 @@ public class DorisManagerUserSpaceComponent extends BaseService {
 
     @Autowired
     private ClusterInfoRepository clusterInfoRepository;
+
+    @Autowired
+    private ResourceClusterManager resourceClusterManager;
 
     @Autowired
     private PaloLoginClient paloLoginClient;
@@ -447,24 +451,27 @@ public class DorisManagerUserSpaceComponent extends BaseService {
         // delete cluster information
         clusterInfoRepository.deleteById(spaceId);
 
-        try {
-            // delete cluster configuration
-            log.debug("delete cluster {} config infos.", spaceId);
-            settingComponent.deleteAdminSetting(spaceId);
+        // delete cluster configuration
+        log.debug("delete cluster {} config infos.", spaceId);
+        settingComponent.deleteAdminSetting(spaceId);
 
-            deleteClusterPermissionInfo(clusterInfo);
+        deleteClusterPermissionInfo(clusterInfo);
 
-            // delete user information
-            log.debug("delete cluster {} all user membership.", spaceId);
-            clusterUserMembershipRepository.deleteByClusterId(spaceId);
+        // delete user information
+        log.debug("delete cluster {} all user membership.", spaceId);
+        clusterUserMembershipRepository.deleteByClusterId(spaceId);
 
-            // TODO: In order to be compatible with the deleted content of spatial information before, it is put here.
-            //  If the interface that releases both cluster and physical resources is implemented later,
-            //  it will be unified in the current doriscluster processing operation
-            clusterManager.deleteClusterOperation(clusterInfo);
-        } catch (Exception e) {
-            log.warn("delete space {} related information failed", spaceId, e);
+        // TODO: In order to be compatible with the deleted content of spatial information before, it is put here.
+        //  If the interface that releases both cluster and physical resources is implemented later,
+        //  it will be unified in the current doriscluster processing operation
+        clusterManager.deleteClusterOperation(clusterInfo);
+
+        if (clusterInfo.getResourceClusterId() < 1L) {
+            log.info("resource cluster has not been created");
+            return;
         }
+        resourceClusterManager.deleteAgentsOperation(clusterInfo.getResourceClusterId());
+        resourceClusterManager.deleteOperation(clusterInfo.getResourceClusterId());
     }
 
     private void deleteClusterPermissionInfo(ClusterInfoEntity clusterInfo) throws Exception {
@@ -489,7 +496,8 @@ public class DorisManagerUserSpaceComponent extends BaseService {
             managerMetaSyncComponent.deleteClusterMetadata(clusterInfo);
 
             log.debug("Delete cluster {} analyzer user {}.", spaceId, allUserGroup.getPaloUserName());
-            queryClient.deleteUser(ConstantDef.DORIS_DEFAULT_NS, ConstantDef.MYSQL_DEFAULT_SCHEMA, clusterInfo, allUserGroup.getPaloUserName());
+            queryClient.deleteUser(ConstantDef.DORIS_DEFAULT_NS, ConstantDef.MYSQL_DEFAULT_SCHEMA, clusterInfo,
+                    allUserGroup.getPaloUserName());
         }
 
         // After deleting the user's space, set clusterid to 0

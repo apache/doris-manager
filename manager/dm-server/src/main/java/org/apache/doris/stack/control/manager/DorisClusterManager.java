@@ -80,13 +80,13 @@ public class DorisClusterManager {
     private JdbcSampleClient jdbcClient;
 
     // Ensure the data atomicity of creating user space, so add transactions
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public long initOperation(NewUserSpaceCreateReq spaceInfo, String creator) throws Exception {
         return userSpaceComponent.create(spaceInfo, creator);
     }
 
     // Ensure the atomicity of data in user space, so add transactions
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void updateClusterOperation(CoreUserEntity user, long clusterId,
                                        NewUserSpaceCreateReq spaceInfo) throws Exception {
         userSpaceComponent.update(user, clusterId, spaceInfo);
@@ -319,7 +319,7 @@ public class DorisClusterManager {
 
     public void deleteClusterOperation(ClusterInfoEntity clusterInfo)throws Exception {
         long clusterId = clusterInfo.getId();
-        log.info("Delete cluster {} instances operation.", clusterId);
+        log.info("Delete {} cluster {} instances operation.", clusterId, clusterInfo.getName());
         deleteClusterOperation(clusterId);
     }
 
@@ -330,5 +330,4 @@ public class DorisClusterManager {
             clusterModuleManager.deleteOperation(moduleEntity);
         }
     }
-
 }
