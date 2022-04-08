@@ -39,13 +39,12 @@ const { Step } = Steps;
 export function AccessCluster() {
     const location = useLocation();
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
     const [step, setStep] = React.useState(0);
     const [loading, setLoading] = useState(false);
     const [requestInfo, setRequestInfo] = useRecoilState(requestInfoState);
     const [stepDisabled, setStepDisabled] = useRecoilState(stepDisabledState);
-    const requestId = searchParams.get('requestId');
     const match = useMatch('space/access/:requestId/:step');
+    const requestId = match?.params.requestId;
     const hidePrevSteps = [
         AccessClusterStepsEnum['space-register'],
         AccessClusterStepsEnum['node-verify'],
