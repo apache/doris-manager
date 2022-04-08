@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -51,8 +52,12 @@ public abstract class BaseCommand {
     }
 
     public boolean run() {
+        return run(0);
+    }
+
+    public boolean run(long timeoutMs) {
         buildCommand();
-        log.info("run command: {}", StringUtils.join(resultCommand, " "));
+        log.info("run command: {} ,timeout time: {}ms", StringUtils.join(resultCommand, " "), timeoutMs);
         ProcessBuilder pb = new ProcessBuilder(resultCommand);
         Process process = null;
         BufferedReader stdoutBufferedReader = null;
@@ -65,7 +70,18 @@ public abstract class BaseCommand {
             stdoutResponse = stdoutBufferedReader.lines().parallel().collect(Collectors.joining(System.lineSeparator()));
             errorResponse = errorBufferedReader.lines().parallel().collect(Collectors.joining(System.lineSeparator()));
 
-            exitCode = process.waitFor();
+            if (timeoutMs <= 0) {
+                exitCode = process.waitFor();
+            } else {
+                boolean isExit = process.waitFor(timeoutMs, TimeUnit.MICROSECONDS);
+                if (!isExit) {
+                    exitCode = 124; // the same as timeout command
+                    log.error("command run timeout in {}ms", timeoutMs);
+                    return false;
+                }
+                exitCode = process.exitValue();
+            }
+
             if (exitCode == 0) {
                 return true;
             } else {

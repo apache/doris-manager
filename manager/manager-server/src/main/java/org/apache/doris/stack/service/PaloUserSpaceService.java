@@ -42,7 +42,7 @@ public class PaloUserSpaceService extends BaseService {
     @Autowired
     private DorisManagerUserSpaceComponent userSpaceComponent;
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public long create(NewUserSpaceCreateReq createReq, CoreUserEntity user) throws Exception {
         return userSpaceComponent.create(createReq, user.getFirstName());
     }
@@ -62,7 +62,7 @@ public class PaloUserSpaceService extends BaseService {
      * @return
      * @throws Exception
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public NewUserSpaceInfo update(CoreUserEntity user, int spaceId, NewUserSpaceCreateReq updateReq) throws Exception {
         return userSpaceComponent.update(user, spaceId, updateReq);
     }
@@ -93,7 +93,7 @@ public class PaloUserSpaceService extends BaseService {
      * @param spaceId
      * @throws Exception
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteSpace(int spaceId) throws Exception {
         userSpaceComponent.deleteSpace(spaceId);
     }
