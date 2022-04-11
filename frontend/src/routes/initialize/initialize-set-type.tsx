@@ -24,12 +24,12 @@ import { InitializeAPI } from './initialize.api';
 import styles from './initialize.less';
 
 export function InitializeSetType() {
-    const [authType, setAuthType] = useState<AuthTypeEnum>(AuthTypeEnum.LOCAL);
+    const [authType, setAuthType] = useState<AuthTypeEnum>(AuthTypeEnum.STUDIO);
     const navigate = useNavigate();
     async function handleSetAuthType() {
         const res = await InitializeAPI.setAuthType({ authType });
         if (isSuccess(res)) {
-            navigate(authType);
+            navigate(`auth/${authType}`);
         } else {
             message.error(res.msg);
         }
@@ -41,7 +41,7 @@ export function InitializeSetType() {
                 <Card type="inner" title="管理用户">
                     <Radio.Group onChange={e => setAuthType(e.target.value)} value={authType}>
                         <Space direction="vertical">
-                            <Radio value={AuthTypeEnum.LOCAL}>本地认证</Radio>
+                            <Radio value={AuthTypeEnum.STUDIO}>本地认证</Radio>
                         </Space>
                     </Radio.Group>
                     <p style={{ marginTop: 10 }}>注意，初始化选择好认证方式后不可再改变。</p>

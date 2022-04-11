@@ -35,7 +35,7 @@ export function useAuth() {
         const res = await InitializeAPI.getInitProperties();
         if (isSuccess(res)) {
             setInitStep(res.data.initStep);
-            setAuthType(res.data.auth_type === 'studio' ? AuthTypeEnum.LOCAL : AuthTypeEnum.LDAP);
+            setAuthType(res.data.auth_type === 'studio' ? AuthTypeEnum.STUDIO : AuthTypeEnum.LDAP);
             if (res.data.completed) {
                 localStorage.setItem('initialized', 'true');
                 setInitialized(true);

@@ -27,7 +27,7 @@ export function AdminUser() {
         const { username, ...params } = values;
         const res = await InitializeAPI.setAdmin({ ...params, name: username });
         if (isSuccess(res)) {
-            navigate('/initialize/auth/local/finish');
+            navigate('/initialize/auth/studio/finish');
         } else {
             message.error(res.msg);
         }

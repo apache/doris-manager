@@ -22,8 +22,8 @@ export function InitializeAuth() {
     return (
         <>
             <Routes>
-                <Route path="local/*" element={<AuthLocal />} />
-                <Route path="/" element={<Navigate replace to="local" />} />
+                <Route path="studio/*" element={<AuthLocal />} />
+                <Route path="/" element={<Navigate replace to="studio" />} />
             </Routes>
         </>
     );
