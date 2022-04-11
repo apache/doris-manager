@@ -33,11 +33,11 @@ export function Initialize() {
         if (currentAuthType && initStep) {
             const feStep = initStep ? initStep - 1 : 1;
             let stepPage = '';
-            if (currentAuthType === AuthTypeEnum.LOCAL) {
+            if (currentAuthType === AuthTypeEnum.STUDIO) {
                 stepPage = LocalStepsEnum[feStep];
             }
             if (initialized) {
-                if (currentAuthType === AuthTypeEnum.LOCAL) {
+                if (currentAuthType === AuthTypeEnum.STUDIO) {
                     stepPage = LocalStepsEnum[feStep];
                     if (feStep === 1) {
                         navigate('/space');

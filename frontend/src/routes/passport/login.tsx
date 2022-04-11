@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { useEffect } from 'react';
 import { dorisAuthProvider } from '@src/components/auths/doris-auth-provider';
+import { useAuth } from '@src/hooks/use-auth';
 export function Login() {
     const [form] = Form.useForm();
     const { t } = useTranslation();
@@ -39,6 +40,9 @@ export function Login() {
             }
         });
     }
+
+    // check should switch to initialize page
+    useAuth();
 
     useEffect(() => {
         const login = dorisAuthProvider.checkLogin();

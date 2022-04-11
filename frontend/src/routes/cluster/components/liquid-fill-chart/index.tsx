@@ -19,7 +19,7 @@ import React from 'react';
 import ReactEChartsCore from 'echarts-for-react/lib/core';
 import * as echarts from 'echarts/core';
 import 'echarts-liquidfill';
-import styles from './index.module.less'
+import styles from './index.module.less';
 
 interface LiquidFillChartProps {
     label?: string;
@@ -39,7 +39,7 @@ export default function LiquidFillChart(props: LiquidFillChartProps) {
                     series: [
                         {
                             type: 'liquidFill',
-                            data: [value],
+                            data: [Number(value) / 100],
                             radius: '150vw',
                             backgroundStyle: {
                                 color: '#fff',
@@ -62,8 +62,8 @@ export default function LiquidFillChart(props: LiquidFillChartProps) {
                             },
                             waveAnimation: false,
                             label: {
-                                formatter: (param: any) => {
-                                    return (param.value * 100).toFixed(2) + '%';
+                                formatter: () => {
+                                    return Number(value).toFixed(2) + '%';
                                 },
                                 fontSize: 25,
                             },

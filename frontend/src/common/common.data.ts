@@ -92,5 +92,5 @@ export const FIRST_COLUMN_FIELD_TYPES = FIELD_TYPES.filter(
 
 export enum AuthTypeEnum {
     LDAP = 'ldap',
-    LOCAL = 'local',
+    STUDIO = 'studio',
 }
