@@ -24,6 +24,7 @@ import org.apache.doris.stack.model.response.construct.NativeQueryResp;
 import org.apache.doris.stack.entity.ClusterInfoEntity;
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.doris.stack.util.CredsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -119,7 +120,7 @@ public class PaloQueryClient extends PaloClient {
     public NativeQueryResp executeSQL(String sql, String ns, String db, ClusterInfoEntity entity) throws Exception {
 
         Statement stmt = jdbcClient.getStatement(entity.getAddress(), entity.getQueryPort(),
-                entity.getUser(), entity.getPasswd(), db);
+                entity.getUser(), CredsUtil.tryAesDecrypt(entity.getPasswd()), db);
         try {
             NativeQueryResp res = executeSql(stmt, sql);
             return res;

@@ -59,6 +59,7 @@ import org.apache.doris.stack.model.response.space.NewUserSpaceInfo;
 import org.apache.doris.stack.service.BaseService;
 import org.apache.doris.stack.service.config.ConfigConstant;
 import org.apache.doris.stack.service.construct.MetadataService;
+import org.apache.doris.stack.util.CredsUtil;
 import org.apache.doris.stack.util.ListUtil;
 import org.apache.doris.stack.util.UuidUtil;
 
@@ -201,6 +202,8 @@ public class DorisManagerUserSpaceComponent extends BaseService {
         log.info("Verify that the Palo cluster is available");
         ClusterInfoEntity entity = new ClusterInfoEntity();
         entity.updateByClusterInfo(createReq);
+        // encrypt passwd
+        entity.setPasswd(CredsUtil.aesEncrypt(entity.getPasswd()));
         // Just verify whether the Doris HTTP interface can be accessed
         try {
             paloLoginClient.loginPalo(entity);
@@ -349,6 +352,7 @@ public class DorisManagerUserSpaceComponent extends BaseService {
         validateCluster(clusterAccessInfo);
 
         clusterInfo.updateByClusterInfo(clusterAccessInfo);
+        clusterInfo.setPasswd(CredsUtil.aesEncrypt(clusterInfo.getPasswd()));
         clusterInfo.setStatus(ClusterInfoEntity.AppClusterStatus.NORMAL.name());
 
         // Initialize the correspondence between permission group and Doris virtual user
@@ -429,7 +433,7 @@ public class DorisManagerUserSpaceComponent extends BaseService {
     private void setClusterStatus(ClusterInfoEntity clusterInfo) {
         try {
             jdbcClient.testConnetion(clusterInfo.getAddress(), clusterInfo.getQueryPort(),
-                    ConstantDef.MYSQL_DEFAULT_SCHEMA, clusterInfo.getUser(), clusterInfo.getPasswd());
+                    ConstantDef.MYSQL_DEFAULT_SCHEMA, clusterInfo.getUser(), CredsUtil.tryAesDecrypt(clusterInfo.getPasswd()));
             clusterInfo.setStatus(ClusterInfoEntity.AppClusterStatus.NORMAL.name());
         } catch (Exception e) {
             clusterInfo.setStatus(ClusterInfoEntity.AppClusterStatus.ABNORMAL.name());
@@ -584,7 +588,7 @@ public class DorisManagerUserSpaceComponent extends BaseService {
         String password = queryClient.createUser(ConstantDef.DORIS_DEFAULT_NS, ConstantDef.MYSQL_DEFAULT_SCHEMA,
                 clusterInfo, userName);
         allUserGroup.setPaloUserName(userName);
-        allUserGroup.setPassword(password);
+        allUserGroup.setPassword(CredsUtil.aesEncrypt(password));
 
         groupRoleRepository.save(allUserGroup);
         log.debug("save palo user for group");

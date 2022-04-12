@@ -34,9 +34,9 @@ import javax.crypto.spec.SecretKeySpec;
 public class CredsUtil {
 
     /**
-    * Encrypt Key
-    * AES must be 128 bits
-    */
+     * Encrypt Key
+     * AES must be 128 bits
+     */
     private static final String ENCRYPT_KEY = "12dfA67887iyW321";
 
     private static final String ALGORITHM_STR = "AES/ECB/PKCS5Padding";
@@ -196,4 +196,17 @@ public class CredsUtil {
         return decryptPassword;
     }
 
+    /**
+     * AES decrypt
+     *
+     * @param encryptStr
+     * @return decrypt string if the encryptStr is de
+     */
+    public static String tryAesDecrypt(String encryptStr) throws Exception {
+        try {
+            return aesDecrypt(encryptStr);
+        } catch (Exception e) {
+            return encryptStr;
+        }
+    }
 }

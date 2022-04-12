@@ -33,6 +33,7 @@ import org.apache.doris.stack.entity.ClusterInfoEntity;
 import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.entity.ResourceNodeEntity;
 import org.apache.doris.stack.model.request.control.DorisClusterModuleResourceConfig;
+import org.apache.doris.stack.util.CredsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -129,7 +130,7 @@ public class DorisClusterTakeOverRequestHandler extends DorisClusterRequestHandl
         List<String> nodeIps = new ArrayList<>();
 
         Statement stmt = jdbcClient.getStatement(clusterInfo.getAddress(), clusterInfo.getQueryPort(),
-                clusterInfo.getUser(), clusterInfo.getPasswd());
+                clusterInfo.getUser(), CredsUtil.aesDecrypt(clusterInfo.getPasswd()));
         Set<String> feNodeIps = jdbcClient.getFeOrBeIps(stmt, "'/frontends';");
         log.debug("The node list IP of Doris cluster Fe is {}", feNodeIps);
 
