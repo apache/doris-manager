@@ -27,6 +27,7 @@ import org.apache.doris.stack.model.palo.PaloResponseEntity;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Maps;
 
+import org.apache.doris.stack.util.CredsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -54,7 +55,7 @@ public class DorisNodesClient extends PaloClient {
         log.debug("Send get doris node list request, url is {}.", url);
         Map<String, String> headers = Maps.newHashMap();
         setHeaders(headers);
-        setAuthHeaders(headers, entity.getUser(), entity.getPasswd());
+        setAuthHeaders(headers, entity.getUser(), CredsUtil.tryAesDecrypt(entity.getPasswd()));
 
         PaloResponseEntity response = poolManager.doGet(url, headers);
         if (response.getCode() != REQUEST_SUCCESS_CODE) {
