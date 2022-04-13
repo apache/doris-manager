@@ -34,10 +34,12 @@ import javax.crypto.spec.SecretKeySpec;
 public class CredsUtil {
 
     /**
-     * Encrypt Key
+     * Default Encrypt Key
      * AES must be 128 bits
      */
-    private static final String ENCRYPT_KEY = "12dfA67887iyW321";
+    private static String encryptKey = "";
+
+    private static final int AES_KEY_STR_LEN = 16;
 
     private static final String ALGORITHM_STR = "AES/ECB/PKCS5Padding";
 
@@ -45,6 +47,14 @@ public class CredsUtil {
 
     private CredsUtil() {
         throw new UnsupportedOperationException();
+    }
+
+    public static void setEncryptKey(String encryptKey) {
+        CredsUtil.encryptKey = encryptKey;
+    }
+
+    public static int getAesKeyStrLen() {
+        return AES_KEY_STR_LEN;
     }
 
     /**
@@ -147,7 +157,7 @@ public class CredsUtil {
         KeyGenerator kgen = KeyGenerator.getInstance("AES");
         kgen.init(128);
         Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
-        cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(ENCRYPT_KEY.getBytes(), "AES"));
+        cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(encryptKey.getBytes(), "AES"));
 
         return cipher.doFinal(content.getBytes("utf-8"));
     }
@@ -176,7 +186,7 @@ public class CredsUtil {
         kgen.init(128);
 
         Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
-        cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(ENCRYPT_KEY.getBytes(), "AES"));
+        cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(encryptKey.getBytes(), "AES"));
         byte[] decryptBytes = cipher.doFinal(encryptBytes);
 
         return new String(decryptBytes);
