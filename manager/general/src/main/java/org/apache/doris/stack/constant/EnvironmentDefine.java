@@ -62,6 +62,9 @@ public class EnvironmentDefine {
     // Data storage connection port environment variable
     public static final String STUDIO_PORT_ENV = "STUDIO_PORT";
 
+    // key used to encrypt password
+    public static final String ENCRYPT_KEY_ENV = "ENCRYPT_KEY";
+
     // spring tomcat waiting queue length
     public static final String WEB_ACCEPT_COUNT_ENV = "WEB_ACCEPT_COUNT";
 

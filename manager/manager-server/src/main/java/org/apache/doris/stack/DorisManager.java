@@ -18,6 +18,7 @@
 package org.apache.doris.stack;
 
 import org.apache.doris.stack.constant.PropertyDefine;
+import org.apache.doris.stack.exception.ConfigItemException;
 import org.apache.doris.stack.util.CommonPropertyUtil;
 import org.apache.doris.stack.util.DeployType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -46,14 +47,14 @@ public class DorisManager extends SpringBootServletInitializer {
         return application.sources(DorisManager.class);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ConfigItemException {
         DorisManager studio = new DorisManager();
         SpringApplicationBuilder builder = getBuilder();
         studio.configure(builder);
         builder.run(args);
     }
 
-    public static SpringApplicationBuilder getBuilder() {
+    public static SpringApplicationBuilder getBuilder() throws ConfigItemException {
         Map<String, Object> properties = CommonPropertyUtil.getProperties();
 
         // Configure the service name. The default is manager
