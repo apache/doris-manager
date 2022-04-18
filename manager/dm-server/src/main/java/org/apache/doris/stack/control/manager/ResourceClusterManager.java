@@ -115,10 +115,6 @@ public class ResourceClusterManager {
                 PMResourceClusterAccessInfo.class);
         // TODO:The path can be set separately for each machine later
         List<ResourceNodeEntity> nodeEntities = nodeRepository.getByResourceClusterId(resourceClusterId);
-        AgentInstallEventConfigInfo configInfo = new AgentInstallEventConfigInfo();
-        configInfo.setSshUser(accessInfo.getSshUser());
-        configInfo.setSshPort(accessInfo.getSshPort());
-        configInfo.setSshKey(accessInfo.getSshKey());
 
         log.debug("check agent port for resource cluster {} all nodes", resourceClusterId);
 
@@ -127,6 +123,11 @@ public class ResourceClusterManager {
         // but it may expose this problem early if the port has been used.
         List<Pair<ResourceNodeEntity, CompletableFuture<Boolean>>> nodeFutures = new ArrayList<>();
         for (ResourceNodeEntity nodeEntity : nodeEntities) {
+            AgentInstallEventConfigInfo configInfo = new AgentInstallEventConfigInfo();
+            configInfo.setSshUser(accessInfo.getSshUser());
+            configInfo.setSshPort(accessInfo.getSshPort());
+            configInfo.setSshKey(accessInfo.getSshKey());
+
             CompletableFuture<Boolean> portCheckFuture = CompletableFuture.supplyAsync(() -> {
                 try {
                     nodeAndAgentManager.checkSshConnect(nodeEntity, configInfo);
@@ -169,6 +170,11 @@ public class ResourceClusterManager {
         log.debug("install agent for resource cluster {} all nodes", resourceClusterId);
         for (ResourceNodeEntity nodeEntity : nodeEntities) {
             log.info("start to install agent to {} node {}", nodeEntity.getId(), nodeEntity.getHost());
+            AgentInstallEventConfigInfo configInfo = new AgentInstallEventConfigInfo();
+            configInfo.setSshUser(accessInfo.getSshUser());
+            configInfo.setSshPort(accessInfo.getSshPort());
+            configInfo.setSshKey(accessInfo.getSshKey());
+
             nodeAndAgentManager.installAgentOperation(nodeEntity, configInfo, requestId);
         }
     }
