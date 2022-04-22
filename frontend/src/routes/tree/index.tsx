@@ -37,6 +37,7 @@ import { isSuccess } from '@src/utils/http';
 const initTreeDate: DataNode[] = [];
 export function MetaBaseTree() {
     const [treeData, setTreeData] = useState(initTreeDate);
+    const [selectedKeys, setSelectedKeys] = useState<string[]>([])
     const [loading, setLoading] = useState(true);
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -61,6 +62,9 @@ export function MetaBaseTree() {
                     });
                 });
                 setTreeData(treeData);
+                const firstItem = database[0] || {}
+                setSelectedKeys([treeData[0].key])
+                navigate(`/meta/database/${firstItem.id}`, { state: { id: firstItem.id, name: firstItem.name } });
             } else {
                 setTreeData([]);
                 message.error(res.msg);
@@ -105,6 +109,7 @@ export function MetaBaseTree() {
     function handleTreeSelect(keys: any[]) {
         if (keys.length > 0) {
             const [storey, db_id, db_name, id, name] = keys[0].split('¥');
+            setSelectedKeys(keys)
             if (storey === '1') {
                 localStorage.setItem('database_id', id);
                 localStorage.setItem('database_name', name);
@@ -120,7 +125,10 @@ export function MetaBaseTree() {
     }
 
     function goHome() {
-        navigate(`/meta`);
+        const firstTreeNode = treeData[0]
+        const [id, name] = firstTreeNode.key.split('¥');
+        setSelectedKeys([firstTreeNode.key])
+        navigate(`/meta/database/${id}`, { state: { id: id, name: name } });
     }
 
     function syncData() {
@@ -144,12 +152,13 @@ export function MetaBaseTree() {
             <h2 className={styles['palo-tree-title']}>
                 <HomeOutlined onClick={goHome} />
                 <span>{t`DataTree`}</span>
-                <SyncOutlined spin={syncLoading} style={{ color: '#1890ff', padding: 0 }} onClick={syncData} />
+                <SyncOutlined spin={syncLoading} title='同步数据' style={{ color: '#1890ff', padding: 0 }} onClick={syncData} />
             </h2>
             <div className={styles['palo-tree-wrapper']}>
                 <Tree
                     showIcon={true}
                     loadData={onLoadData}
+                    selectedKeys={selectedKeys}
                     treeData={treeData}
                     className={styles['palo-side-tree']}
                     onSelect={selectedKeys => handleTreeSelect(selectedKeys)}
