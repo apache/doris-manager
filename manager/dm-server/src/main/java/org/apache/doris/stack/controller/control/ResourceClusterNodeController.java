@@ -20,8 +20,8 @@ package org.apache.doris.stack.controller.control;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.doris.manager.common.heartbeat.HeartBeatEventInfo;
-import org.apache.doris.manager.common.heartbeat.HeartBeatEventResult;
+import org.apache.doris.manager.common.heartbeat.HeartBeatContext;
+import org.apache.doris.manager.common.heartbeat.HeartBeatResult;
 import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.rest.ResponseEntityBuilder;
 import org.apache.doris.stack.service.control.ResourceClusterNodeService;
@@ -38,7 +38,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 @Api(tags = "Resource Cluster Node Agent API")
 @RestController
@@ -51,20 +50,22 @@ public class ResourceClusterNodeController {
     @Autowired
     private ResourceClusterNodeService nodeService;
 
-    @ApiOperation(value = "get node agent heartbeat")
-    @GetMapping(value = "{agentNodeId}/agent/heartbeat", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<HeartBeatEventInfo> getHeartbeat(HttpServletRequest request,
-                                                 HttpServletResponse response,
-                                                 @PathVariable(value = "agentNodeId") long agentNodeId) {
-        return nodeService.getHeartbeat(agentNodeId);
+    @ApiOperation(value = "get heart beat context(node agent heartbeat and instance info)")
+    @GetMapping(value = "{agentNodeId}/agent/context", produces = MediaType.APPLICATION_JSON_VALUE)
+    public HeartBeatContext getHeartbeatContext(HttpServletRequest request,
+                                                HttpServletResponse response,
+                                                @PathVariable(value = "agentNodeId") long agentNodeId) {
+        return nodeService.getHeartBeatContext(agentNodeId);
     }
 
-    @ApiOperation(value = "deal node agent heartbeat event result")
-    @PostMapping(value = "{agentNodeId}/agent/heartbeat", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Object postHeartbeat(HttpServletRequest request,
-                                HttpServletResponse response,
-                                @RequestBody List<HeartBeatEventResult> results) throws Exception {
-        nodeService.dealHeartbeatResult(results);
+    @ApiOperation(value = "deal heart beat context)")
+    @PostMapping(value = "{agentNodeId}/agent/context", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Object postHeartbeatContext(HttpServletRequest request,
+                                                HttpServletResponse response,
+                                                @PathVariable(value = "agentNodeId") long agentNodeId,
+                                                @RequestBody HeartBeatResult ctx) {
+        log.info("agent {} post heartbeat context", agentNodeId);
+        nodeService.dealHeartbeatContext(ctx);
         return "SUCCESS";
     }
 

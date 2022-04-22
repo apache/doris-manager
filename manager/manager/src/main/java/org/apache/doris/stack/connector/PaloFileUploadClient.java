@@ -30,6 +30,7 @@ import org.apache.doris.stack.exception.HdfsUrlException;
 import org.apache.doris.stack.exception.PaloRequestException;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.doris.stack.util.CredsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -68,7 +69,7 @@ public class PaloFileUploadClient extends PaloClient {
         headers.put("Content-Type", contentType);
         String[] array = contentType.split(";");
         String[] boundary = array[1].split("=");
-        setAuthHeaders(headers, entity.getUser(), entity.getPasswd());
+        setAuthHeaders(headers, entity.getUser(), CredsUtil.tryAesDecrypt(entity.getPasswd()));
 
         PaloResponseEntity response = poolManager.uploadFile(url, file, headers, otherParams, boundary[1]);
 
@@ -102,7 +103,7 @@ public class PaloFileUploadClient extends PaloClient {
         Map<String, String> headers = Maps.newHashMap();
         setHeaders(headers);
         setPostHeaders(headers);
-        setAuthHeaders(headers, entity.getUser(), entity.getPasswd());
+        setAuthHeaders(headers, entity.getUser(), CredsUtil.tryAesDecrypt(entity.getPasswd()));
         headers.put("label", importReq.getName());
 
         StringBuffer columnNameBuffer = new StringBuffer();
@@ -145,7 +146,7 @@ public class PaloFileUploadClient extends PaloClient {
 
         Map<String, String> headers = Maps.newHashMap();
         setHeaders(headers);
-        setAuthHeaders(headers, entity.getUser(), entity.getPasswd());
+        setAuthHeaders(headers, entity.getUser(), CredsUtil.tryAesDecrypt(entity.getPasswd()));
         PaloResponseEntity response = poolManager.doDelete(url, headers);
         if (response.getCode() != REQUEST_SUCCESS_CODE) {
             log.error("delete file error:" + response.getData());
@@ -164,7 +165,7 @@ public class PaloFileUploadClient extends PaloClient {
         Map<String, String> headers = Maps.newHashMap();
         setHeaders(headers);
         setPostHeaders(headers);
-        setAuthHeaders(headers, entity.getUser(), entity.getPasswd());
+        setAuthHeaders(headers, entity.getUser(), CredsUtil.tryAesDecrypt(entity.getPasswd()));
 
         PaloResponseEntity response = poolManager.doPost(url, headers, req);
         if (response.getCode() != REQUEST_SUCCESS_CODE) {

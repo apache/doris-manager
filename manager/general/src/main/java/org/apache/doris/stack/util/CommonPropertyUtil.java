@@ -20,6 +20,7 @@ package org.apache.doris.stack.util;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.doris.stack.constant.EnvironmentDefine;
 import org.apache.doris.stack.constant.PropertyDefine;
+import org.apache.doris.stack.exception.ConfigItemException;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
@@ -49,6 +50,8 @@ public class CommonPropertyUtil {
     private static final String DB_HOST = System.getenv(EnvironmentDefine.DB_HOST_ENV);
 
     private static final String STUDIO_PORT = System.getenv(EnvironmentDefine.STUDIO_PORT_ENV);
+
+    private static final String ENCRYPT_KEY = System.getenv(EnvironmentDefine.ENCRYPT_KEY_ENV);
 
     private static final String NGINX_PORT = System.getenv(EnvironmentDefine.NGINX_PORT_ENV);
 
@@ -88,7 +91,7 @@ public class CommonPropertyUtil {
 
     private static final String LOG_PATH = System.getenv(EnvironmentDefine.LOG_PATH_ENV);
 
-    public static Map<String, Object> getProperties() {
+    public static Map<String, Object> getProperties() throws ConfigItemException {
         Map<String, Object> properties = new HashMap<>();
         // log path configuration
 
@@ -101,6 +104,17 @@ public class CommonPropertyUtil {
             properties.put(PropertyDefine.SERVER_PORT_PROPERTY, 8080);
         } else {
             properties.put(PropertyDefine.SERVER_PORT_PROPERTY, STUDIO_PORT);
+        }
+
+        if (ENCRYPT_KEY == null || ENCRYPT_KEY.isEmpty()) {
+            log.error("config item [ENCRYPT_KEY] is not set");
+            throw new ConfigItemException("config item [ENCRYPT_KEY] is not set");
+        } else if (ENCRYPT_KEY.length() != CredsUtil.getAesKeyStrLen()) {
+            log.error("encrypt key {} string length is not {}", ENCRYPT_KEY, CredsUtil.getAesKeyStrLen());
+            throw new ConfigItemException("config item [ENCRYPT_KEY] is not correct");
+        } else {
+            log.debug("set encrypt key: " + ENCRYPT_KEY);
+            CredsUtil.setEncryptKey(ENCRYPT_KEY);
         }
 
         // Nginx service port configuration

@@ -17,6 +17,10 @@
 
 package org.apache.doris.manager.common.util;
 
+import com.google.common.collect.Maps;
+
+import java.util.Map;
+
 public class ServerAndAgentConstant {
 
     private ServerAndAgentConstant() {
@@ -34,6 +38,7 @@ public class ServerAndAgentConstant {
 
     // The path of borker module initialization when the installation package is downloaded
     public static final String BROKER_INIT_SUB_DIR = "apache_hdfs_broker";
+    public static final String BAIDU_BROKER_INIT_SUB_DIR = "baidu_doris_broker";
 
     public static final String DORIS_INSTALL_HOME_EVN = "DORIS_INSTALL_HOME";
     public static final String DORIS_PACKAGE_URL_ENV = "DORIS_PACKAGE_URL";
@@ -41,6 +46,7 @@ public class ServerAndAgentConstant {
     public static final String FE_PID_FILE = "fe.pid";
     public static final String BE_PID_FILE = "be.pid";
     public static final String BROKER_PID_FILE = "apache_hdfs_broker.pid";
+    public static final String BAIDU_BROKER_PID_FILE = "baidu_doris_broker.pid";
 
     public static final String FE_PID_NAME = "PaloFe";
     public static final String BE_PID_NAME = "palo_be";
@@ -57,6 +63,7 @@ public class ServerAndAgentConstant {
     public static final String FE_CONF_FILE = "fe.conf";
     public static final String BE_CONF_FILE = "be.conf";
     public static final String BROKER_CONF_FILE = "apache_hdfs_broker.conf";
+    public static final String BAIDU_BROKER_CONF_FILE = "baidu_doris_broker.conf";
 
     public static final String PACKAGE_DOWNLOAD_SCRIPT = "download_doris.sh";
 
@@ -66,6 +73,22 @@ public class ServerAndAgentConstant {
     public static final String FE_EDIT_SERVICE = "fe_edit";
 
     public static final String BE_HEARTBEAT_SERVICE = "be_heartbeat";
+    public static final String BE_HTTP_SERVICE = "be_http";
+
     public static final String BROKER_PRC_SERVICE = "broker_rpc";
+
+    public static final Map<String, String> BAIDU_BROKER_CONFIG_DEDAULT;
+
+    static {
+        BAIDU_BROKER_CONFIG_DEDAULT = Maps.newHashMap();
+        BAIDU_BROKER_CONFIG_DEDAULT.put("afs_filesystem_impl", "org.apache.hadoop.fs.DFileSystem");
+        BAIDU_BROKER_CONFIG_DEDAULT.put("hdfs_filesystem_impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+        BAIDU_BROKER_CONFIG_DEDAULT.put("bos_filesystem_impl", "org.apache.hadoop.fs.bos.BaiduBosFileSystem");
+        BAIDU_BROKER_CONFIG_DEDAULT.put("afs_agent_port", "20001");
+        BAIDU_BROKER_CONFIG_DEDAULT.put("hdfs_agent_port", "20002");
+        BAIDU_BROKER_CONFIG_DEDAULT.put("afs_client_auth_method", "3");
+        BAIDU_BROKER_CONFIG_DEDAULT.put("hdfs_client_auth_method", "2");
+        BAIDU_BROKER_CONFIG_DEDAULT.put("bos_client_auth_method", "2");
+    }
 
 }

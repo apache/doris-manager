@@ -15,11 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useContext, useEffect, useLayoutEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { PageContainer } from '@ant-design/pro-layout';
-import ProCard from '@ant-design/pro-card';
-import { Button, message, Row, Space, Steps, Table, Tabs } from 'antd';
-import { useHistory, useRouteMatch } from 'react-router';
+import { message, Steps, Table, Tabs } from 'antd';
 import TabPane from '@ant-design/pro-card/lib/components/TabPane';
 import { isSuccess } from '@src/utils/http';
 import { NewSpaceInfoContext } from '@src/common/common.context';
@@ -30,19 +28,20 @@ import { IResult } from '@src/interfaces/http.interface';
 import { OperateStatusEnum } from '@src/routes/space/space.data';
 import { useRecoilState } from 'recoil';
 import { stepDisabledState } from '../../access-cluster.recoil';
+import { LoadingOutlined } from '@ant-design/icons';
 const Step = Steps.Step;
+
+const ERROR_STATUS = [OperateStatusEnum.FAIL, OperateStatusEnum.CANCEL];
 
 export function ClusterVerify(props: any) {
     const [activeKey, setActiveKey] = useState(DorisNodeTypeEnum.FE);
-    const {reqInfo} = useContext(NewSpaceInfoContext);
-    const match = useRouteMatch<{spaceId: string}>();
+    const { reqInfo } = useContext(NewSpaceInfoContext);
     const [instance, setInstance] = useState([]);
     const [nodeTypes, setNodeTypes] = useState<any[]>([]);
     const [feNodes, setFENodes] = useState([]);
     const [beNodes, setBENodes] = useState([]);
     const [brokerNodes, setBrokerNodes] = useState([]);
     const [stepDisabled, setStepDisabled] = useRecoilState(stepDisabledState);
-
 
     const columns = [
         {
@@ -60,16 +59,25 @@ export function ClusterVerify(props: any) {
             key: 'operateStatus',
             render: (record: any) => {
                 return (
-                    <Steps progressDot current={record.operateStage - 1} percent={60} size="small" style={{marginLeft: -50}} status={OperateStatusEnum.getStepStatus(record.operateStatus)}>
-                        <Step style={{width: 80}} />
+                    <Steps
+                        progressDot={(iconDot, { status }) => {
+                            if (status === 'process') return <LoadingOutlined style={{ color: '#1890ff' }} />;
+                            return iconDot;
+                        }}
+                        current={record.operateStage - 1}
+                        size="small"
+                        style={{ marginLeft: -50 }}
+                        status={OperateStatusEnum.getStepStatus(record.operateStatus)}
+                    >
+                        <Step style={{ width: 80 }} />
                     </Steps>
-                )
-            }
+                );
+            },
         },
     ];
     const getClusterInstance = useRequest<IResult<any>, any>(
         (clusterId: string) => {
-            return SpaceAPI.getClusterInstance<any>({clusterId});
+            return SpaceAPI.getClusterInstance<any>({ clusterId });
         },
         {
             manual: true,
@@ -81,28 +89,38 @@ export function ClusterVerify(props: any) {
                     const types = [];
                     const feNodes = res.data.filter(item => item.moduleName?.toUpperCase() === DorisNodeTypeEnum.FE);
                     const beNodes = res.data.filter(item => item.moduleName?.toUpperCase() === DorisNodeTypeEnum.BE);
-                    const brokerNodes = res.data.filter(item => item.moduleName?.toUpperCase() === DorisNodeTypeEnum.BROKER);
+                    const brokerNodes = res.data.filter(
+                        (item: any) => item.moduleName?.toUpperCase() === DorisNodeTypeEnum.BROKER,
+                    );
                     setFENodes(feNodes);
                     setBENodes(beNodes);
                     setBrokerNodes(brokerNodes);
                     if (feNodes.length > 0) {
-                        types.push({key: DorisNodeTypeEnum.FE, tab: 'FE节点', moduleName: DorisNodeTypeEnum.FE });
+                        types.push({ key: DorisNodeTypeEnum.FE, tab: 'FE节点', moduleName: DorisNodeTypeEnum.FE });
                     }
                     if (beNodes.length > 0) {
-                        types.push({key: DorisNodeTypeEnum.BE, tab: 'BE节点', moduleName: DorisNodeTypeEnum.BE });
+                        types.push({ key: DorisNodeTypeEnum.BE, tab: 'BE节点', moduleName: DorisNodeTypeEnum.BE });
                     }
                     if (brokerNodes.length > 0) {
-                        types.push({key: DorisNodeTypeEnum.BROKER, tab: 'Broker节点', moduleName: DorisNodeTypeEnum.BROKER });
+                        types.push({
+                            key: DorisNodeTypeEnum.BROKER,
+                            tab: 'Broker节点',
+                            moduleName: DorisNodeTypeEnum.BROKER,
+                        });
                     }
                     setNodeTypes(types);
+                    const failedInstance = data.find(item => ERROR_STATUS.includes(item.operateStatus));
+                    if (failedInstance) {
+                        message.error(failedInstance.operateResult);
+                    }
                     const CANCEL_STATUS = [OperateStatusEnum.PROCESSING, OperateStatusEnum.INIT];
                     if (data.filter(item => CANCEL_STATUS.includes(item.operateStatus)).length === 0) {
                         getClusterInstance.cancel();
                     }
                     if (data.filter(item => item.operateStatus !== OperateStatusEnum.SUCCESS).length > 0) {
-                        setStepDisabled({...stepDisabled, next: true});
+                        setStepDisabled({ ...stepDisabled, next: true });
                     } else {
-                        setStepDisabled({...stepDisabled, next: false});
+                        setStepDisabled({ ...stepDisabled, next: false });
                     }
                 }
             },
@@ -115,14 +133,11 @@ export function ClusterVerify(props: any) {
         },
     );
 
-
     useEffect(() => {
         if (reqInfo.cluster_id) {
-            console.log(reqInfo.cluster_id)
             getClusterInstance.run(reqInfo.cluster_id);
         }
     }, [reqInfo.cluster_id]);
-
 
     return (
         <PageContainer
@@ -132,18 +147,13 @@ export function ClusterVerify(props: any) {
         >
             <Tabs activeKey={activeKey} onChange={(key: any) => setActiveKey(key)} type="card">
                 {nodeTypes.map(item => (
-                    <TabPane tab={item.tab} key={item.key}>
-                    </TabPane>
+                    <TabPane tab={item.tab} key={item.key}></TabPane>
                 ))}
             </Tabs>
-            {activeKey === DorisNodeTypeEnum.FE && (
-                 <Table columns={columns} dataSource={feNodes} rowKey="instanceId" />
-            )}
-            {activeKey === DorisNodeTypeEnum.BE && (
-                 <Table columns={columns} dataSource={beNodes} rowKey="instanceId" />
-            )}
+            {activeKey === DorisNodeTypeEnum.FE && <Table columns={columns} dataSource={feNodes} rowKey="instanceId" />}
+            {activeKey === DorisNodeTypeEnum.BE && <Table columns={columns} dataSource={beNodes} rowKey="instanceId" />}
             {activeKey === DorisNodeTypeEnum.BROKER && (
-                 <Table columns={columns} dataSource={brokerNodes} rowKey="instanceId" />
+                <Table columns={columns} dataSource={brokerNodes} rowKey="instanceId" />
             )}
         </PageContainer>
     );

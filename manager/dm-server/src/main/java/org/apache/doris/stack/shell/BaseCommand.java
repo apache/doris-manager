@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -32,25 +33,55 @@ import java.util.stream.Collectors;
 public abstract class BaseCommand {
 
     protected String[] resultCommand;
+    protected String stdoutResponse;
     protected String errorResponse;
+    protected int exitCode;
 
     protected abstract void buildCommand();
+
+    public String getStdoutResponse() {
+        return this.stdoutResponse;
+    }
 
     public String getErrorResponse() {
         return this.errorResponse;
     }
 
+    public int getExitCode() {
+        return this.exitCode;
+    }
+
     public boolean run() {
+        return run(0);
+    }
+
+    public boolean run(long timeoutMs) {
         buildCommand();
-        log.info("run command: {}", StringUtils.join(resultCommand, " "));
+        log.info("run command: {} ,timeout time: {}ms", StringUtils.join(resultCommand, " "), timeoutMs);
         ProcessBuilder pb = new ProcessBuilder(resultCommand);
         Process process = null;
-        BufferedReader bufferedReader = null;
+        BufferedReader stdoutBufferedReader = null;
+        BufferedReader errorBufferedReader = null;
         try {
             process = pb.start();
-            bufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            errorResponse = bufferedReader.lines().parallel().collect(Collectors.joining(System.lineSeparator()));
-            final int exitCode = process.waitFor();
+            stdoutBufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            errorBufferedReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
+            stdoutResponse = stdoutBufferedReader.lines().parallel().collect(Collectors.joining(System.lineSeparator()));
+            errorResponse = errorBufferedReader.lines().parallel().collect(Collectors.joining(System.lineSeparator()));
+
+            if (timeoutMs <= 0) {
+                exitCode = process.waitFor();
+            } else {
+                boolean isExit = process.waitFor(timeoutMs, TimeUnit.MICROSECONDS);
+                if (!isExit) {
+                    exitCode = 124; // the same as timeout command
+                    log.error("command run timeout in {}ms", timeoutMs);
+                    return false;
+                }
+                exitCode = process.exitValue();
+            }
+
             if (exitCode == 0) {
                 return true;
             } else {
@@ -65,8 +96,11 @@ public abstract class BaseCommand {
                 process.destroy();
             }
             try {
-                if (bufferedReader != null) {
-                    bufferedReader.close();
+                if (stdoutBufferedReader != null) {
+                    stdoutBufferedReader.close();
+                }
+                if (errorBufferedReader != null) {
+                    errorBufferedReader.close();
                 }
             } catch (IOException e) {
                 log.error("close buffered reader fail");

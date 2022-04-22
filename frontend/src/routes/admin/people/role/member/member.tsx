@@ -22,23 +22,24 @@ import { useRoleMember } from '@src/hooks/use-roles.hooks';
 import { useSpaceUsers } from '@src/hooks/use-users.hooks';
 import { isSuccess } from '@src/utils/http';
 import { showName } from '@src/utils/utils';
-import { Button, Table, Modal, Form, Select, message, Row } from 'antd';
+import { Table, Modal, Form, Select, message, Row } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { ColumnsType } from 'antd/lib/table';
-import React, { useContext, useState } from 'react';
+import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRouteMatch } from 'react-router';
 import { RoleAPI } from '../role.api';
 import commonStyles from '../../people.less';
+import { useMatch } from 'react-router';
 
-export function RoleMembers(props: any) {
+export function RoleMembers() {
     const { t } = useTranslation();
-    const match = useRouteMatch<{ roleId: string }>();
+    const match = useMatch('admin/people/role/:roleId');
+    const roleId = match?.params.roleId as string;
     const { users } = useSpaceUsers();
-    const { members, getRoleMembers, loading } = useRoleMember(match.params.roleId);
+    const { members, getRoleMembers, loading } = useRoleMember(roleId);
     const [visible, setVisible] = useState(false);
     const [confirmLoading, setConfirmLoading] = useState(false);
-    const userInfo = useContext(UserInfoContext)!;
+    const userInfo = useContext(UserInfoContext);
     const [form] = useForm();
     const isAllUser = members?.name.includes('All Users');
     const { confirm } = Modal;
@@ -72,7 +73,7 @@ export function RoleMembers(props: any) {
                 const forbiddenEditRole =
                     members.name === 'All Users_1' ||
                     (members.name === 'Administrators_1' && members?.members.length <= 1) ||
-                    userInfo.name === record.name;
+                    userInfo?.name === record.name;
                 return (
                     <FlatBtn disabled={forbiddenEditRole} onClick={() => handleDelete(record)}>
                         {t`remove`}
@@ -86,7 +87,7 @@ export function RoleMembers(props: any) {
         setConfirmLoading(true);
         const res = await RoleAPI.addMember({
             user_ids: values.user,
-            group_id: +match.params.roleId,
+            group_id: +roleId,
         });
         setConfirmLoading(false);
         if (isSuccess(res)) {
@@ -125,7 +126,7 @@ export function RoleMembers(props: any) {
         <>
             <Row justify="space-between" style={{ marginBottom: 20 }}>
                 <span style={{ fontWeight: 700, fontSize: 20 }}>{showName(members?.name)}</span>
-                <Button
+                {/* <Button
                     key="1"
                     type="primary"
                     onClick={() => {
@@ -133,7 +134,7 @@ export function RoleMembers(props: any) {
                     }}
                 >
                     {t`addMembers`}
-                </Button>
+                </Button> */}
             </Row>
             <Table
                 pagination={false}

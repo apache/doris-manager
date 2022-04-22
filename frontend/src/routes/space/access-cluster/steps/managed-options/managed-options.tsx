@@ -20,11 +20,12 @@ import React, { useContext, useEffect } from 'react';
 import ProCard from '@ant-design/pro-card';
 import { NewSpaceInfoContext } from '@src/common/common.context';
 import TextArea from 'antd/lib/input/TextArea';
+import styles from './index.module.less';
 
 export function ManagedOptions(props: any) {
     const { form, reqInfo } = useContext(NewSpaceInfoContext);
     useEffect(() => {
-        form.setFieldsValue({...reqInfo.authInfo});
+        form.setFieldsValue({ ...reqInfo.authInfo });
     }, [reqInfo.cluster_id]);
     return (
         <ProCard title={<h2>托管选项</h2>} headerBordered>
@@ -62,15 +63,20 @@ export function ManagedOptions(props: any) {
             <Form
                 form={form}
                 name="basic"
-                labelCol={{ span: 2 }}
-                wrapperCol={{ span: 10 }}
                 initialValues={{
                     installInfo: reqInfo.installInfo,
                 }}
                 autoComplete="off"
             >
                 <Form.Item label="安装路径" name="installInfo" rules={[{ required: true, message: '请输入安装路径' }]}>
-                    <Input />
+                    <Input className={styles.input} />
+                </Form.Item>
+                <Form.Item
+                    label="Agent启动端口"
+                    name="agentPort"
+                    rules={[{ required: true, message: '请输入Agent启动端口' }]}
+                >
+                    <Input className={styles.input} />
                 </Form.Item>
             </Form>
         </ProCard>

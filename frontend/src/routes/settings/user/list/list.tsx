@@ -106,7 +106,10 @@ export function UserList() {
                             {t`edit`}
                         </FlatBtn>
 
-                        <FlatBtn onClick={() => handleResetPassword(record)}>{t`resetPassword`}</FlatBtn>
+                        <FlatBtn
+                            onClick={() => handleResetPassword(record)}
+                            disabled={disabled}
+                        >{t`resetPassword`}</FlatBtn>
 
                         <FlatBtn onClick={() => toggleActivate(record)} disabled={disabled}>
                             {record.is_active ? t`deactivateUser` : t`activateUser`}

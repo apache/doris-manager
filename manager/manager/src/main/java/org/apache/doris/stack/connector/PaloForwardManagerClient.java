@@ -28,6 +28,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONException;
 import com.google.common.collect.Maps;
 
+import org.apache.doris.stack.util.CredsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -50,7 +51,7 @@ public class PaloForwardManagerClient extends PaloClient {
 
         Map<String, String> headers = Maps.newHashMap();
         setHeaders(headers);
-        setAuthHeaders(headers, entity.getUser(), entity.getPasswd());
+        setAuthHeaders(headers, entity.getUser(), CredsUtil.tryAesDecrypt(entity.getPasswd()));
         PaloResponseEntity response;
         try {
             response = poolManager.doGet(url, headers);
@@ -69,7 +70,7 @@ public class PaloForwardManagerClient extends PaloClient {
 
         Map<String, String> headers = Maps.newHashMap();
         setHeaders(headers);
-        setAuthHeaders(headers, entity.getUser(), entity.getPasswd());
+        setAuthHeaders(headers, entity.getUser(), CredsUtil.tryAesDecrypt(entity.getPasswd()));
         headers.put("Content-Type", "application/json");
         PaloResponseEntity response;
         try {
@@ -83,11 +84,11 @@ public class PaloForwardManagerClient extends PaloClient {
         return ResponseEntityBuilder.ok(JSON.parse(response.getData()));
     }
 
-    public boolean doesFeMonitorExist(ClusterInfoEntity entity) {
+    public boolean doesFeMonitorExist(ClusterInfoEntity entity) throws Exception {
         String url = "http://" + entity.getAddress() + ":" + entity.getHttpPort() + FE_MONITOR_CHECK_API;
         Map<String, String> headers = Maps.newHashMap();
         setHeaders(headers);
-        setAuthHeaders(headers, entity.getUser(), entity.getPasswd());
+        setAuthHeaders(headers, entity.getUser(), CredsUtil.tryAesDecrypt(entity.getPasswd()));
         PaloResponseEntity response;
         try {
             response = poolManager.doGet(url, headers);

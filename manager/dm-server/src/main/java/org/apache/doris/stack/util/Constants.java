@@ -19,6 +19,9 @@ package org.apache.doris.stack.util;
 
 public class Constants {
     public static final String KEY_DORIS_AGENT_START_SCRIPT = "bin/agent_start.sh";
+    public static final String KEY_DORIS_AGENT_STOP_SCRIPT = "bin/agent_stop.sh";
+
+    public static final String KEY_DORIS_AGENT_CONFIG_PATH = "config/application.properties";
     public static final String KEY_FE_QUERY_PORT = "query_port";
     public static final String KEY_FE_EDIT_LOG_PORT = "edit_log_port";
     public static final String KEY_BE_HEARTBEAT_PORT = "heartbeat_service_port";

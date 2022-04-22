@@ -19,8 +19,8 @@ package org.apache.doris.manager.agent.util;
 
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.doris.manager.common.heartbeat.HeartBeatEventInfo;
-import org.apache.doris.manager.common.heartbeat.HeartBeatEventResult;
+import org.apache.doris.manager.common.heartbeat.HeartBeatContext;
+import org.apache.doris.manager.common.heartbeat.HeartBeatResult;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -35,29 +35,34 @@ import org.apache.http.util.EntityUtils;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
 public class Request {
+    public static HeartBeatContext getHeartBeatContext(String requestUrl) {
+        String ctx = null;
 
-    public static List<HeartBeatEventInfo> getHeartBeatEventInfo(String requestUrl) {
-        String getHeartBeatEventResults = sendGetRequest(requestUrl, new HashMap<>());
-        log.info("getHeartBeatEventResults:" + getHeartBeatEventResults);
-//        ManagerServerResponse response = JSON.parseObject(getHeartBeatEventResults, ManagerServerResponse.class);
-        if (getHeartBeatEventResults == null) {
-            return new ArrayList<>();
+        try {
+            ctx = sendGetRequest(requestUrl, new HashMap<>());
+            log.info("getHeartBeatContextResults:" + ctx);
+        } catch (Exception e) {
+            log.error("get heartbeat context error {}", e.getMessage());
         }
-        return JSON.parseArray(getHeartBeatEventResults, HeartBeatEventInfo.class);
+
+        if (ctx == null) {
+            log.warn("no context return");
+            return new HeartBeatContext();
+        }
+        return JSON.parseObject(ctx, HeartBeatContext.class);
     }
 
-    public static void sendHeartBeatEventResult(String requestUrl, List<HeartBeatEventResult> results) {
-       sendPostRequest(requestUrl, JSON.toJSONString(results));
+    public static String sendHeartBeatContextResult(String requestUrl, HeartBeatResult res) throws IOException {
+        log.info("send heart beat context result {} to {}", JSON.toJSONString(res), requestUrl);
+        return sendPostRequest(requestUrl, JSON.toJSONString(res));
     }
 
-    public static String sendPostRequest(String requestUrl, String bodyJson) {
+    public static String sendPostRequest(String requestUrl, String bodyJson) throws IOException {
         HttpPost httpPost = new HttpPost(requestUrl);
         httpPost.setConfig(timeout());
 
@@ -68,7 +73,7 @@ public class Request {
             return request(httpPost);
         } catch (IOException e) {
             log.error("request url error:{},param:{}", requestUrl, bodyJson, e);
-            throw new RuntimeException(e);
+            throw e;
         }
     }
 
@@ -87,7 +92,8 @@ public class Request {
         }
     }
 
-    public static String sendGetRequest(String requestUrl, Map<String, Object> params) {
+    public static String sendGetRequest(String requestUrl, Map<String, Object> params)
+            throws URISyntaxException, IOException {
         URI url = null;
         try {
             URIBuilder uriBuilder = null;
@@ -97,7 +103,8 @@ public class Request {
             }
             url = uriBuilder.build();
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            log.error("{} syntax error {}", requestUrl, e.getMessage());
+            throw e;
         }
 
         HttpGet httpGet = new HttpGet(url);
@@ -107,7 +114,7 @@ public class Request {
             return request(httpGet);
         } catch (IOException e) {
             log.error("request url error:{},param:{}", requestUrl, params, e);
-            throw new RuntimeException(e);
+            throw e;
         }
     }
 

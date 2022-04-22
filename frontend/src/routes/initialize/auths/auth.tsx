@@ -15,18 +15,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React from "react";
-import { Redirect, Route, Switch, useRouteMatch } from "react-router";
-import { AuthLDAP } from "./ldap/ldap";
-import { AuthStudio } from "./studio/studio";
+import { Navigate, Route, Routes } from 'react-router';
+import { AuthLocal } from './local/local';
 
-export function InitializeAuth(props: any) {
-    const match = useRouteMatch();
+export function InitializeAuth() {
     return (
-        <Switch>
-            <Route path={`${match.path}/ldap`} component={AuthLDAP} />
-            <Route path={`${match.path}/studio`} component={AuthStudio} />
-            <Redirect to={`${match.path}/studio`} />
-        </Switch>
-    )
+        <>
+            <Routes>
+                <Route path="studio/*" element={<AuthLocal />} />
+                <Route path="/" element={<Navigate replace to="studio" />} />
+            </Routes>
+        </>
+    );
 }

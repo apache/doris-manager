@@ -75,7 +75,6 @@ public class ClusterInfoEntity {
 
     /**
      * Doris user password
-     * TODO:The subsequent storage shall be encrypted to prevent the leakage of password information
      */
     @Column(length = 100)
     private String passwd;

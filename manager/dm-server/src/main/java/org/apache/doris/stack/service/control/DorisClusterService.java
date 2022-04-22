@@ -55,7 +55,6 @@ import org.apache.doris.stack.model.response.control.ClusterModuleInfo;
 import org.apache.doris.stack.model.response.control.ResourceNodeInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,7 +102,6 @@ public class DorisClusterService {
     @Autowired
     private ClusterUserComponent userComponent;
 
-    @Transactional
     public ModelControlResponse creation(CoreUserEntity user, DorisClusterCreationReq creationReq) throws Exception {
         log.info("Rquest info is {}", JSON.toJSON(creationReq));
 
@@ -118,7 +116,6 @@ public class DorisClusterService {
         return response;
     }
 
-    @Transactional
     public ModelControlResponse takeOver(CoreUserEntity user, DorisClusterTakeOverReq takeOverReq) throws Exception {
         log.info("Rquest info is {}", JSON.toJSON(takeOverReq));
         DorisClusterTakeOverRequest request = new DorisClusterTakeOverRequest();
@@ -301,7 +298,7 @@ public class DorisClusterService {
         } else if (moduleName.equals(ServerAndAgentConstant.FE_NAME)) {
             for (String key : ConfigDefault.FE_CONFIG_DEDAULT.keySet()) {
                 DeployConfigItem configItem = new DeployConfigItem();
-                String value = ConfigDefault.BE_CONFIG_DEDAULT.get(key);
+                String value = ConfigDefault.FE_CONFIG_DEDAULT.get(key);
                 if (key.equals(ConfigDefault.FE_LOG_CONFIG_NAME) || key.equals(ConfigDefault.FE_META_CONFIG_NAME)) {
                     value = installInfo + "/" + ServerAndAgentConstant.FE_NAME + value;
                 }
@@ -313,7 +310,7 @@ public class DorisClusterService {
         } else {
             for (String key : ConfigDefault.BROKER_CONFIG_DEDAULT.keySet()) {
                 DeployConfigItem configItem = new DeployConfigItem();
-                String value = ConfigDefault.BE_CONFIG_DEDAULT.get(key);
+                String value = ConfigDefault.BROKER_CONFIG_DEDAULT.get(key);
                 configItem.setKey(key);
                 configItem.setValue(value);
 

@@ -24,6 +24,7 @@ import org.apache.doris.stack.entity.ClusterInfoEntity;
 import org.apache.doris.stack.exception.PaloRequestException;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.doris.stack.util.CredsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -55,7 +56,7 @@ public class PaloMetaInfoClient extends PaloClient {
         log.debug("Send get database list request, url is {}.", url);
         Map<String, String> headers = Maps.newHashMap();
         setHeaders(headers);
-        setAuthHeaders(headers, entity.getUser(), entity.getPasswd());
+        setAuthHeaders(headers, entity.getUser(), CredsUtil.tryAesDecrypt(entity.getPasswd()));
         PaloResponseEntity response = poolManager.doGet(url, headers);
         if (response.getCode() != REQUEST_SUCCESS_CODE) {
             throw new PaloRequestException("Get Database list by ns error.");
@@ -92,7 +93,7 @@ public class PaloMetaInfoClient extends PaloClient {
         log.debug("Send get table list request, url is {}.", url);
         Map<String, String> headers = Maps.newHashMap();
         setHeaders(headers);
-        setAuthHeaders(headers, entity.getUser(), entity.getPasswd());
+        setAuthHeaders(headers, entity.getUser(), CredsUtil.tryAesDecrypt(entity.getPasswd()));
 
         PaloResponseEntity response = poolManager.doGet(url, headers);
         if (response.getCode() != REQUEST_SUCCESS_CODE) {
@@ -102,7 +103,7 @@ public class PaloMetaInfoClient extends PaloClient {
     }
 
     public TableSchemaInfo.TableSchema getTableBaseSchema(String ns, String db, String table,
-                                          ClusterInfoEntity entity) throws Exception {
+                                                          ClusterInfoEntity entity) throws Exception {
         TableSchemaInfo result = getTableSchema(ns, db, table, entity);
         TableSchemaInfo.TableSchema tableSchema = result.getSchemaInfo().getSchemaMap().get(table);
         return tableSchema;
@@ -131,7 +132,7 @@ public class PaloMetaInfoClient extends PaloClient {
         log.debug("Send get table schema request, url is {}.", url);
         Map<String, String> headers = Maps.newHashMap();
         setHeaders(headers);
-        setAuthHeaders(headers, entity.getUser(), entity.getPasswd());
+        setAuthHeaders(headers, entity.getUser(), CredsUtil.tryAesDecrypt(entity.getPasswd()));
 
         PaloResponseEntity response = poolManager.doGet(url, headers);
         if (response.getCode() != REQUEST_SUCCESS_CODE) {

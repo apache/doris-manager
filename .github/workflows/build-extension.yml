@@ -37,7 +37,10 @@ jobs:
       with:
         distribution: adopt
         java-version: '8'
-
+    - name: Setup NodeJS
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'
     - name: Setup thrift
       run: |
         sudo apt-get update
@@ -45,5 +48,7 @@ jobs:
         thrift --version
         touch custom_env.sh
         echo 'export THRIFT_BIN=/usr/bin/thrift' >> custom_env.sh
+    - name: Build Application
+      run: /bin/bash build.sh
 
 

@@ -33,6 +33,7 @@ import org.apache.doris.stack.entity.ClusterInfoEntity;
 import org.apache.doris.stack.entity.CoreUserEntity;
 import org.apache.doris.stack.entity.ResourceNodeEntity;
 import org.apache.doris.stack.model.request.control.DorisClusterModuleResourceConfig;
+import org.apache.doris.stack.util.CredsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -85,6 +86,7 @@ public class DorisClusterTakeOverRequestHandler extends DorisClusterRequestHandl
 
     @Override
     public long initRequestModel(DorisClusterRequest request, String creator) throws Exception {
+        log.info("init doris cluster, create cluster user space");
         DorisClusterTakeOverRequest takeOverRequest = (DorisClusterTakeOverRequest) request;
         return dorisClusterManager.initOperation(takeOverRequest.getReqInfo().getSpaceInfo(), creator);
     }
@@ -94,7 +96,9 @@ public class DorisClusterTakeOverRequestHandler extends DorisClusterRequestHandl
                                                                DorisClusterTakeOverRequest request,
                                                                boolean isInit) throws Exception {
         long clusterId = request.getClusterId();
+        log.info("handle take over cluster {} CREATE_CLUSTER_SPACE request {} event", clusterId, request.getRequestId());
         if (!isInit) {
+            log.info("The cluster user space already exist, update info.");
             dorisClusterManager.updateClusterOperation(user, clusterId,
                     request.getReqInfo().getSpaceInfo());
         }
@@ -106,6 +110,7 @@ public class DorisClusterTakeOverRequestHandler extends DorisClusterRequestHandl
     private ModelControlResponse handleAccessDorisClusterEvent(CoreUserEntity user,
                                                                DorisClusterTakeOverRequest request) throws Exception {
         long clusterId = request.getClusterId();
+        log.info("handle take over cluster {} ACCESS_DORIS_CLUSTER request {} event", clusterId, request.getRequestId());
 
         dorisClusterManager.clusterAccessOperation(clusterId, request.getReqInfo().getClusterAccessInfo());
 
@@ -114,29 +119,39 @@ public class DorisClusterTakeOverRequestHandler extends DorisClusterRequestHandl
 
     // CREATE_AND_START_RESOURCE_CLUSTER
     private ModelControlResponse handleCreateAndStartResourceClusterEvent(CoreUserEntity user,
-                                                               DorisClusterTakeOverRequest request) throws Exception {
+                                                                          DorisClusterTakeOverRequest request) throws Exception {
         long clusterId = request.getClusterId();
+        log.info("handle take over cluster {} CREATE_AND_START_RESOURCE_CLUSTER request {} event",
+                clusterId, request.getRequestId());
 
         ClusterInfoEntity clusterInfo = clusterInfoRepository.findById(clusterId).get();
 
         // TODO:get cluster nodes ip info
         List<String> nodeIps = new ArrayList<>();
 
-        Statement stmt = jdbcClient.getStatement(clusterInfo.getAddress(), clusterInfo.getQueryPort(), clusterInfo.getUser(), clusterInfo.getPasswd());
+        Statement stmt = jdbcClient.getStatement(clusterInfo.getAddress(), clusterInfo.getQueryPort(),
+                clusterInfo.getUser(), CredsUtil.aesDecrypt(clusterInfo.getPasswd()));
         Set<String> feNodeIps = jdbcClient.getFeOrBeIps(stmt, "'/frontends';");
+        log.debug("The node list IP of Doris cluster Fe is {}", feNodeIps);
 
         Set<String> beNodeIps = jdbcClient.getFeOrBeIps(stmt, "'/backends';");
+        log.debug("The node list IP of Doris cluster Be is {}", beNodeIps);
         jdbcClient.closeStatement(stmt);
 
         Set<String> allNodeDistinct = new HashSet<>();
         allNodeDistinct.addAll(feNodeIps);
         allNodeDistinct.addAll(beNodeIps);
 
+        log.debug("The node list distinct IP of Doris cluster is {}", allNodeDistinct);
+
         nodeIps.addAll(allNodeDistinct);
+        log.debug("The node list IP of Doris cluster is {}", nodeIps);
 
         dorisClusterManager.createClusterResourceOperation(user, clusterInfo, request.getReqInfo().getAuthInfo(), nodeIps);
-        dorisClusterManager.configClusterResourceOperation(clusterInfo, "", request.getReqInfo().getInstallInfo());
+        dorisClusterManager.configClusterResourceOperation(clusterInfo, "",
+                request.getReqInfo().getInstallInfo(), request.getReqInfo().getAgentPort());
 
+        // TODO  sshInfo  and  iplist  can check agent port
         List<ResourceNodeEntity> nodeEntities =
                 nodeRepository.getByResourceClusterId(clusterInfo.getResourceClusterId());
         Set<Long> feNodeIds = new HashSet<>();
@@ -150,6 +165,8 @@ public class DorisClusterTakeOverRequestHandler extends DorisClusterRequestHandl
                 beNodeIds.add(nodeEntity.getId());
             }
         }
+        log.debug("The node list ID of Doris cluster fe is {}", feNodeIds);
+        log.debug("The node list ID of Doris cluster be is {}", beNodeIds);
 
         DorisClusterModuleResourceConfig feConfig = new DorisClusterModuleResourceConfig();
         feConfig.setModuleName(ServerAndAgentConstant.FE_NAME);
@@ -171,6 +188,7 @@ public class DorisClusterTakeOverRequestHandler extends DorisClusterRequestHandl
     private ModelControlResponse handleCheckClusterDeployEvent(CoreUserEntity user,
                                                                DorisClusterTakeOverRequest request) throws Exception {
         long clusterId = request.getClusterId();
+        log.info("handle take over cluster {} CHECK_CLUSTER_DEPLOY request {} event", clusterId, request.getRequestId());
 
         // Check whether the cluster node agent is installed successfully
         ClusterInfoEntity clusterInfoEntity = clusterInfoRepository.findById(clusterId).get();
@@ -185,6 +203,7 @@ public class DorisClusterTakeOverRequestHandler extends DorisClusterRequestHandl
     private ModelControlResponse handleCompletedEvent(CoreUserEntity user,
                                                       DorisClusterTakeOverRequest request) throws Exception {
         long clusterId = request.getClusterId();
+        log.info("handle take over cluster {} COMPLETED_TAKEOVER request {} event", clusterId, request.getRequestId());
         dorisClusterManager.checkClusterInstancesOperation(clusterId);
         return getResponse(request, true);
     }

@@ -16,14 +16,14 @@
 // under the License.
 
 /** @format */
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './index.module.less';
 import { Row, Tabs, Avatar, Col, Button, Form, Input, message } from 'antd';
 import { RequiredMark } from 'antd/lib/form/Form';
 import { UserSettingAPI } from './user.api';
 const { TabPane } = Tabs;
 import { useTranslation } from 'react-i18next';
-import {PassportAPI} from '@src/routes/passport/passport.api'
+import { PassportAPI } from '@src/routes/passport/passport.api';
 export function UserSetting() {
     useEffect(() => {
         getCurrentInfo();
@@ -68,7 +68,7 @@ export function UserSetting() {
         UserSettingAPI.modifyUserInfo(userInfo.id, _value).then(res => {
             if (res.code === 0) {
                 message.success(t`Successfully`);
-                setUserInfo(res.data)
+                setUserInfo(res.data);
             } else {
                 message.warning(res.msg);
             }
@@ -80,8 +80,8 @@ export function UserSetting() {
                 message.success(t`PasswordResetComplete`);
                 PassportAPI.SessionLogin({
                     password: _value.new_password,
-                    username: userInfo.name
-                })
+                    username: userInfo.name,
+                });
             } else {
                 message.warning(res.msg);
             }

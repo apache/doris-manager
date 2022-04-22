@@ -17,10 +17,15 @@
 
 package org.apache.doris.manager.agent.service.heartbeat;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.doris.manager.agent.exceptions.InstanceNotInstallException;
+import org.apache.doris.manager.agent.exceptions.InstanceNotRunningException;
+import org.apache.doris.manager.agent.exceptions.InstanceServiceException;
+import org.apache.doris.manager.agent.util.Request;
 import org.apache.doris.manager.agent.util.ShellUtil;
 import org.apache.doris.manager.common.util.ConfigDefault;
 import org.apache.doris.manager.common.util.ServerAndAgentConstant;
@@ -30,13 +35,20 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
 @Component
 public class DorisInstanceOperator {
+
+    // Actual broker installation path
+    // For compatibility, the actual broker deployment folder name may be baidu_doris_broker
+    // or apache_hdfs_broker when the cluster is hosted
+    private String brokerInstallationPath = "";
 
     // Download installation package
     public boolean downloadInstancePackage(String moudleName, String installInfo, String packageInfo) {
@@ -82,7 +94,15 @@ public class DorisInstanceOperator {
                 }
                 confFile = Paths.get(installInfo, moudleName, "conf", ServerAndAgentConstant.BE_CONF_FILE).toFile();
             } else {
-                confFile = Paths.get(installInfo, moudleName, "conf", ServerAndAgentConstant.BROKER_CONF_FILE).toFile();
+                String actualBrokerPath = getBrokerInstallationPath(installInfo);
+                String configFileName = ServerAndAgentConstant.BROKER_CONF_FILE;
+
+                if (actualBrokerPath.equals(ServerAndAgentConstant.BAIDU_BROKER_INIT_SUB_DIR)) {
+                    log.debug("Baidu doris broker config");
+                    configFileName = ServerAndAgentConstant.BAIDU_BROKER_CONF_FILE;
+                    parms.putAll(ServerAndAgentConstant.BAIDU_BROKER_CONFIG_DEDAULT);
+                }
+                confFile = Paths.get(installInfo, actualBrokerPath, "conf", configFileName).toFile();
             }
 
             // Create a new profile
@@ -108,24 +128,29 @@ public class DorisInstanceOperator {
     public boolean startInstance(String moudleName, String installInfo, String followerEndpoint) {
         log.info("begin to start {} instance", moudleName);
         try {
+            if (moudleName.equals(ServerAndAgentConstant.BROKER_NAME)) {
+                moudleName = getBrokerInstallationPath(installInfo);
+            }
+
             int mainProcPid = processIsRunning(moudleName, installInfo);
             if (mainProcPid == -1) {
                 log.info("{} instance not running, start it", moudleName);
-                String startScript = ServerAndAgentConstant.FE_START_SCRIPT;
-                if (followerEndpoint != null && !followerEndpoint.isEmpty()) {
-                    startScript += " --helper " + followerEndpoint;
-                }
-
-                if (moudleName.equals(ServerAndAgentConstant.BE_NAME)) {
+                String startScript = "";
+                if (moudleName.equals(ServerAndAgentConstant.FE_NAME)) {
+                    startScript = ServerAndAgentConstant.FE_START_SCRIPT;
+                    if (followerEndpoint != null && !followerEndpoint.isEmpty()) {
+                        startScript += " --helper " + followerEndpoint;
+                    }
+                } else if (moudleName.equals(ServerAndAgentConstant.BE_NAME)) {
                     startScript = ServerAndAgentConstant.BE_START_SCRIPT;
-                } else if (moudleName.equals(ServerAndAgentConstant.BROKER_NAME)) {
+                } else {
                     startScript = ServerAndAgentConstant.BROKER_START_SCRIPT;
                 }
                 startScript += " --daemon";
 
                 executePkgShellScriptWithBash(startScript, installInfo, moudleName, Maps.newHashMap());
             } else {
-                log.info("{} instance is running", moudleName);
+                log.info("instance {} is running", moudleName);
             }
             log.info("start {} instance success", moudleName);
             return true;
@@ -138,13 +163,19 @@ public class DorisInstanceOperator {
     public boolean stopInstance(String moudleName, String installInfo) {
         log.info("begin to stop {} instance", moudleName);
         try {
+            if (moudleName.equals(ServerAndAgentConstant.BROKER_NAME)) {
+                moudleName = getBrokerInstallationPath(installInfo);
+            }
+
             int mainProcPid = processIsRunning(moudleName, installInfo);
             if (mainProcPid > -1) {
                 log.info("{} instance is running, stop it", moudleName);
-                String stopScript = ServerAndAgentConstant.FE_STOP_SCRIPT;
-                if (moudleName.equals(ServerAndAgentConstant.BE_NAME)) {
+                String stopScript = "";
+                if (moudleName.equals(ServerAndAgentConstant.FE_NAME)) {
+                    stopScript = ServerAndAgentConstant.FE_STOP_SCRIPT;
+                } else if (moudleName.equals(ServerAndAgentConstant.BE_NAME)) {
                     stopScript = ServerAndAgentConstant.BE_STOP_SCRIPT;
-                } else if (moudleName.equals(ServerAndAgentConstant.BROKER_NAME)) {
+                } else {
                     stopScript = ServerAndAgentConstant.BROKER_STOP_SCRIPT;
                 }
                 executePkgShellScript(stopScript, installInfo, moudleName, Maps.newHashMap());
@@ -168,18 +199,108 @@ public class DorisInstanceOperator {
     }
 
     // Check whether the instance has been installed and started
-    public boolean checkInstanceDeploy(String moudleName, String installInfo) {
+    public void checkInstanceProcessState(String moduleName, String installDir, int httpPort)
+            throws InstanceNotInstallException, InstanceNotRunningException, InstanceServiceException {
+
+        if (moduleName.equals(ServerAndAgentConstant.BROKER_NAME)) {
+            moduleName = getBrokerInstallationPath(installDir);
+        }
+
+        // install dir check
+        log.info("to check module {} instance process state in {}", moduleName, installDir);
+        File moduleRoot = Paths.get(installDir, moduleName).toFile();
+        if (!moduleRoot.exists()) {
+            log.error("instance {} not installed, can not find root path: {}", moduleName, moduleRoot);
+            throw new InstanceNotInstallException(moduleName, installDir);
+        }
+
+        // process state check
+        // dont consider multiple be is deployed at one a machine node
         try {
-            int bePid = processIsRunning(moudleName, installInfo);
-            if (bePid < 0) {
-                return false;
-            } else {
-                return true;
+            int insPid = processIsRunning(moduleName, installDir);
+            if (insPid < 0) {
+                log.error("instance {} is not running", moduleName);
+                throw new InstanceNotRunningException(moduleName, moduleRoot.getAbsolutePath());
             }
         } catch (Exception e) {
-            log.error("Check " + moudleName + " instance running error {}.", e);
-            return false;
+            log.error("check instance {} process state error: {}", moduleName, e.getMessage());
+            throw new InstanceNotRunningException(moduleName, moduleRoot.getAbsolutePath());
         }
+
+        if (httpPort <= 0) {
+            log.warn("invalid http port {}, skip http service check", httpPort);
+            return;
+        }
+
+        // fe/be http service check
+        String statusURL;
+        if (moduleName.equals(ServerAndAgentConstant.FE_NAME)) {
+            statusURL = "http://localhost:" + httpPort + "/api/bootstrap";
+        } else if (moduleName.equals(ServerAndAgentConstant.BE_NAME)) {
+            statusURL = "http://localhost:" + httpPort + "/api/health";
+        } else {
+            // can not check other module by http
+            log.error("unknown module name {}", moduleName);
+            return;
+        }
+
+        /*
+         * Before Palo 3.10, the FE api/bootstrap API return like this:
+         * {
+         *    "replayedJournalId": 0,
+         *    "queryPort": 0,
+         *    "rpcPort": 0,
+         *    "status": "OK",
+         *    "msg": "Success"
+         * }
+         *
+         * From 3.10, the FE api/bootstrap API return like this:
+         * {
+         *  "msg": "success",
+         *  "code": 0,
+         *  "data": {"replayedJournalId": 0, "queryPort": 0, "rpcPort": 0},
+         *  "count": 0
+         * }
+         *
+         * FE api/health return like this
+         * {
+         * "msg": "success",
+         * "code": 0,
+         * "data": {"online_backend_num": 2, "total_backend_num": 2},
+         * "count": 0
+         * }
+         *
+         * BE api/health return lik this
+         * {"status": "OK","msg": "To Be Added"}
+         *
+         */
+
+        String stateRes;
+        try {
+            stateRes = Request.sendGetRequest(statusURL, new HashMap<>());
+        } catch (URISyntaxException e) {
+            log.error("{} syntax error {}", statusURL, e.getMessage());
+            return;
+        } catch (IOException e) {
+            throw new InstanceServiceException(moduleName);
+        }
+        log.info("http health return: {}", stateRes);
+        // or status == ok
+        JSONObject stateJson =  JSONObject.parseObject(stateRes);
+        String status = stateJson.getString("status");
+        if (status != null && status.equals("OK")) {
+            log.info("module {} instance service is normal, return status OK", moduleName);
+            return;
+        }
+
+        // or code == 0
+        Integer code = stateJson.getInteger("code");
+        if (code != null && code == 0) {
+            log.info("modele {} instance service is normal return code 0", moduleName);
+            return;
+        }
+
+        throw new InstanceServiceException(moduleName);
     }
 
     /*
@@ -192,14 +313,22 @@ public class DorisInstanceOperator {
      */
     private int processIsRunning(String moduleName, String runningDir) throws Exception {
 
-        String processName = ServerAndAgentConstant.FE_PID_NAME;
-        String pidFileName = ServerAndAgentConstant.FE_PID_FILE;
-        if (moduleName.equals(ServerAndAgentConstant.BE_NAME)) {
+        String processName = "";
+        String pidFileName = "";
+
+        if (moduleName.equals(ServerAndAgentConstant.FE_NAME)) {
+            processName = ServerAndAgentConstant.FE_PID_NAME;
+            pidFileName = ServerAndAgentConstant.FE_PID_FILE;
+        } else if (moduleName.equals(ServerAndAgentConstant.BE_NAME)) {
             processName = ServerAndAgentConstant.BE_PID_NAME;
             pidFileName = ServerAndAgentConstant.BE_PID_FILE;
-        } else if (moduleName.equals(ServerAndAgentConstant.BROKER_NAME)) {
+        } else {
             processName = ServerAndAgentConstant.BROKER_PID_NAME;
-            pidFileName = ServerAndAgentConstant.BROKER_PID_FILE;
+            if (moduleName.equals(ServerAndAgentConstant.BAIDU_BROKER_INIT_SUB_DIR)) {
+                pidFileName = ServerAndAgentConstant.BAIDU_BROKER_PID_FILE;
+            } else {
+                pidFileName = ServerAndAgentConstant.BROKER_PID_FILE;
+            }
         }
 
         int pid = getPid(processName);
@@ -300,15 +429,20 @@ public class DorisInstanceOperator {
         int index = scripts.indexOf(":") + 1;
         scripts = scripts.substring(0, index) + "//" + scripts.substring(index + 1);
         final String shellCmd = "sh " + scripts;
+
         log.info("begin to execute: `" + shellCmd + "`");
         executeShell(shellCmd, environment);
     }
 
     private void executePkgShellScriptWithBash(String scriptName, String runningDir,
                                        String moduleName, Map<String, String> environment) throws Exception {
-        String scripts = Paths.get(runningDir, moduleName, "bin", scriptName).toFile().getAbsolutePath();
-        final String shellCmd = "sh " + scripts;
-        log.info("begin to execute: `" + shellCmd + "`");
+        String mouduleRootDir = runningDir + File.separator + moduleName;
+        String script = "bin" + File.separator + scriptName;
+
+        String cmdFormat = "cd %s && sh %s";
+        final String shellCmd = String.format(cmdFormat, mouduleRootDir, script);
+
+        log.info("begin to execute with bash: `" + shellCmd + "`");
         ShellUtil.cmdExecute(shellCmd);
     }
 
@@ -322,6 +456,32 @@ public class DorisInstanceOperator {
             if (!file.mkdirs()) {
                 throw new Exception("failed to create dir: " + path);
             }
+        }
+    }
+
+    // Set the actual path of the broker
+    private String getBrokerInstallationPath(String installInfo) {
+        if (brokerInstallationPath.isEmpty()) {
+
+            File brokerFile = Paths.get(installInfo, ServerAndAgentConstant.BROKER_NAME).toFile();
+            if (brokerFile.exists()) {
+                return ServerAndAgentConstant.BROKER_NAME;
+            }
+
+            brokerFile = Paths.get(installInfo, ServerAndAgentConstant.BROKER_INIT_SUB_DIR).toFile();
+            if (brokerFile.exists()) {
+                return ServerAndAgentConstant.BROKER_INIT_SUB_DIR;
+            }
+
+            brokerFile = Paths.get(installInfo, ServerAndAgentConstant.BAIDU_BROKER_INIT_SUB_DIR).toFile();
+            if (brokerFile.exists()) {
+                return ServerAndAgentConstant.BAIDU_BROKER_INIT_SUB_DIR;
+            }
+
+            return ServerAndAgentConstant.BROKER_NAME;
+
+        } else {
+            return brokerInstallationPath;
         }
     }
 }

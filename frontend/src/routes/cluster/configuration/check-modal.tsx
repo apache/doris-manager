@@ -15,10 +15,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button, Modal, Table } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { ConfigurationItem } from '.';
+import { transformHostToIp } from '../cluster.utils';
 
 interface CheckModalProps {
     visible: boolean;
@@ -38,6 +39,7 @@ export default function CheckModal(props: CheckModalProps) {
         {
             title: t`hostIp`,
             dataIndex: 'host',
+            render: (host: string) => transformHostToIp(host),
         },
         {
             title: t`currentValue`,

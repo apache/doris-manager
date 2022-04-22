@@ -15,18 +15,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-/**
- * @format
- */
-import React, { useEffect, useState } from 'react';
 import styles from './meta.less';
 import { PageSide } from '@src/layout/page-side/index';
 import { MetaBaseTree } from '../tree/index';
-import { Redirect, Route, Router, Switch } from 'react-router-dom';
+import { Routes, Route, Router } from 'react-router-dom';
 import TableContent from '../table-content';
 import Database from '../database';
 
-export function Meta(props: any) {
+export function Meta() {
     return (
         <div className={styles['palo-new-main']}>
             <div className={styles['new-main-sider']}>
@@ -42,10 +38,10 @@ export function Meta(props: any) {
                     height: 'calc(100vh - 95px)',
                 }}
             >
-                <Switch>
-                    <Route path="/meta/table/:tableId" component={TableContent}/>
-                    <Route path="/meta/database" component={Database}/>
-                </Switch>
+                <Routes>
+                    <Route path="table/:tableId/*" element={<TableContent />} />
+                    <Route path="database/*" element={<Database />} />
+                </Routes>
             </div>
         </div>
     );

@@ -15,8 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React from 'react';
-import { useLocation, useHistory } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Tabs } from 'antd';
 
 const { TabPane } = Tabs;
@@ -31,10 +30,10 @@ interface TabsHeaderProps {
 export default function TabsHeader(props: TabsHeaderProps) {
     const { routes } = props;
     const { pathname } = useLocation();
-    const history = useHistory();
+    const navigate = useNavigate();
 
     const handleTabChange = (key: string) => {
-        history.replace(key);
+        navigate(key);
     };
 
     const findActiveKey = (pathname: string) => {

@@ -17,20 +17,19 @@
 
 /** @format */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
 import styles from './header.module.less';
 import { HeaderProps } from './header.interface';
 import { SyncOutlined } from '@ant-design/icons';
 import { HeaderAPI } from './header.api';
 import CSSModules from 'react-css-modules';
-const EventEmitter = require('events').EventEmitter; 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const EventEmitter = require('events').EventEmitter;
 const event = new EventEmitter();
 
 export function Header(props: HeaderProps) {
     const [loading, setLoading] = useState(false);
-    // useEffect(() => {
-    //     HeaderAPI.refreshData();
-    // }, []);
+
     function refresh() {
         HeaderAPI.refreshData();
         event.emit('refreshData');
@@ -45,7 +44,7 @@ export function Header(props: HeaderProps) {
                 <span styleName="common-header-icon">{props.icon}</span>
                 <span styleName="common-header-name">{props.title}</span>
             </div>
-            <div styleName="common-header-refresh">
+            {/* <div styleName="common-header-refresh">
                 <SyncOutlined
                     spin={loading}
                     onClick={() => {
@@ -53,7 +52,7 @@ export function Header(props: HeaderProps) {
                         setLoading(true);
                     }}
                 />
-            </div>
+            </div> */}
         </div>
     );
 }

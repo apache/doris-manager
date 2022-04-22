@@ -1,8 +1,11 @@
 {
     "username": "用户名",
     "password": "密码",
+    "Username or Mail": "用户名或邮箱",
     "OldPassword":"旧密码",
     "PleaseEnterTheOldPassword":"请输入旧密码",
+    "Please input the username or email": "请输入用户名或邮箱",
+    "Please input the password": "请输入密码",
     "NewPassword":"新密码",
     "ContainAtLeast2Types":"至少包含英文大写、英文小写、数字和特殊符号中的2种",
     "PleaseEnterTheNewPassword":"请输入新密码",
@@ -54,6 +57,7 @@
     "loginExpirtMsg": "登录信息已过期。点击确定跳转到登陆页面。",
     "nextStep": "下一步",
     "previousStep": "上一步",
+    "Accomplish": "完成",
     "pleaseEnter": "请输入",
     "cancelButton": "取消",
     "loadButton": "导入",
@@ -63,6 +67,13 @@
     "selectWarning": "请选择表",
     "executionTime": "执行时间",
     "search":"查询",
+    "addNodes": "添加节点",
+    "sshTip": "请提前完成Manager节点与其他节点间SSH信任，并在下方填入Manager节点的SSH信息。",
+    "sshTrust": "SSH信任",
+    "sshTrustHelper": "如何进行SSH信任？",
+    "sshUser": "SSH用户",
+    "sshPort": "SSH端口",
+    "sshKey": "SSH私钥",
 
     "noData":"暂无数据",
     "data": "数据",
@@ -327,6 +338,25 @@
     "Space Register": "注册空间",
     "Please Select Users...": "请选择用户...",
     "NewPasswordLengthRuleMessage": "密码长度为6-12",
-    "NewPasswordPatternRuleMessage": "密码仅支持大写字母、小写字母、数字、下划线，至少包含三种"
+    "NewPasswordPatternRuleMessage": "密码仅支持大写字母、小写字母、数字、下划线，至少包含三种",
+    "AddHost": "添加主机",
+    "SetupOptions": "安装选项",
+    "CheckoutHost": "校验主机",
+    "PlaningNodes": "规划节点",
+    "SetUpParameters": "设置参数",
+    "DeployCluster": "部署集群",
+    "creationComplete": "创建完成",
+
+    "BasicInfo": "基本信息",
+    "DataPreview": "数据预览",
+    "DataTree": "数据目录树",
+    "TableName": "表名称",
+    "TableDescription": "数据表描述信息",
+    "CreateTime": "创建时间",
+    "UpdateTime": "最近修改时间",
+    "UpdateTimeHelper": "记录该表最近发生表结构变更的时间",
+
+    "Sync successfully, please refresh the page": "同步成功，请刷新页面" ,
+    "Sync failed": "同步失败"
 }
 

@@ -15,44 +15,69 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React from 'react';
 import { Loading } from './components/loading';
 import { NotFound } from './components/not-found';
 import { Suspense } from 'react';
 
-
-import { Route, Switch, BrowserRouter as Router } from 'react-router-dom';
-import { InitializedRoute } from './components/initialized-route/initialized-route';
+import { Route, BrowserRouter, Routes, Navigate } from 'react-router-dom';
 import { Settings } from './routes/settings/settings';
-import { Initialize } from './routes/initialize/initialize.route';
+import { Initialize } from './routes/initialize/initialize';
 import { SuperAdminContainer } from './routes/super-admin-container';
 import { Admin } from './routes/admin/admin';
 import { Login } from './routes/passport/login';
 import { Container } from './routes/container';
+import { RequireInitialized } from './components/auths/require-initialized';
+import { AuthRoute } from './components/auths/auth-route';
 
 const routes = (
     <Suspense fallback={<Loading />}>
-        <Router>
-            <Switch>
-                <InitializedRoute path="/passport/login">
-                    <Login />
-                </InitializedRoute>
-                <Route path="/initialize" component={Initialize} />
-                <InitializedRoute path="/settings">
-                    <Settings />
-                </InitializedRoute>
-                <InitializedRoute path="/space">
-                    <SuperAdminContainer />
-                </InitializedRoute>
-                <InitializedRoute path="/admin">
-                    <Admin />
-                </InitializedRoute>
-                <InitializedRoute path="/">
-                    <Container />
-                </InitializedRoute>
-                <Route component={NotFound} />
-            </Switch>
-        </Router>
+        <BrowserRouter>
+            <Routes>
+                <Route
+                    path="/passport/login"
+                    element={
+                        <RequireInitialized>
+                            <Login />
+                        </RequireInitialized>
+                    }
+                />
+                <Route path="/initialize/*" element={<Initialize />} />
+                <Route
+                    path="/space/*"
+                    element={
+                        <AuthRoute>
+                            <SuperAdminContainer />
+                        </AuthRoute>
+                    }
+                />
+                <Route
+                    path="/settings/*"
+                    element={
+                        <AuthRoute>
+                            <Settings />
+                        </AuthRoute>
+                    }
+                />
+                <Route
+                    path="/admin/*"
+                    element={
+                        <AuthRoute>
+                            <Admin />
+                        </AuthRoute>
+                    }
+                />
+                <Route
+                    path="/*"
+                    element={
+                        <AuthRoute>
+                            <Container />
+                        </AuthRoute>
+                    }
+                />
+                <Route path="/" element={<Navigate to="space" replace />} />
+                <Route path="*" element={<NotFound />} />
+            </Routes>
+        </BrowserRouter>
     </Suspense>
 );
 

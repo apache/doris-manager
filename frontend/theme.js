@@ -47,6 +47,6 @@ module.exports = () => {
         '@layout-header-height': '60px',
         '@layout-header-background': '#1b1b1b',
         '@layout-sider-background': '#fafafb',
-        '@layout-body-background': '#fff'
+        '@layout-body-background': '#fff',
     };
 };

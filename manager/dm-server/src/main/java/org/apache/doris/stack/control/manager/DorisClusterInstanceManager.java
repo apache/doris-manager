@@ -51,6 +51,7 @@ public class DorisClusterInstanceManager {
 
     public long initOperation(long clusterId, ClusterModuleEntity moudle, long nodeId) {
         // TODO:Judge whether node can deploy this instance
+        log.info("create a new instance for cluster {} moudle {} on node {}", clusterId, moudle.getModuleName(), nodeId);
         ResourceNodeEntity nodeEntity = nodeRepository.findById(nodeId).get();
 
         ClusterInstanceEntity instanceEntity = new ClusterInstanceEntity(clusterId, moudle.getId(), nodeId,
@@ -63,10 +64,11 @@ public class DorisClusterInstanceManager {
                                 long requestId) {
         // TODO:Judge whether instance can be deploy
         // TODO: Step fallback operation
-
+        log.info("deploy instance {}", instance.getId());
         long eventId = instance.getCurrentEventId();
         if (eventId < 1L) {
             // First install instance operation
+            log.debug("first deploy instance {}", instance.getId());
             HeartBeatEventEntity eventEntity = new HeartBeatEventEntity(HeartBeatEventType.INSTANCE_INSTALL.name(),
                     HeartBeatEventResultType.INIT.name(), JSON.toJSONString(configInfo), requestId);
 
@@ -75,6 +77,7 @@ public class DorisClusterInstanceManager {
             instance.setCurrentEventId(newEventEntity.getId());
             clusterInstanceRepository.save(instance);
         } else {
+            log.debug("deploy instance {} heart beat event {} exist", instance.getId(), eventId);
             HeartBeatEventEntity eventEntity = heartBeatEventRepository.findById(eventId).get();
             // TODO:exception
             if (!eventEntity.getType().equals(HeartBeatEventType.INSTANCE_INSTALL.name())) {
@@ -95,9 +98,11 @@ public class DorisClusterInstanceManager {
 
     public void checkDeployOperation(ClusterInstanceEntity instance, InstanceDeployCheckEventConfigInfo configInfo,
                                      long requestId) {
+        log.info("check instance {} deploy", instance.getId());
         long eventId = instance.getCurrentEventId();
         if (eventId < 1L) {
-            // First install instance operation
+            // First check instance install operation
+            log.debug("first check instance {} deploy", instance.getId());
             HeartBeatEventEntity eventEntity = new HeartBeatEventEntity(HeartBeatEventType.INSTANCE_DEPLOY_CHECK.name(),
                     HeartBeatEventResultType.INIT.name(), JSON.toJSONString(configInfo), requestId);
 
@@ -106,6 +111,7 @@ public class DorisClusterInstanceManager {
             instance.setCurrentEventId(newEventEntity.getId());
             clusterInstanceRepository.save(instance);
         } else {
+            log.debug("check instance {} deploy heart beat event {} exist", instance.getId(), eventId);
             HeartBeatEventEntity eventEntity = heartBeatEventRepository.findById(eventId).get();
             // TODO:exception
             if (!eventEntity.getType().equals(HeartBeatEventType.INSTANCE_DEPLOY_CHECK.name())) {
@@ -126,6 +132,7 @@ public class DorisClusterInstanceManager {
 
     // Check whether instance is installed successfully
     public boolean checkInstanceOperation(ClusterInstanceEntity instance) {
+        log.info("check instance {} has been deployed", instance.getId());
         long eventId = instance.getCurrentEventId();
         if (eventId < 1L) {
             return false;
@@ -146,23 +153,27 @@ public class DorisClusterInstanceManager {
 
     public void startOperation(ClusterInstanceEntity instance, InstanceStartEventConfigInfo configInfo,
                                long requestId) {
+        log.info("start instance {} for request {}", instance.getId(), requestId);
         saveInstanceNewHeartBeat(instance, JSON.toJSONString(configInfo),
                 HeartBeatEventType.INSTANCE_START, requestId);
     }
 
     public void stopOperation(ClusterInstanceEntity instance, InstanceStopEventConfigInfo configInfo,
                                long requestId) {
+        log.info("stop instance {} for request {}", instance.getId(), requestId);
         saveInstanceNewHeartBeat(instance, JSON.toJSONString(configInfo),
                 HeartBeatEventType.INSTANCE_STOP, requestId);
     }
 
     public void restartOperation(ClusterInstanceEntity instance, InstanceRestartEventConfigInfo configInfo,
                                  long requestId) {
+        log.info("restart instance {} for request {}", instance.getId(), requestId);
         saveInstanceNewHeartBeat(instance, JSON.toJSONString(configInfo),
                 HeartBeatEventType.INSTANCE_RESTART, requestId);
     }
 
     public void deleteOperation(ClusterInstanceEntity instance) {
+        log.info("delete instance {}", instance.getId());
         clusterInstanceRepository.delete(instance);
     }
 

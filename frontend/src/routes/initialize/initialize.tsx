@@ -16,41 +16,48 @@
 // under the License.
 
 import { AuthTypeEnum } from '@src/common/common.data';
-import { isSuccess } from '@src/utils/http';
-import { Button, Card, message, Radio, Row, Space, Steps } from 'antd';
-import React, { useState } from 'react';
-import { useHistory, useRouteMatch } from 'react-router';
-import { InitializeAPI } from './initialize.api';
+import { Sidebar } from '@src/components/sidebar/sidebar';
+import { useAuth } from '@src/hooks/use-auth';
+import { useEffect } from 'react';
+import { Route, Routes, useNavigate } from 'react-router';
+import { InitializeAuth } from './auths/auth';
+import { InitializeSetType } from './initialize-set-type';
+import { LocalStepsEnum } from './initialize.data';
 import styles from './initialize.less';
 
-export function InitializePage(props: any) {
-    const [authType, setAuthType] = useState<AuthTypeEnum>(AuthTypeEnum.STUDIO);
-    const match = useRouteMatch();
-    const history = useHistory();
-    async function handleSetAuthType() {
-        const res = await InitializeAPI.setAuthType({authType});
-        if (isSuccess(res)) {
-            history.push(`${match.path}auth/${authType}`);
-        } else {
-            message.error(res.msg);
-        }
-    }
+export function Initialize() {
+    const navigate = useNavigate();
+    const { initStep, authType: currentAuthType, initialized } = useAuth();
 
+    useEffect(() => {
+        if (currentAuthType && initStep) {
+            const feStep = initStep ? initStep - 1 : 1;
+            let stepPage = '';
+            if (currentAuthType === AuthTypeEnum.STUDIO) {
+                stepPage = LocalStepsEnum[feStep];
+            }
+            if (initialized) {
+                if (currentAuthType === AuthTypeEnum.STUDIO) {
+                    stepPage = LocalStepsEnum[feStep];
+                    if (feStep === 1) {
+                        navigate('/space');
+                    }
+                }
+            } else {
+                navigate(`auth/${currentAuthType}/${stepPage}`);
+            }
+        }
+    }, [currentAuthType, initialized, initStep]);
     return (
-        <div className={styles['initialize']}>
-            <div className={styles['initialize-steps-content']}>
-                <Card type="inner" title="管理用户">
-                    <Radio.Group onChange={e => setAuthType(e.target.value)} value={authType}>
-                        <Space direction="vertical">
-                            <Radio value={AuthTypeEnum.STUDIO}>本地认证</Radio>
-                            {/* <Radio value={AuthTypeEnum.LDAP}>LDAP认证</Radio> */}
-                        </Space>
-                    </Radio.Group>
-                    <p style={{marginTop: 10}}>注意，初始化选择好认证方式后不可再改变。</p>
-                    <Row justify="end">
-                        <Button type="primary" onClick={() => handleSetAuthType()}>去配置</Button>
-                    </Row>
-                </Card>
+        <div>
+            <Sidebar mode="initialize" />
+            <div style={{ marginLeft: 80 }}>
+                <div className={styles['initialize-container']}>
+                    <Routes>
+                        <Route path="/" element={<InitializeSetType />} />
+                        <Route path="auth/*" element={<InitializeAuth />} />
+                    </Routes>
+                </div>
             </div>
         </div>
     );

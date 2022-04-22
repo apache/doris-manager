@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { ConfigurationItem } from '.';
 import { useAsync } from '@src/hooks/use-async';
 import * as ClusterAPI from '../cluster.api';
+import { transformHostToIp } from '../cluster.utils';
 
 interface EditModalProps {
     visible: boolean;
@@ -33,12 +34,18 @@ interface FormInstanceProps {
     value: string;
     persist: boolean;
     range: 'all' | 'part';
-    nodes: number[];
+    nodes: string[];
+}
+
+const enum RangeEnum {
+    ALL = 'ALL',
+    PART = 'PART',
 }
 
 export default function EditModal(props: EditModalProps) {
     const { t } = useTranslation();
     const { visible, currentParameter, onOk, onCancel } = props;
+    const [range, setRange] = useState<RangeEnum>(RangeEnum.ALL);
     const { loading: confirmLoading, run: runChangeConfiguration } = useAsync();
     const [form] = Form.useForm<FormInstanceProps>();
 
@@ -48,7 +55,7 @@ export default function EditModal(props: EditModalProps) {
                 runChangeConfiguration(
                     ClusterAPI.changeConfiguration(currentParameter.type === 'Frontend' ? 'fe' : 'be', {
                         [currentParameter.name]: {
-                            node: [...currentParameter.nodes],
+                            node: [...(range === RangeEnum.ALL ? currentParameter.nodes : values.nodes)],
                             value: values.value,
                             persist: values.persist ? 'true' : 'false',
                         },
@@ -68,7 +75,7 @@ export default function EditModal(props: EditModalProps) {
 
     const handleCancel = () => {
         form.resetFields();
-        // setRange('all');
+        setRange(RangeEnum.ALL);
         onCancel();
     };
 
@@ -99,7 +106,7 @@ export default function EditModal(props: EditModalProps) {
                         <Radio value={false}>{t`onceEffective`}</Radio>
                     </Radio.Group>
                 </Form.Item>
-                {/* <Form.Item
+                <Form.Item
                     name="range"
                     label={t`effectiveRange`}
                     rules={[{ required: true, message: t`effectiveRangeRequiredMessage` }]}
@@ -109,21 +116,25 @@ export default function EditModal(props: EditModalProps) {
                             setRange(e.target.value);
                         }}
                     >
-                        <Radio value="all">{t`allNodes`}</Radio>
-                        <Radio value="part">{t`certainNodes`}</Radio>
+                        <Radio value={RangeEnum.ALL}>{t`allNodes`}</Radio>
+                        <Radio value={RangeEnum.PART}>{t`certainNodes`}</Radio>
                     </Radio.Group>
-                </Form.Item> */}
-                {/* {range === 'part' && (
+                </Form.Item>
+                {range === RangeEnum.PART && (
                     <Form.Item
                         name="nodes"
                         label={t`effectiveNodes`}
                         rules={[{ required: true, message: t`effectiveNodesPlaceholder` }]}
                     >
                         <Select mode="multiple" placeholder={t`effectiveNodesPlaceholder`}>
-                            <Select.Option value="1">127.0.0.1</Select.Option>
+                            {currentParameter.nodes.map(nodeHost => (
+                                <Select.Option key={nodeHost} value={nodeHost}>
+                                    {transformHostToIp(nodeHost)}
+                                </Select.Option>
+                            ))}
                         </Select>
                     </Form.Item>
-                )} */}
+                )}
             </Form>
         </Modal>
     );

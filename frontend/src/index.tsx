@@ -21,5 +21,4 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import './i18n';
 
-
-ReactDOM.render(<App />, document.querySelector("#root"));
+ReactDOM.render(<App />, document.querySelector('#root'));

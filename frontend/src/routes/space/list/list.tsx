@@ -14,14 +14,14 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import React, { useContext, useEffect, useState } from 'react';
+
+import { useContext, useEffect, useState } from 'react';
 import { Button, Dropdown, Menu, Row, Table, Tabs } from 'antd';
 import { Space } from 'antd';
 import { SpaceAPI } from '../space.api';
 import moment from 'moment';
 import { FlatBtn, FlatBtnGroup } from '@src/components/flatbtn';
 import { TABLE_DELAY } from '@src/config';
-import { useHistory } from 'react-router';
 import { PageContainer } from '@ant-design/pro-layout';
 import { useRequest } from 'ahooks';
 import { DownOutlined } from '@ant-design/icons';
@@ -32,12 +32,13 @@ import { requestInfoState } from '../access-cluster/access-cluster.recoil';
 import { UserInfoContext } from '@src/common/common.context';
 import { useTranslation } from 'react-i18next';
 import { NewClusterStepsEnum } from '../new-cluster/new-cluster.data';
+import { useNavigate } from 'react-router';
 const { TabPane } = Tabs;
 type SpaceListType = 'finished' | 'draft';
 
 export const SpaceList = () => {
     const userInfo = useContext(UserInfoContext);
-    const history = useHistory();
+    const navigate = useNavigate();
     const [activeKey, setActiveKey] = useState<SpaceListType>('finished');
     const [requestInfo, setRequestInfo] = useRecoilState(requestInfoState);
     const { t } = useTranslation();
@@ -80,14 +81,14 @@ export const SpaceList = () => {
 
     async function recover(record: any) {
         record.requestInfo.type === 'CREATION'
-            ? history.push(`/space/new/${record.requestId}/${NewClusterStepsEnum[record.eventType]}`)
-            : history.push(`/space/access/${record.requestId}/${AccessClusterStepsEnum[record.eventType]}`);
+            ? navigate(`/space/new/${record.requestId}/${NewClusterStepsEnum[record.eventType]}`)
+            : navigate(`/space/access/${record.requestId}/${AccessClusterStepsEnum[record.eventType]}`);
     }
 
     const enterSpace = (record: any) => {
         SpaceAPI.switchSpace(record.id).then(res => {
             if (res.code === 0) {
-                history.push('/');
+                navigate('/cluster');
             }
         });
     };
@@ -121,11 +122,6 @@ export const SpaceList = () => {
             render: (createTime: string) => <span>{moment(new Date(createTime)).format('YYYY-MM-DD HH:mm:ss')}</span>,
         },
         {
-            title: t`Status`,
-            dataIndex: 'status',
-            key: 'status',
-        },
-        {
             title: t`Actions`,
             dataIndex: 'status',
             key: 'status',
@@ -134,7 +130,6 @@ export const SpaceList = () => {
                 <FlatBtnGroup showNum={4}>
                     <FlatBtn onClick={() => enterSpace(record)}>{t`Enter Space`}</FlatBtn>
                     <FlatBtn onClick={() => deleteSpace(record)}>{t`Delete`}</FlatBtn>
-                    <FlatBtn to={`/space/detail/${record.id}`}>{t`Edit`}</FlatBtn>
                 </FlatBtnGroup>
             ),
         },
@@ -175,14 +170,14 @@ export const SpaceList = () => {
             <Menu.Item
                 onClick={() => {
                     setRequestInfo(ACCESS_CLUSTER_REQUEST_INIT_PARAMS);
-                    history.push('/space/new/0');
+                    navigate('/space/new/0');
                 }}
                 key="1"
             >{t`New Cluster`}</Menu.Item>
             <Menu.Item
                 onClick={() => {
                     setRequestInfo(ACCESS_CLUSTER_REQUEST_INIT_PARAMS);
-                    history.push('/space/access/0');
+                    navigate('/space/access/0');
                 }}
                 key="2"
             >{t`Cluster hosting`}</Menu.Item>

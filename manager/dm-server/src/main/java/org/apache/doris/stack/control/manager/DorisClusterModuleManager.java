@@ -59,6 +59,7 @@ public class DorisClusterModuleManager {
     private DorisClusterInstanceManager instanceManager;
 
     public long initOperation(long clusterId, DorisClusterModuleResourceConfig resourceConfig) {
+        log.info("create module {} for cluster {}", resourceConfig.getModuleName(), clusterId);
         ClusterModuleEntity moduleEntity = new ClusterModuleEntity(clusterId, resourceConfig.getModuleName());
 
         ClusterModuleEntity newModuleEntity = clusterModuleRepository.save(moduleEntity);
@@ -70,8 +71,8 @@ public class DorisClusterModuleManager {
     }
 
     public void configOperation(long clusterId, DorisClusterModuleDeployConfig deployConfig) {
-
         String moduleName = deployConfig.getModuleName();
+        log.info("config module name {} for cluster {}", moduleName, clusterId);
         List<ClusterModuleEntity> moduleEntities = clusterModuleRepository.getByClusterIdAndModuleName(clusterId, moduleName);
 
         // Step fallback operation
@@ -135,7 +136,13 @@ public class DorisClusterModuleManager {
             // for be service, heartbeat
             for (DeployConfigItem configItem : deployConfig.getConfigs()) {
                 if (configItem.getKey().equals(ConfigDefault.BE_HEARTBEAT_PORT_CONFIG_NAME)) {
-                    serviceNamePorts.put(ServerAndAgentConstant.BE_HEARTBEAT_SERVICE, Integer.valueOf(configItem.getValue()));
+                    serviceNamePorts.put(ServerAndAgentConstant.BE_HEARTBEAT_SERVICE,
+                            Integer.valueOf(configItem.getValue()));
+                }
+
+                if (configItem.getKey().equals(ConfigDefault.BE_WEBSERVER_PORT_NAME)) {
+                    serviceNamePorts.put(ServerAndAgentConstant.BE_HTTP_SERVICE,
+                            Integer.valueOf(configItem.getValue()));
                 }
             }
             serviceCreateOperation(moduleEntity, serviceNamePorts, accessInfo);
@@ -149,10 +156,12 @@ public class DorisClusterModuleManager {
             serviceCreateOperation(moduleEntity, serviceNamePorts, accessInfo);
         }
 
+        clusterModuleRepository.save(moduleEntity);
     }
 
     private void serviceCreateOperation(ClusterModuleEntity module, Map<String, Integer> serviceNamePorts,
                                        List<String> accessInfo) {
+        log.info("create module {} service", module.getId());
         for (String name : serviceNamePorts.keySet()) {
             int port = serviceNamePorts.get(name);
             ClusterModuleServiceEntity serviceEntity = new ClusterModuleServiceEntity(name, module.getClusterId(),
@@ -163,6 +172,7 @@ public class DorisClusterModuleManager {
 
     public void deployOperation(ClusterModuleEntity module, long requestId) {
         // TODO:Step fallback operation
+        log.info("deploy module {}", module.getId());
         List<ClusterInstanceEntity> instanceEntities = instanceRepository.getByModuleId(module.getId());
         DorisClusterModuleDeployConfig deployConfig = JSON.parseObject(module.getConfig(),
                 DorisClusterModuleDeployConfig.class);
@@ -185,6 +195,7 @@ public class DorisClusterModuleManager {
 
     public void checkDeployOperation(ClusterModuleEntity module, long requestId) {
         // TODO:Step fallback operation
+        log.info("check module {} deploy for request {}", module.getId(), requestId);
         List<ClusterInstanceEntity> instanceEntities = instanceRepository.getByModuleId(module.getId());
 
         InstanceDeployCheckEventConfigInfo configInfo = new InstanceDeployCheckEventConfigInfo();
@@ -197,6 +208,7 @@ public class DorisClusterModuleManager {
     }
 
     public void checkInstancesOperation(ClusterModuleEntity module) throws Exception {
+        log.info("check module {} instances", module.getId());
         List<ClusterInstanceEntity> instanceEntities = instanceRepository.getByModuleId(module.getId());
 
         for (ClusterInstanceEntity instanceEntity : instanceEntities) {
@@ -207,6 +219,7 @@ public class DorisClusterModuleManager {
     }
 
     public void stopOperation(ClusterModuleEntity module, long requestId) {
+        log.info("stop module {} for request {}", module.getId(), requestId);
         List<ClusterInstanceEntity> instanceEntities = instanceRepository.getByModuleId(module.getId());
 
         InstanceStopEventConfigInfo configInfo = new InstanceStopEventConfigInfo();
@@ -219,6 +232,7 @@ public class DorisClusterModuleManager {
     }
 
     public void startOperation(ClusterModuleEntity module, long requestId) {
+        log.info("start module {} for request {}", module.getId(), requestId);
         List<ClusterInstanceEntity> instanceEntities = instanceRepository.getByModuleId(module.getId());
 
         InstanceStartEventConfigInfo configInfo = new InstanceStartEventConfigInfo();
@@ -231,6 +245,7 @@ public class DorisClusterModuleManager {
     }
 
     public void restartOperation(ClusterModuleEntity module, long requestId) {
+        log.info("restart module {} for request {}", module.getId(), requestId);
         List<ClusterInstanceEntity> instanceEntities = instanceRepository.getByModuleId(module.getId());
 
         InstanceRestartEventConfigInfo configInfo = new InstanceRestartEventConfigInfo();
@@ -243,6 +258,7 @@ public class DorisClusterModuleManager {
     }
 
     public void deleteOperation(ClusterModuleEntity module) {
+        log.info("delete module {}", module.getId());
         List<ClusterInstanceEntity> instanceEntities = instanceRepository.getByModuleId(module.getId());
 
         // delete all instances
@@ -252,6 +268,9 @@ public class DorisClusterModuleManager {
 
         // delete service
         serviceRepository.deleteByModuleId(module.getId());
+
+        // delete module
+        clusterModuleRepository.deleteById(module.getId());
     }
 
 }

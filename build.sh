@@ -16,6 +16,14 @@
 # specific language governing permissions and limitations
 # under the License.
 
+set -eo pipefail
+
+curdir=`dirname "$0"`
+curdir=`cd "$curdir"; pwd`
+
+export BUILD_HOME=`cd "$curdir"; pwd`
+echo "$BUILD_HOME"
+
 echo "build doris manager home path"
 
 echo "build doris manager frontend start"
@@ -27,6 +35,16 @@ echo "build doris manager frontend end"
 
 cd ../
 echo "copy doris manager web resources to server"
+
+echo "Check whether the front end is compiled successfully"
+export FRONTEND_DIR="$BUILD_HOME/frontend/dist"
+if [ ! -d $FRONTEND_DIR ]; then
+    echo "Error: Front end compilation failed, please check the compilation log."
+    exit 1
+fi
+
+echo "The front end is compiled successfully"
+
 rm -rf manager/manager-server/src/main/resources/web-resource
 mv frontend/dist manager/manager-server/src/main/resources/web-resource
 echo "copy doris manager web resources to server end"
@@ -50,6 +68,10 @@ mv output/manager-bin/agent output/
 mv output/manager-bin output/server/bin
 mkdir -p output/agent/lib
 mv manager/dm-agent/target/dm-agent-1.0.0.jar output/agent/lib/dm-agent.jar
+
+mkdir -p output/agent/config
+cp manager/dm-agent/src/main/resources/application.properties output/agent/config
+
 cp -r manager/manager-server/src/main/resources/web-resource output/server/
 tar -zcvf doris-manager-1.0.0.tar.gz output/
 echo "copy to output package end"

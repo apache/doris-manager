@@ -52,7 +52,7 @@ export default function ClusterOverview() {
         },
     });
     const getClusterInfo = useCallback(
-        (setStartLoading: boolean = false) => {
+        (setStartLoading = false) => {
             return runGetClusterInfo(
                 Promise.all([
                     SpaceAPI.spaceGet(userInfo.space_id + '').then(res => {

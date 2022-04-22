@@ -15,13 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-/** @format */
-
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './database.module.less';
 import CSSModules from 'react-css-modules';
-import { useHistory } from 'react-router-dom';
-import { Layout, Form, Tabs, Button, message } from 'antd';
+import { Layout, Form, Tabs, message } from 'antd';
 import { HddOutlined } from '@ant-design/icons';
 import { CommonHeader } from '@src/components/common-header/header';
 import { DatabaseAPI } from './database.api';
@@ -29,7 +26,7 @@ import { DatabaseInfoResponse } from './database.interface';
 import { useTranslation } from 'react-i18next';
 import { getShowTime } from '@src/utils/utils';
 
-const { Content, Sider } = Layout;
+const { Content } = Layout;
 const iconDatabase = <HddOutlined />;
 const { TabPane } = Tabs;
 const layout = {
@@ -38,7 +35,6 @@ const layout = {
 };
 
 function Database(props: any) {
-    const history = useHistory();
     const { t } = useTranslation();
     const [dbName, setDbName] = useState<any>('');
     const [databaseInfo, setDatabaseInfo] = useState<DatabaseInfoResponse>({
@@ -58,7 +54,7 @@ function Database(props: any) {
         }
         setDbName(name);
         DatabaseAPI.getDatabaseInfo({ dbId: id }).then(res => {
-            const { msg, code, data } = res;
+            const { msg, code } = res;
             if (code === 0) {
                 setDatabaseInfo(res.data);
             } else {
@@ -78,7 +74,9 @@ function Database(props: any) {
                                 <Form.Item label={t`DatabaseDescriptionInformation`}>
                                     {databaseInfo.describe ? databaseInfo.describe : '-'}
                                 </Form.Item>
-                                <Form.Item label={t`CreationTime`}>{getShowTime(databaseInfo.createTime) ? getShowTime(databaseInfo.createTime) : '-'}</Form.Item>
+                                <Form.Item label={t`CreationTime`}>
+                                    {getShowTime(databaseInfo.createTime) ? getShowTime(databaseInfo.createTime) : '-'}
+                                </Form.Item>
                             </Form>
                         </div>
                     </TabPane>

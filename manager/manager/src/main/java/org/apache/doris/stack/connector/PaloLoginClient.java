@@ -22,6 +22,7 @@ import org.apache.doris.stack.entity.ClusterInfoEntity;
 import org.apache.doris.stack.exception.PaloRequestException;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.doris.stack.util.CredsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +45,7 @@ public class PaloLoginClient extends PaloClient {
         Map<String, String> headers = Maps.newHashMap();
         setHeaders(headers);
         setPostHeaders(headers);
-        setAuthHeaders(headers, entity.getUser(), entity.getPasswd());
+        setAuthHeaders(headers, entity.getUser(), CredsUtil.tryAesDecrypt(entity.getPasswd()));
 
         PaloResponseEntity response = poolManager.doPost(url, headers, null);
         if (response.getCode() != LOGIN_SUCCESS_CODE) {
