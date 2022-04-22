@@ -59,7 +59,17 @@ public class InstanceEventHandler {
         InstanceDeployCheckEventConfigInfo configInfo = JSON.parseObject(jsonConfigStr,
                 InstanceDeployCheckEventConfigInfo.class);
 
-        boolean isDeploy = instanceOperator.checkInstanceDeploy(configInfo.getModuleName(), configInfo.getInstallInfo());
+        boolean isDeploy = true;
+        try {
+            // here we do not check http service is ready or not
+            // because it is ready after a few seconds of the process starts
+            // which may cause `Doris Cluster Creation Request` failed and blocked
+            instanceOperator.checkInstanceProcessState(configInfo.getModuleName(),
+                    configInfo.getInstallInfo(), 0);
+        } catch (Exception e) {
+            log.error("check instance {} deploy error: {}", configInfo.getModuleName(), e.getMessage());
+            isDeploy = false;
+        }
 
         HeartBeatEventResult result = new HeartBeatEventResult(eventInfo);
         // There is only one step

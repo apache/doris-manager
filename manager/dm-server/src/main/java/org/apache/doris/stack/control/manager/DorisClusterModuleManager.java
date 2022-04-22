@@ -136,7 +136,13 @@ public class DorisClusterModuleManager {
             // for be service, heartbeat
             for (DeployConfigItem configItem : deployConfig.getConfigs()) {
                 if (configItem.getKey().equals(ConfigDefault.BE_HEARTBEAT_PORT_CONFIG_NAME)) {
-                    serviceNamePorts.put(ServerAndAgentConstant.BE_HEARTBEAT_SERVICE, Integer.valueOf(configItem.getValue()));
+                    serviceNamePorts.put(ServerAndAgentConstant.BE_HEARTBEAT_SERVICE,
+                            Integer.valueOf(configItem.getValue()));
+                }
+
+                if (configItem.getKey().equals(ConfigDefault.BE_WEBSERVER_PORT_NAME)) {
+                    serviceNamePorts.put(ServerAndAgentConstant.BE_HTTP_SERVICE,
+                            Integer.valueOf(configItem.getValue()));
                 }
             }
             serviceCreateOperation(moduleEntity, serviceNamePorts, accessInfo);

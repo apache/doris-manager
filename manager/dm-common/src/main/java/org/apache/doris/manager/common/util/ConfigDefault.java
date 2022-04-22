@@ -37,6 +37,7 @@ public class ConfigDefault {
     public static final String FE_EDIT_LOG_PORT = "edit_log_port";
 
     public static final String BE_HEARTBEAT_PORT_CONFIG_NAME = "heartbeat_service_port";
+    public static final String BE_WEBSERVER_PORT_NAME = "webserver_port";
 
     public static final String BROKER_PORT_CONFIG_NAME = "broker_ipc_port";
 

@@ -228,7 +228,7 @@ public class ResourceClusterManager {
 
         List<ResourceNodeEntity> agentInstalledNodes = new ArrayList<>();
         for (ResourceNodeEntity nodeEntity : nodeEntities) {
-            if (!nodeAndAgentManager.checkAgentOperation(nodeEntity)) {
+            if (!nodeAndAgentManager.isAgentInstalled(nodeEntity)) {
                 log.warn("the agent has not been installed on {} node {}", nodeEntity.getId(), nodeEntity.getHost());
             } else {
                 agentInstalledNodes.add(nodeEntity);
@@ -269,7 +269,7 @@ public class ResourceClusterManager {
         }
 
         // async delete agent
-        for (ResourceNodeEntity nodeEntity : nodeEntities) {
+        for (ResourceNodeEntity nodeEntity : agentInstalledNodes) {
             AgentUnInstallEventConfigInfo uninstallConfig = new AgentUnInstallEventConfigInfo(
                     accessInfo.getSshUser(), accessInfo.getSshPort(), accessInfo.getSshKey(),
                     nodeEntity.getHost(), nodeEntity.getAgentInstallDir(),
