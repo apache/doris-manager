@@ -73,6 +73,8 @@ public class ServerAndAgentConstant {
     public static final String FE_EDIT_SERVICE = "fe_edit";
 
     public static final String BE_HEARTBEAT_SERVICE = "be_heartbeat";
+    public static final String BE_HTTP_SERVICE = "be_http";
+
     public static final String BROKER_PRC_SERVICE = "broker_rpc";
 
     public static final Map<String, String> BAIDU_BROKER_CONFIG_DEDAULT;

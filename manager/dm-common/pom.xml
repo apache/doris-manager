@@ -27,6 +27,12 @@ under the License.
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>dm-common</artifactId>
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.doris</groupId>
+            <artifactId>resource-common</artifactId>
+        </dependency>
+    </dependencies>
 
 
 </project>
