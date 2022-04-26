@@ -81,7 +81,7 @@ public class ResourceNodeAndAgentManager {
             throws Exception {
 
         // check agent has been installed or not
-        if (!checkAgentOperation(node)) {
+        if (!isAgentInstalled(node)) {
             log.warn("node[{}]:{} does not install agent, no need to uninstall", node.getId(), node.getHost());
             return;
         }
@@ -174,6 +174,34 @@ public class ResourceNodeAndAgentManager {
             }
 
             if (eventEntity.isCompleted() && eventEntity.getStatus().equals(HeartBeatEventResultType.SUCCESS.name())) {
+                return true;
+            }
+
+            log.warn("Agent has not been installed successfully");
+            return false;
+        }
+    }
+
+    public boolean isAgentInstalled(ResourceNodeEntity node) {
+        long eventId = node.getCurrentEventId();
+
+        if (eventId < 1L) {
+            log.warn("The node no have agent");
+            return false;
+        } else {
+            HeartBeatEventEntity eventEntity = heartBeatEventRepository.findById(eventId).get();
+
+            // handling other event, agent has been installed
+            if (!eventEntity.getType().equals(HeartBeatEventType.AGENT_INSTALL.name())) {
+                return true;
+            }
+
+            // AGENT_INSTALL event
+            if (eventEntity.isCompleted() && eventEntity.getStatus().equals(HeartBeatEventResultType.SUCCESS.name())) {
+                return true;
+            }
+
+            if (eventEntity.getStage() >= AgentInstallEventStage.AGENT_START.getStage()) {
                 return true;
             }
 
@@ -369,7 +397,7 @@ public class ResourceNodeAndAgentManager {
     }
 
     private void uninstallEventProcess(ResourceNodeEntity node, AgentUnInstallEventConfigInfo configInfo,
-                                       HeartBeatEventEntity agentUninstallAgentEntity) {
+                                     HeartBeatEventEntity agentUninstallAgentEntity) {
         if (!agentUninstallAgentEntity.getType().equals(HeartBeatEventType.AGENT_STOP.name())) {
             log.warn("agent no need to stop on {} node {}", node.getId(), node.getHost());
             return;

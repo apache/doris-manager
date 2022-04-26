@@ -17,10 +17,15 @@
 
 package org.apache.doris.manager.agent.service.heartbeat;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.doris.manager.agent.exceptions.InstanceNotInstallException;
+import org.apache.doris.manager.agent.exceptions.InstanceNotRunningException;
+import org.apache.doris.manager.agent.exceptions.InstanceServiceException;
+import org.apache.doris.manager.agent.util.Request;
 import org.apache.doris.manager.agent.util.ShellUtil;
 import org.apache.doris.manager.common.util.ConfigDefault;
 import org.apache.doris.manager.common.util.ServerAndAgentConstant;
@@ -30,8 +35,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -143,7 +150,7 @@ public class DorisInstanceOperator {
 
                 executePkgShellScriptWithBash(startScript, installInfo, moudleName, Maps.newHashMap());
             } else {
-                log.info("{} instance is running", moudleName);
+                log.info("instance {} is running", moudleName);
             }
             log.info("start {} instance success", moudleName);
             return true;
@@ -192,21 +199,108 @@ public class DorisInstanceOperator {
     }
 
     // Check whether the instance has been installed and started
-    public boolean checkInstanceDeploy(String moudleName, String installInfo) {
+    public void checkInstanceProcessState(String moduleName, String installDir, int httpPort)
+            throws InstanceNotInstallException, InstanceNotRunningException, InstanceServiceException {
+
+        if (moduleName.equals(ServerAndAgentConstant.BROKER_NAME)) {
+            moduleName = getBrokerInstallationPath(installDir);
+        }
+
+        // install dir check
+        log.info("to check module {} instance process state in {}", moduleName, installDir);
+        File moduleRoot = Paths.get(installDir, moduleName).toFile();
+        if (!moduleRoot.exists()) {
+            log.error("instance {} not installed, can not find root path: {}", moduleName, moduleRoot);
+            throw new InstanceNotInstallException(moduleName, installDir);
+        }
+
+        // process state check
+        // dont consider multiple be is deployed at one a machine node
         try {
-            if (moudleName.equals(ServerAndAgentConstant.BROKER_NAME)) {
-                moudleName = getBrokerInstallationPath(installInfo);
-            }
-            int bePid = processIsRunning(moudleName, installInfo);
-            if (bePid < 0) {
-                return false;
-            } else {
-                return true;
+            int insPid = processIsRunning(moduleName, installDir);
+            if (insPid < 0) {
+                log.error("instance {} is not running", moduleName);
+                throw new InstanceNotRunningException(moduleName, moduleRoot.getAbsolutePath());
             }
         } catch (Exception e) {
-            log.error("Check " + moudleName + " instance running error {}.", e);
-            return false;
+            log.error("check instance {} process state error: {}", moduleName, e.getMessage());
+            throw new InstanceNotRunningException(moduleName, moduleRoot.getAbsolutePath());
         }
+
+        if (httpPort <= 0) {
+            log.warn("invalid http port {}, skip http service check", httpPort);
+            return;
+        }
+
+        // fe/be http service check
+        String statusURL;
+        if (moduleName.equals(ServerAndAgentConstant.FE_NAME)) {
+            statusURL = "http://localhost:" + httpPort + "/api/bootstrap";
+        } else if (moduleName.equals(ServerAndAgentConstant.BE_NAME)) {
+            statusURL = "http://localhost:" + httpPort + "/api/health";
+        } else {
+            // can not check other module by http
+            log.error("unknown module name {}", moduleName);
+            return;
+        }
+
+        /*
+         * Before Palo 3.10, the FE api/bootstrap API return like this:
+         * {
+         *    "replayedJournalId": 0,
+         *    "queryPort": 0,
+         *    "rpcPort": 0,
+         *    "status": "OK",
+         *    "msg": "Success"
+         * }
+         *
+         * From 3.10, the FE api/bootstrap API return like this:
+         * {
+         *  "msg": "success",
+         *  "code": 0,
+         *  "data": {"replayedJournalId": 0, "queryPort": 0, "rpcPort": 0},
+         *  "count": 0
+         * }
+         *
+         * FE api/health return like this
+         * {
+         * "msg": "success",
+         * "code": 0,
+         * "data": {"online_backend_num": 2, "total_backend_num": 2},
+         * "count": 0
+         * }
+         *
+         * BE api/health return lik this
+         * {"status": "OK","msg": "To Be Added"}
+         *
+         */
+
+        String stateRes;
+        try {
+            stateRes = Request.sendGetRequest(statusURL, new HashMap<>());
+        } catch (URISyntaxException e) {
+            log.error("{} syntax error {}", statusURL, e.getMessage());
+            return;
+        } catch (IOException e) {
+            throw new InstanceServiceException(moduleName);
+        }
+        log.info("http health return: {}", stateRes);
+        // or status == ok
+        JSONObject stateJson =  JSONObject.parseObject(stateRes);
+        String status = stateJson.getString("status");
+        if (status != null && status.equals("OK")) {
+            log.info("module {} instance service is normal, return status OK", moduleName);
+            return;
+        }
+
+        // or code == 0
+        Integer code = stateJson.getInteger("code");
+        if (code != null && code == 0) {
+            log.info("modele {} instance service is normal return code 0", moduleName);
+            return;
+        }
+
+        throw new InstanceServiceException(moduleName);
     }
 
     /*
