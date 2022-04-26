@@ -49,6 +49,8 @@ public class CommonPropertyUtil {
 
     private static final String DB_HOST = System.getenv(EnvironmentDefine.DB_HOST_ENV);
 
+    private static final String STUDIO_IP = System.getenv(EnvironmentDefine.STUDIO_IP_ENV);
+
     private static final String STUDIO_PORT = System.getenv(EnvironmentDefine.STUDIO_PORT_ENV);
 
     private static final String ENCRYPT_KEY = System.getenv(EnvironmentDefine.ENCRYPT_KEY_ENV);
@@ -104,6 +106,11 @@ public class CommonPropertyUtil {
             properties.put(PropertyDefine.SERVER_PORT_PROPERTY, 8080);
         } else {
             properties.put(PropertyDefine.SERVER_PORT_PROPERTY, STUDIO_PORT);
+        }
+
+        if (STUDIO_IP == null || STUDIO_IP.isEmpty()) {
+            log.error("STUDIO_IP  Not allowed to be empty");
+            throw new ConfigItemException("config item [STUDIO_IP] is empty");
         }
 
         if (ENCRYPT_KEY == null || ENCRYPT_KEY.isEmpty()) {
