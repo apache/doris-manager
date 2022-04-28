@@ -36,6 +36,9 @@ public class PropertyDefine {
     // Application port configuration item
     public static final String SERVER_PORT_PROPERTY = "server.port";
 
+    // Application ip configuration item
+    public static final String SERVER_IP_PROPERTY = "server.ip";
+
     // spring tomcat waiting queue length, default 100
     public static final String SERVER_ACCEPT_COUNT_PROPERTY = "server.tomcat.accept-count";
 

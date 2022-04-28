@@ -31,6 +31,7 @@ import org.apache.doris.stack.dao.HeartBeatEventRepository;
 import org.apache.doris.stack.dao.ResourceNodeRepository;
 import org.apache.doris.stack.entity.HeartBeatEventEntity;
 import org.apache.doris.stack.entity.ResourceNodeEntity;
+import org.apache.doris.stack.exceptions.ServerException;
 import org.apache.doris.stack.shell.SCP;
 import org.apache.doris.stack.shell.SSH;
 import org.apache.doris.stack.util.Constants;
@@ -40,6 +41,8 @@ import org.springframework.boot.system.ApplicationHome;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
 
@@ -464,6 +467,14 @@ public class ResourceNodeAndAgentManager {
     private String getServerAddr() {
         String host = System.getenv(EnvironmentDefine.STUDIO_IP_ENV);
         String port = System.getenv(EnvironmentDefine.STUDIO_PORT_ENV);
+
+        if (host == null || host.isEmpty()) {
+            try {
+                host = InetAddress.getLocalHost().getHostAddress();
+            } catch (UnknownHostException e) {
+                throw new ServerException("get server ip fail");
+            }
+        }
         return host + ":" + port;
     }
 

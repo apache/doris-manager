@@ -109,8 +109,14 @@ public class CommonPropertyUtil {
         }
 
         if (STUDIO_IP == null || STUDIO_IP.isEmpty()) {
-            log.error("STUDIO_IP  Not allowed to be empty");
-            throw new ConfigItemException("config item [STUDIO_IP] is empty");
+            log.debug("STUDIO_IP is empty,Manger IP will be used automatically");
+        } else {
+            AddressVerification addressVerification = new AddressVerification();
+            if (addressVerification.IpVerification(STUDIO_IP)) {
+                properties.put(PropertyDefine.SERVER_IP_PROPERTY, STUDIO_IP);
+            } else {
+                throw new ConfigItemException("config item [STUDIO_IP] is invalid");
+            }
         }
 
         if (ENCRYPT_KEY == null || ENCRYPT_KEY.isEmpty()) {
