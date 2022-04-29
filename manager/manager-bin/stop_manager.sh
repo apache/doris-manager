@@ -17,4 +17,4 @@
 # specific language governing permissions and limitations
 # under the License.
 
-ps -ef|grep doris-manager|grep -v grep|cut -c 9-15|xargs kill -9
+ps -ef|grep doris-manager|grep -v grep|awk '{print $2}'|xargs kill -9

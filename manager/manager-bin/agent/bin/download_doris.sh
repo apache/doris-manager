@@ -41,8 +41,7 @@ download_func() {
     wget --no-check-certificate $DOWNLOAD_URL -O $DESC_DIR/$FILENAME.tar.gz
     cd $DESC_DIR
     echo "start to decompress palo package"
-    tar -zxf "$FILENAME".tar.gz
-    mv PALO* $FILENAME
+    mkdir $FILENAME && tar -xzf "$FILENAME".tar.gz -C ./$FILENAME --strip-components 1
     echo "file name : $FILENAME"
     echo "start to copy fe be broker to dest dir"
     cp -r $DESC_DIR/$FILENAME/fe $DESC_DIR/
