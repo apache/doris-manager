@@ -177,8 +177,8 @@ public class CommonPropertyUtil {
             }
             url.append(":");
             if (StringUtils.isEmpty(DB_PORT)) {
-                url.append("8306");
-                properties.put(PropertyDefine.MYSQL_PORT_PROPERTY, 8306);
+                url.append("3306");
+                properties.put(PropertyDefine.MYSQL_PORT_PROPERTY, 3306);
             } else {
                 url.append(DB_PORT);
                 properties.put(PropertyDefine.MYSQL_PORT_PROPERTY, DB_PORT);
