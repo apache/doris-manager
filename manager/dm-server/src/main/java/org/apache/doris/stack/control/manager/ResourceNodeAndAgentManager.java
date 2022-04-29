@@ -465,13 +465,16 @@ public class ResourceNodeAndAgentManager {
      * get server address
      */
     private String getServerAddr() {
-        String host = null;
-        try {
-            host = InetAddress.getLocalHost().getHostAddress();
-        } catch (UnknownHostException e) {
-            throw new ServerException("get server ip fail");
-        }
+        String host = System.getenv(EnvironmentDefine.STUDIO_IP_ENV);
         String port = System.getenv(EnvironmentDefine.STUDIO_PORT_ENV);
+
+        if (host == null || host.isEmpty()) {
+            try {
+                host = InetAddress.getLocalHost().getHostAddress();
+            } catch (UnknownHostException e) {
+                throw new ServerException("get server ip fail");
+            }
+        }
         return host + ":" + port;
     }
 

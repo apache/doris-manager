@@ -1,7 +1,4 @@
-custom_env.sh
-flink-doris-connector/dependency-reduced-pom.xml
-flink-doris-connector/output/
-flink-doris-connector/target/
-spark-doris-connector/dependency-reduced-pom.xml
-spark-doris-connector/output/
-spark-doris-connector/target/
+manager/**/web-resource
+manager/**/target
+manager/**/*.iml
+.idea/
