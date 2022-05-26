@@ -65,7 +65,7 @@ public class ShellUtil {
         CommandLine cmdLine = CommandLine.parse(shellCmd);
         DefaultExecutor executor = new DefaultExecutor();
         // If the running time exceeds 1 minute, it will be judged as execution failure
-        ExecuteWatchdog watchdog = new ExecuteWatchdog(shellTimeout * 300 * 1000);
+        ExecuteWatchdog watchdog = new ExecuteWatchdog(shellTimeout * 60 * 1000);
         executor.setWatchdog(watchdog);
         executor.setExitValues(succExitValue);
         int exitValue = 0;
