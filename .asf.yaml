@@ -16,7 +16,7 @@
 #
 
 github:
-  description: Cluster manager for Apache Doris(Incubating)
+  description: Cluster manager for Apache Doris
   homepage: https://doris.apache.org/
   labels:
     - data-warehousing
