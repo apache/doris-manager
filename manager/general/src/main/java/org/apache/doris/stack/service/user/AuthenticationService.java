@@ -98,8 +98,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AuthenticationService extends BaseService {
 
-    private static final String BUILT_IN_USERNAME = "buop@studio.com";
-    public static String builtInPassword = "studio@123";
+    private static final String BUILT_IN_USERNAME = "";
+    public static String builtInPassword = "";
     private static StringBuffer mapString;
 
     // Name of cookie
@@ -360,16 +360,6 @@ public class AuthenticationService extends BaseService {
 
         // user id
         int userId;
-
-        // check built in user and password
-        if (username.matches(BUILT_IN_USERNAME) && loginReq.getPassword().equals(builtInPassword)) {
-            String sessionId = UuidUtil.newUuid();
-
-            CoreSessionEntity sessionEntity = new CoreSessionEntity(sessionId, -1,
-                    new Timestamp(System.currentTimeMillis()), null);
-            sessionRepository.save(sessionEntity);
-            return sessionId;
-        }
 
         List<CoreUserEntity> coreUserEntities;
         // login by first name or email
