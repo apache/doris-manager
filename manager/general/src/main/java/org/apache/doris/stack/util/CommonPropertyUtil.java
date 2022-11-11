@@ -49,6 +49,8 @@ public class CommonPropertyUtil {
 
     private static final String DB_HOST = System.getenv(EnvironmentDefine.DB_HOST_ENV);
 
+    private static final String STUDIO_IP = System.getenv(EnvironmentDefine.STUDIO_IP_ENV);
+
     private static final String STUDIO_PORT = System.getenv(EnvironmentDefine.STUDIO_PORT_ENV);
 
     private static final String ENCRYPT_KEY = System.getenv(EnvironmentDefine.ENCRYPT_KEY_ENV);
@@ -104,6 +106,17 @@ public class CommonPropertyUtil {
             properties.put(PropertyDefine.SERVER_PORT_PROPERTY, 8080);
         } else {
             properties.put(PropertyDefine.SERVER_PORT_PROPERTY, STUDIO_PORT);
+        }
+
+        if (STUDIO_IP == null || STUDIO_IP.isEmpty()) {
+            log.debug("STUDIO_IP is empty,Manger IP will be used automatically");
+        } else {
+            AddressVerification addressVerification = new AddressVerification();
+            if (addressVerification.IpVerification(STUDIO_IP)) {
+                properties.put(PropertyDefine.SERVER_IP_PROPERTY, STUDIO_IP);
+            } else {
+                throw new ConfigItemException("config item [STUDIO_IP] is invalid");
+            }
         }
 
         if (ENCRYPT_KEY == null || ENCRYPT_KEY.isEmpty()) {
@@ -164,8 +177,8 @@ public class CommonPropertyUtil {
             }
             url.append(":");
             if (StringUtils.isEmpty(DB_PORT)) {
-                url.append("8306");
-                properties.put(PropertyDefine.MYSQL_PORT_PROPERTY, 8306);
+                url.append("3306");
+                properties.put(PropertyDefine.MYSQL_PORT_PROPERTY, 3306);
             } else {
                 url.append(DB_PORT);
                 properties.put(PropertyDefine.MYSQL_PORT_PROPERTY, DB_PORT);

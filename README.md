@@ -17,12 +17,12 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-# Apache Doris (incubating) Manager
+# Apache Doris Manager
 
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 [![Join the Doris Community at Slack](https://img.shields.io/badge/chat-slack-brightgreen)](https://join.slack.com/t/apachedoriscommunity/shared_invite/zt-11jb8gesh-7IukzSrdea6mqoG0HB4gZg)
 
-The repository contains Manager for Apache Doris (incubating)
+The repository contains Manager for Apache Doris
 
 ## License
 
@@ -30,7 +30,7 @@ The repository contains Manager for Apache Doris (incubating)
 
 ## Report issues or submit pull request
 
-If you find any bugs, feel free to file a [GitHub issue](https://github.com/apache/incubator-doris/issues) or fix it by submitting a [pull request](https://github.com/apache/incubator-doris/pulls).
+If you find any bugs, feel free to file a [GitHub issue](https://github.com/apache/doris/issues) or fix it by submitting a [pull request](https://github.com/apache/doris/pulls).
 
 ## Contact Us
 
@@ -42,6 +42,6 @@ Contact us through the following mailing list.
 
 ## Links
 
-* Doris official site - <http://doris.incubator.apache.org>
+* Doris official site - <http://doris.apache.org>
 * Developer Mailing list - <dev@doris.apache.org>. Mail to <dev-subscribe@doris.apache.org>, follow the reply to subscribe the mail list.
 * Slack channel - [Join the Slack](https://join.slack.com/t/apachedoriscommunity/shared_invite/zt-11jb8gesh-7IukzSrdea6mqoG0HB4gZg)

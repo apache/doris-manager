@@ -62,6 +62,9 @@ public class EnvironmentDefine {
     // Data storage connection port environment variable
     public static final String STUDIO_PORT_ENV = "STUDIO_PORT";
 
+    // Data storage connection ip environment variable
+    public  static  final String STUDIO_IP_ENV = "STUDIO_IP";
+
     // key used to encrypt password
     public static final String ENCRYPT_KEY_ENV = "ENCRYPT_KEY";
 

@@ -44,6 +44,7 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
@@ -343,6 +344,21 @@ public class ResourceNodeAndAgentManager {
 
         //check jdk
         // JDK_CHECK stage
+        final String checkSystem = "cat /etc/os-release";
+        ssh.setCommand(checkSystem);
+        if (!ssh.run()) {
+            log.error("View system failures", ssh.getErrorResponse());
+            return;
+        }
+        if (ssh.getStdoutResponse().toLowerCase(Locale.ROOT).contains("ubuntu")) {
+            final String mkdirBashProfile = "if test -f ~/.bash_profile;then echo ok;else touch ~/.bash_profile;fi";
+            ssh.setCommand(mkdirBashProfile);
+            if (!ssh.run()) {
+                log.error("Create file fail", ssh.getErrorResponse());
+                return;
+            }
+        }
+        log.info("Create .bash_profile successfully");
         final String checkJavaHome = "source /etc/profile && source ~/.bash_profile && java -version && echo $JAVA_HOME";
         ssh.setCommand(checkJavaHome);
         if (!ssh.run()) {
@@ -465,13 +481,16 @@ public class ResourceNodeAndAgentManager {
      * get server address
      */
     private String getServerAddr() {
-        String host = null;
-        try {
-            host = InetAddress.getLocalHost().getHostAddress();
-        } catch (UnknownHostException e) {
-            throw new ServerException("get server ip fail");
-        }
+        String host = System.getenv(EnvironmentDefine.STUDIO_IP_ENV);
         String port = System.getenv(EnvironmentDefine.STUDIO_PORT_ENV);
+
+        if (host == null || host.isEmpty()) {
+            try {
+                host = InetAddress.getLocalHost().getHostAddress();
+            } catch (UnknownHostException e) {
+                throw new ServerException("get server ip fail");
+            }
+        }
         return host + ":" + port;
     }
 
