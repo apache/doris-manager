@@ -1,4 +1,4 @@
-#bin/bash
+#!/usr/bin/env bash
 
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -17,4 +17,20 @@
 # specific language governing permissions and limitations
 # under the License.
 
-ps -ef|grep doris-manager|grep -v grep|awk '{print $2}'|xargs kill -9
+MANAGER_HOME=$(dirname "$(readlink -f "$0")")
+
+cd "$MANAGER_HOME" || exit
+
+pidfile="$MANAGER_HOME"/../bin/doris_manager.pid
+echo "$pidfile"
+
+if [[ ! -f $pidfile ]]; then
+    echo "doris manager has not been started"
+    exit 1
+fi
+
+pid=$(cat "$pidfile")
+echo "$pid"
+
+kill -9 "$pid"
+rm -f "$pidfile"
