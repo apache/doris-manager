@@ -139,7 +139,7 @@ mv PALO-0.15.1-rc03-binary.tar.gz /usr/share/nginx/html
 
 2.修改ngixn.conf
 ```
-location /download {
+location /download/ {
                 alias /home/work/nginx/nginx/html/;
         }
 ```
