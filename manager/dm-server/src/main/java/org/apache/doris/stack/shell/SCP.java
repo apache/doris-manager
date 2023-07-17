@@ -33,7 +33,11 @@ public class SCP extends BaseCommand {
         this.user = user;
         this.sshPort = sshPort;
         this.sshKeyFile = sshKeyFile;
-        this.host = host;
+        if (host != null && host.split(":").length > 2) {
+            this.host = '[' + host + ']';
+        } else {
+            this.host = host;
+        }
         this.localPath = localPath;
         this.remotePath = remotePath;
     }

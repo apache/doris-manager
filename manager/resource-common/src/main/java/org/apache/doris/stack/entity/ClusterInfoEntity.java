@@ -63,6 +63,17 @@ public class ClusterInfoEntity {
 
     private String address;
 
+    public String getAddress() {
+        if (address != null && address.split(":").length > 2) {
+            return '[' + address + ']';
+        }
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
     private int httpPort;
 
     private int queryPort;

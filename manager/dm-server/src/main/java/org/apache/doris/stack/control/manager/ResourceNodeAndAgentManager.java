@@ -487,6 +487,9 @@ public class ResourceNodeAndAgentManager {
         if (host == null || host.isEmpty()) {
             try {
                 host = InetAddress.getLocalHost().getHostAddress();
+                if (host.split(":").length > 2) {
+                    host = '[' + host + ']';
+                }
             } catch (UnknownHostException e) {
                 throw new ServerException("get server ip fail");
             }

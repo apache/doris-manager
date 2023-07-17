@@ -17,6 +17,6 @@
 
 export function transformHostToIp(host: string) {
     if (!host.includes(':')) return host;
-    const sliceIndex = host.indexOf(':');
+    const sliceIndex = host.lastIndexOf(':');
     return host.slice(0, sliceIndex);
 }
