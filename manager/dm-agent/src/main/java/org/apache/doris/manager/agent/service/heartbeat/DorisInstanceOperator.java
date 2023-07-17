@@ -447,7 +447,7 @@ public class DorisInstanceOperator {
     }
 
     private int executeShell(String shellCmd, Map<String, String> environment) throws Exception {
-        return ShellUtil.executeShellWithoutOutput(shellCmd, new int[]{0}, 1, environment);
+        return ShellUtil.executeShellWithoutOutput(shellCmd, new int[]{0}, ServerAndAgentConstant.SHELL_TIME_OUT, environment);
     }
 
     private void createDataPath(String path) throws Exception {

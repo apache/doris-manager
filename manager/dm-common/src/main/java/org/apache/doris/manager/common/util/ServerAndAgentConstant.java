@@ -49,7 +49,7 @@ public class ServerAndAgentConstant {
     public static final String BAIDU_BROKER_PID_FILE = "baidu_doris_broker.pid";
 
     public static final String FE_PID_NAME = "PaloFe";
-    public static final String BE_PID_NAME = "palo_be";
+    public static final String BE_PID_NAME = "doris_be";
     public static final String BROKER_PID_NAME = "BrokerBootstrap";
 
     public static final String FE_START_SCRIPT = "start_fe.sh";
@@ -66,6 +66,7 @@ public class ServerAndAgentConstant {
     public static final String BAIDU_BROKER_CONF_FILE = "baidu_doris_broker.conf";
 
     public static final String PACKAGE_DOWNLOAD_SCRIPT = "download_doris.sh";
+    public static final int SHELL_TIME_OUT = 2;
 
     // TODO:Later, it will be defined uniformly through the cluster module service template
     public static final String FE_JDBC_SERVICE = "fe_jdbc";
