@@ -1,4 +1,4 @@
-#bin/bash
+#!/usr/bin/env bash
 
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -18,44 +18,42 @@
 # under the License.
 
 echo "Get manager home path"
-curdir=`dirname "$0"`
-curdir=`cd "$curdir"; pwd`
-
-export MANAGER_HOME=`cd "$curdir"; pwd`
+MANAGER_HOME=$(dirname "$(readlink -f "$0")")
 echo "$MANAGER_HOME"
 
-export LOG_DIR="$MANAGER_HOME/../logs"
+pidfile="$MANAGER_HOME"/../bin/doris_manager.pid
+
+LOG_DIR="$MANAGER_HOME"/../logs
 
 echo "Make log dir"
-# make log path
+# Create log path
 # need check and create if the log directory existed before outing message to the log file.
-if [ ! -d $LOG_DIR ]; then
-    mkdir -p $LOG_DIR
+if [[ ! -d "$LOG_DIR" ]]; then
+    mkdir -p "$LOG_DIR"
 fi
 echo "$LOG_DIR"
 
 echo "Read config"
-while read line; do
-    envline=`echo $line | sed 's/[[:blank:]]*=[[:blank:]]*/=/g' | sed 's/^[[:blank:]]*//g' | egrep "^[[:upper:]]([[:upper:]]|_|[[:digit:]])*="`
-    envline=`eval "echo $envline"`
+while read -r line; do
+    envline=$(echo "$line" | sed 's/[[:blank:]]*=[[:blank:]]*/=/g' | sed 's/^[[:blank:]]*//g' | grep -E "^[[:upper:]]([[:upper:]]|_|[[:digit:]])*=")
+    envline=$(eval "echo $envline")
     if [[ $envline == *"="* ]]; then
         eval 'export "$envline"'
     fi
-done < $MANAGER_HOME/../conf/manager.conf
+done <"$MANAGER_HOME"/../conf/manager.conf
 
 echo "config end"
 
 echo "check java and version"
 # java
 if [ "$JAVA_HOME" = "" ]; then
-  echo "Error: JAVA_HOME is not set."
-  exit 1
+    echo "Error: JAVA_HOME is not set."
+    exit 1
 fi
-JAVA=$JAVA_HOME/bin/java
-
+JAVA="$JAVA_HOME"/bin/java
 echo "$JAVA"
 
-# get jdk version, return version as an Integer.
+# Get jdk version, return version as an Integer.
 # 1.8 => 8, 13.0 => 13
 jdk_version() {
     local result
@@ -63,17 +61,14 @@ jdk_version() {
     local IFS=$'\n'
     # remove \r for Cygwin
     local lines=$("$java_cmd" -Xms32M -Xmx32M -version 2>&1 | tr '\r' '\n')
-    if [[ -z $java_cmd ]]
-    then
+    if [[ -z $java_cmd ]]; then
         result=no_java
     else
         for line in $lines; do
-            if [[ (-z $result) && ($line = *"version \""*) ]]
-            then
+            if [[ (-z $result) && ($line = *"version \""*) ]]; then
                 local ver=$(echo $line | sed -e 's/.*version "\(.*\)"\(.*\)/\1/; 1q')
                 # on macOS, sed doesn't support '?'
-                if [[ $ver = "1."* ]]
-                then
+                if [[ $ver = "1."* ]]; then
                     result=$(echo $ver | sed -e 's/1\.\([0-9]*\)\(.*\)/\1/; 1q')
                 else
                     result=$(echo $ver | sed -e 's/\([0-9]*\)\(.*\)/\1/; 1q')
@@ -83,18 +78,19 @@ jdk_version() {
     fi
     echo "$result"
 }
-# check java version and choose correct JAVA_OPTS
+# Check java version and choose correct JAVA_OPTS
 java_version=$(jdk_version)
 min_version=8
 
 echo "java version is $java_version"
 
-if [ $java_version -lt $min_version ]
-then
-	echo "Java version is too low to start"
-	exit -1
+if [[ "$java_version" -lt $min_version ]]; then
+    echo "Java version is too low to start"
+    exit 1
 fi
 
-#start manager
-nohup $JAVA -jar $MANAGER_HOME/../lib/doris-manager.jar > $LOG_DIR/manager.out 2>&1 </dev/null &
+# Start doris manager
+nohup "$JAVA" -jar "$MANAGER_HOME"/../lib/doris-manager.jar >"$LOG_DIR"/manager.out 2>&1 </dev/null &
 echo "Doris Manager start done"
+
+echo $! >"$pidfile"
