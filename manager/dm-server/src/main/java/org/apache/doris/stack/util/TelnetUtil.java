@@ -43,11 +43,11 @@ public class TelnetUtil {
         } catch (IOException e) {
             log.error("can not telnet {}:{}", host, port);
         } finally {
-            try {
+            // try {
                 socket.close();
-            } catch (IOException e) {
-                log.error("can not telnet {}:{}", host, port);
-            }
+            // } catch (IOException e) {
+            //     log.error("can not telnet {}:{}", host, port);
+            // }
         }
         System.out.println(System.currentTimeMillis() - str);
         return isConnected;
