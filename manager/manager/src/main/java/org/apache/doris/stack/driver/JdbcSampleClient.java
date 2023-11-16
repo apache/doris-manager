@@ -192,7 +192,7 @@ public class JdbcSampleClient {
             while (result.next()) {
                 boolean isAlive = result.getBoolean("Alive");
                 if (isAlive) {
-                    ips.add(result.getString("IP"));
+                    ips.add(result.getString("Host"));
                 }
             }
             return ips;
